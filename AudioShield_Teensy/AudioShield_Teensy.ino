@@ -1,41 +1,55 @@
 /*
-  Multiple Serial test
-
-  Receives from the main serial port, sends to the others.
-  Receives from serial port 1, sends to the main serial (Serial 0).
-
-  This example works only with boards with more than one serial like Arduino Mega, Due, Zero etc.
-
-  The circuit:
-  - any serial device attached to Serial port 1
-  - Serial Monitor open on Serial port 0
-
-  created 30 Dec 2008
-  modified 20 May 2012
-  by Tom Igoe & Jed Roach
-  modified 27 Nov 2015
-  by Arturo Guadalupi
-
-  This example code is in the public domain.
+  AudioShield firmware for SoundingSoil
+  -------------------------------------
+  Mixing different code bases:
+  - Serial_monitor (ICST)
+  - Teensy_recorder (PJRC)
 */
 
-//#include "gpsRoutines.h"
-//
-//bool musicPlaying = false;
-//String inCmd, bcResp;
+#include <Bounce.h>
+#include <Audio.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <SD.h>
+#include <SerialFlash.h>
 
-#define DEVLIST_MAXLEN 4
+// Audio connections definition
+AudioRecordQueue              queueRec1;
+AudioPlaySdRaw                playRaw1;
+AudioPlaySdWav                playWav1;
+AudioControlSGTL5000          sgtl5000_1;
+const int                     audioInput = AUDIO_INPUT_LINEIN;
+
+// Buttons definition
+#define BUTTON_RECORD         0
+#define BUTTON_MONITOR        2
+#define BUTTON_BLUETOOTH      1
+Bounce                        buttonRecord = Bounce(BUTTON_RECORD, 8);
+Bounce                        buttonMonitor = Bounce(BUTTON_MONITOR, 8);
+Bounce                        buttonBluetooth = Bounce(BUTTON_BLUETOOTH, 8);
+
+// LED definition
+#define LED_RECORD            25
+#define LED_MONITOR           27
+#define LED_BLUETOOTH         26
+
+// SDcard pins definition (Audio Shield slot)
+#define SDCARD_CS_PIN         10
+#define SDCARD_MOSI_PIN       7
+#define SDCARD_SCK_PIN        14
+
+// Bluetooth audio devices definition
 struct BTdev {
-  String address;
-  String capabilities;
-  unsigned int strength;
+  String                      address;
+  String                      capabilities;
+  unsigned int                strength;
 };
+#define DEVLIST_MAXLEN        6
+struct BTdev                  devList[DEVLIST_MAXLEN];
+unsigned int                  foundDevices;
+String                        peerAddress;
 
-struct BTdev devList[DEVLIST_MAXLEN];
-unsigned int foundDevices;
-unsigned int devCounter;
-String peerAddress;
-
+// Serial command messages enumeration
 enum outputMsg {
   BCCMD_NOTHING = 0,
   BCCMD_GEN_RESET,
@@ -55,105 +69,146 @@ enum outputMsg {
   MAX_OUTPUTS
 };
 
-enum inputMsg {
-  ANCMD_BT_INQUIRY,
-  ANCMD_BT_STARTMON,
-  ANCMD_BT_STOPMON,
-  ANCMD_BT_STARTREC,
-  ANCMD_BT_STOPREC,
-  ANCMD_BT_SEND_DT,
-  MAX_INPUTS
+// File where the recorded data is saved
+File                          frec;
+
+// Teensy's working state: 0 -> stopped, 2 -> recording, 4 -> monitoring
+enum wState {
+  STATE_IDLE = 0,
+  STATE_BLE_ADV,
+  STATE_BT_INQ,
+  STATE_RECORDING,
+  STATE_MONITORING,
+  STATE_MAX
 };
+enum wState                   workingState = STATE_IDLE;
 
 void setup() {
-  // initialize both serial ports:
+  // Initialize both serial ports:
   Serial.begin(9600); // Serial monitor port
   Serial4.begin(9600); // BC127 communication port
-//  Serial2.begin(9600); // GPS communication port
-//  Serial2.setTimeout(100);
+  Serial2.begin(9600); // GPS port
 
-  delay(200);
+  // Configure the pushbutton pins
+  pinMode(BUTTON_RECORD, INPUT_PULLUP);
+  pinMode(BUTTON_MONITOR, INPUT_PULLUP);
+  pinMode(BUTTON_BLUETOOTH, INPUT_PULLUP);
 
-  sendOutput(BCCMD_GEN_RESET);
+  // Configure the output pins
+  pinMode(LED_RECORD, OUTPUT);
+  pinMode(LED_MONITOR, OUTPUT);
+  pinMode(LED_BLUETOOTH, OUTPUT);
+
+  // Memory buffer for the record queue
+  AudioMemory(60);
+
+  // Enable the audio shield, select input, enable output
+  sgtl5000_1.enable();
+  sgtl5000_1.inputSelect(audioInput);
+  sgtl5000_1.volume(0.5);
+
+  // Initialize the SD card
+  SPI.setMOSI(SDCARD_MOSI_PIN);
+  SPI.setSCK(SDCARD_SCK_PIN);
+  if(!(SD.begin(SDCARD_CS_PIN))) {
+    while(1) {
+      Serial.println("Unable to access the SD card");
+      delay(500);
+    }
+  }
+
+  // Reset BC127 module
+  sendCmdOut(BCCMD_GEN_RESET);
 }
 
 void loop() {
-  // read from port 4, send to port 0:
+  buttonRecord.update();
+  buttonMonitor.update();
+  buttonBluetooth.update();
+  if(buttonRecord.fallingEdge()) {
+    Serial.println("Record button pressed");
+    if(workingState == STATE_IDLE) startRecording();
+    if(workingState == STATE_RECORDING) stopRecording();
+  }
+//  if(buttonMonitor.fallingEdge()) {
+//    Serial.println("Play button pressed");
+//    if(workingState == STATE_MONITORING) stopPlaying();
+//    if(workingState == STATE_IDLE) startPlaying();
+//  }
+//  if(buttonBluetooth.fallingEdge()) {
+//    Serial.println("Bluetooth button pressed");
+//    if(workingState == STATE_MONITORING) stopBluetooth();
+//    else startBluetooth();
+//  }
   if (Serial4.available()) {
     String inMsg = Serial4.readStringUntil('\r');
-    int outMsg = parseInput(inMsg);
-    if(!sendOutput(outMsg)) {
+    int outMsg = parseSerialIn(inMsg);
+    if(!sendCmdOut(outMsg)) {
       Serial.println("Sending command error!!");
     }
-//    if(bcResp == "OPEN_OK AVRCP\n") {
-//      Serial4.write("MUSIC PLAY\r");
-//      musicPlaying = true;
-//    }
-//    else if(bcResp == "RECV BLE +\n") {
-//      Serial4.write("VOLUME UP\r");
-//    }
-//    else if(bcResp == "RECV BLE -\n") {
-//      Serial4.write("VOLUME DOWN\r");
-//    }
-//    else if((bcResp == "RECV BLE s\n") || (bcResp == "RECV BLE S\n")) {
-//      if(!musicPlaying) {
-//        Serial4.write("MUSIC PLAY\r");
-//        musicPlaying = true;
-//      }
-//    }
-//    else if((bcResp == "RECV BLE p\n") || (bcResp == "RECV BLE P\n")) {
-//      if(musicPlaying) {
-//        Serial4.write("MUSIC STOP\r");
-//        musicPlaying = false;
-//      }
-//    }
-//    else if((bcResp == "RECV BLE inq\n") || (bcResp == "RECT BLE INQ\n")) {
-//      Serial4.write("INQUIRY 10\r");
-//    }
-//    else if(bcResp.substring(0,7) == "INQUIRY") {
-//      String toSend = bcResp.substring(8, 19);
-//      Serial4.write("SEND BLE ");
-//      Serial4.print(toSend + '\r');
-//    }
-//    else {
-//      Serial.print(bcResp.substring(0, 7)+'\n');
-//    }
   }
-//
-  // read from port 0, send to port 4:
   if (Serial.available()) {
     String manInput = Serial.readStringUntil('\n');
     int len = manInput.length() - 1;
     Serial4.print(manInput.substring(0, len)+'\r');
-//    if(inCmd == "+") {
-//      Serial4.write("VOLUME UP\r");
-//    }
-//    else if(inCmd == "-") {
-//      Serial4.write("VOLUME DOWN\r");
-//    }
-//    else if((inCmd == "s") || (inCmd == "S")) {
-//      if(musicPlaying) {
-//        Serial4.write("MUSIC STOP\r");
-//        musicPlaying = false;
-//      }
-//    }
-//    else if((inCmd == "p") || (inCmd == "P")) {
-//      if(!musicPlaying) {
-//        Serial4.write("MUSIC PLAY\r");
-//        musicPlaying = true;
-//      }
-//    }
-//    else if((inCmd == "G") || (inCmd == "g")) {
-//      fetchGPS();
-//    }
-//    else {
-//      Serial4.print(inCmd+"\r");
-//    }
   }
 }
 
-int parseInput(String input)
-{
+void startRecording() {
+  Serial.println("Starting recording...");
+  if(SD.exists("RECORD.RAW")) {
+    SD.remove("RECORD.RAW");
+  }
+  frec = SD.open("RECORD.RAW", FILE_WRITE);
+  if(frec) {
+    queueRec1.begin();
+    workingState = STATE_RECORDING;
+  }
+}
+
+void continueRecording() {
+  if(queueRec1.available() >= 2) {
+    byte buffer[512];
+    // Fetch 2 blocks from the audio library and copy
+    // into a 512 byte buffer.  The Arduino SD library
+    // is most efficient when full 512 byte sector size
+    // writes are used.
+    memcpy(buffer, queueRec1.readBuffer(), 256);
+    queueRec1.freeBuffer();
+    memcpy(buffer+256, queueRec1.readBuffer(), 256);
+    queueRec1.freeBuffer();
+    // write all 512 bytes to the SD card
+//    elapsedMicros usec = 0;
+    frec.write(buffer, 512);
+    // Uncomment these lines to see how long SD writes
+    // are taking.  A pair of audio blocks arrives every
+    // 5802 microseconds, so hopefully most of the writes
+    // take well under 5802 us.  Some will take more, as
+    // the SD library also must write to the FAT tables
+    // and the SD card controller manages media erase and
+    // wear leveling.  The queue1 object can buffer
+    // approximately 301700 us of audio, to allow time
+    // for occasional high SD card latency, as long as
+    // the average write time is under 5802 us.
+    //Serial.print("SD write, us=");
+    //Serial.println(usec);
+  }
+}
+
+void stopRecording() {
+  Serial.println("Stop recording");
+  queueRec1.end();
+  if(workingState == STATE_RECORDING) {
+    while(queueRec1.available() > 0) {
+      frec.write((byte*)queueRec1.readBuffer(), 256);
+      queueRec1.freeBuffer();
+    }
+    frec.close();
+  }
+  workingState = STATE_IDLE;
+}
+
+int parseSerialIn(String input) {
   // ================================================================
   // Slicing input string.
   // Currently 3 usefull schemes:
@@ -210,7 +265,6 @@ int parseInput(String input)
     String caps = part2.substring(13, 19);
     unsigned int stren = part2.substring(len-4, len-2).toInt();
     populateDevlist(addr, caps, stren);
-    devCounter = 0;
     return ANNOT_INQ_STATE;
   }
   // Commands from Android
@@ -251,8 +305,7 @@ int parseInput(String input)
   return BCCMD_NOTHING;
 }
 
-bool sendOutput(int msg)
-{
+bool sendCmdOut(int msg) {
   bool retVal = true;
   String devString = "";
   String cmdLine = "";
@@ -355,7 +408,7 @@ void populateDevlist(String addr, String caps, unsigned int stren) {
   }
   
   Serial.println("Device list:");
-  for(int i = 0; i < foundDevices; i++) {
+  for(unsigned int i = 0; i < foundDevices; i++) {
     Serial.print(i); Serial.print(": ");
     Serial.print(devList[i].address); Serial.print(", ");
     Serial.print(devList[i].capabilities); Serial.print(", ");
