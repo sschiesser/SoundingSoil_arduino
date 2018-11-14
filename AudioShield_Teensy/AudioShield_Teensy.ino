@@ -14,6 +14,7 @@
 #include <SerialFlash.h>
 
 #include "gpsRoutines.h"
+#include "waveHeader.h"
 
 // Audio connections definition
 AudioInputI2S                 i2sRec;
@@ -48,6 +49,9 @@ Bounce                        buttonBluetooth = Bounce(BUTTON_BLUETOOTH, 8);
 #define SDCARD_MOSI_PIN       7
 #define SDCARD_SCK_PIN        14
 
+// Total amount of recorded bytes
+unsigned long                 totRecBytes = 0;
+
 // Bluetooth audio devices definition
 struct BTdev {
   String                      address;
@@ -81,8 +85,6 @@ enum outputMsg {
 
 // SD card file variables
 File                          frec;
-//String                        fname = "";
-//String                        dirName = "";
 
 // GPS tag definition (in 'gpsRoutines.h')
 extern struct gps_rmc_tag     gps_tag;
@@ -145,6 +147,19 @@ void setup() {
     }
   }
 
+  // Initialize the wave header
+  strncpy(wavehd.riff,"RIFF",4);
+  strncpy(wavehd.wave,"WAVE",4);
+  strncpy(wavehd.fmt,"fmt ",4);
+  strncpy(wavehd.data,"data",4);
+  wavehd.chunk_size = WAVE_FMT_CHUNK_SIZE;
+  wavehd.format_tag = WAVE_FORMAT_PCM;
+  wavehd.num_chans = WAVE_NUM_CHANNELS;
+  wavehd.srate = WAVE_SAMPLING_RATE;
+  wavehd.bits_per_samp = WAVE_BITS_PER_SAMPLE;
+  wavehd.bytes_per_sec = wavehd.srate * wavehd.bits_per_samp;
+
+  // Initializing states
   workingState.rec_state = false;
   workingState.mon_state = false;
   workingState.bt_state = BTSTATE_IDLE;
@@ -224,17 +239,14 @@ String createSDpath() {
   path.concat(dirName);
   path.concat("/");
   path.concat(fileName);
-  path.concat(".raw");
+  path.concat(".wav");
 
   if(SD.exists(dirName)) {
-    Serial.println("DIR exists!");
     if(SD.exists(path)) {
-      Serial.println("PATH exists!");
       SD.remove(path);
     }
   }
   else {
-    Serial.println("DIR does NOT exist!");
     SD.mkdir(dirName);
   }
   return path;
@@ -245,7 +257,9 @@ void startRecording(String path) {
   
   frec = SD.open(path, FILE_WRITE);
   if(frec) {
+    frec.write((byte*)&wavehd, 44);
     queueRec.begin();
+    totRecBytes = 0;
     workingState.rec_state = true;
   }
 }
@@ -264,6 +278,7 @@ void continueRecording() {
     // write all 512 bytes to the SD card
 //    elapsedMicros usec = 0;
     frec.write(buffer, 512);
+    totRecBytes += 512;
     // Uncomment these lines to see how long SD writes
     // are taking.  A pair of audio blocks arrives every
     // 5802 microseconds, so hopefully most of the writes
@@ -286,10 +301,25 @@ void stopRecording() {
     while(queueRec.available() > 0) {
       frec.write((byte*)queueRec.readBuffer(), 256);
       queueRec.freeBuffer();
+      totRecBytes += 256;
     }
-    frec.close();
+    writeWaveHeader();
+//    frec.close();
   }
   workingState.rec_state = false;
+}
+
+void writeWaveHeader() {
+  wavehd.dlength = totRecBytes;
+  wavehd.flength = wavehd.dlength + 36;
+  frec.seek(WAVE_FLENGTH_POS);
+  frec.write(wavehd.flength);
+  frec.seek(WAVE_DLENGTH_POS);
+  frec.write(wavehd.dlength);
+  frec.close();
+  Serial.print("Total amount of data: "); Serial.println(wavehd.dlength);
+  float mlen = (float)wavehd.dlength/(float)wavehd.bytes_per_sec;
+  Serial.print("Music time: "); Serial.println(mlen);
 }
 
 int parseSerialIn(String input) {
