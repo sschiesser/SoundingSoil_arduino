@@ -14,24 +14,37 @@
 #include <SerialFlash.h>
 
 // Audio connections definition
-AudioRecordQueue              queueRec1;
-AudioPlaySdRaw                playRaw1;
-AudioPlaySdWav                playWav1;
-AudioControlSGTL5000          sgtl5000_1;
-const int                     audioInput = AUDIO_INPUT_LINEIN;
+// GUItool: begin automatically generated code
+AudioInputI2S            i2s2;           //xy=105,63
+AudioAnalyzePeak         peak1;          //xy=278,108
+AudioRecordQueue         queue1;         //xy=281,63
+AudioPlaySdRaw           playRaw1;       //xy=302,157
+AudioOutputI2S           i2s1;           //xy=470,120
+AudioConnection          patchCord1(i2s2, 0, queue1, 0);
+AudioConnection          patchCord2(i2s2, 0, peak1, 0);
+AudioConnection          patchCord3(playRaw1, 0, i2s1, 0);
+AudioConnection          patchCord4(playRaw1, 0, i2s1, 1);
+AudioControlSGTL5000     sgtl5000_1;     //xy=265,212
+// GUItool: end automatically generated code
 
 // Buttons definition
-#define BUTTON_RECORD         0
-#define BUTTON_MONITOR        2
-#define BUTTON_BLUETOOTH      1
+#define BUTTON_RECORD         24
+#define BUTTON_MONITOR        25
+#define BUTTON_BLUETOOTH      29
 Bounce                        buttonRecord = Bounce(BUTTON_RECORD, 8);
 Bounce                        buttonMonitor = Bounce(BUTTON_MONITOR, 8);
 Bounce                        buttonBluetooth = Bounce(BUTTON_BLUETOOTH, 8);
 
+
+const int                     audioInput = AUDIO_INPUT_LINEIN;
+
+
 // LED definition
-#define LED_RECORD            25
+#define LED_RECORD            26
 #define LED_MONITOR           27
-#define LED_BLUETOOTH         26
+#define LED_BLUETOOTH         28
+#define LED_OFF               HIGH
+#define LED_ON                LOW
 
 // SDcard pins definition (Audio Shield slot)
 #define SDCARD_CS_PIN         10
@@ -81,13 +94,13 @@ enum wState {
   STATE_MONITORING,
   STATE_MAX
 };
-enum wState                   workingState = STATE_IDLE;
+volatile enum wState                   workingState = STATE_IDLE;
 
 void setup() {
   // Initialize both serial ports:
   Serial.begin(9600); // Serial monitor port
   Serial4.begin(9600); // BC127 communication port
-  Serial2.begin(9600); // GPS port
+//  Serial2.begin(9600); // GPS port
 
   // Configure the pushbutton pins
   pinMode(BUTTON_RECORD, INPUT_PULLUP);
@@ -96,8 +109,11 @@ void setup() {
 
   // Configure the output pins
   pinMode(LED_RECORD, OUTPUT);
+  digitalWrite(LED_RECORD, LED_OFF);
   pinMode(LED_MONITOR, OUTPUT);
+  digitalWrite(LED_MONITOR, LED_OFF);
   pinMode(LED_BLUETOOTH, OUTPUT);
+  digitalWrite(LED_BLUETOOTH, LED_OFF);
 
   // Memory buffer for the record queue
   AudioMemory(60);
@@ -118,28 +134,48 @@ void setup() {
   }
 
   // Reset BC127 module
-  sendCmdOut(BCCMD_GEN_RESET);
+//  sendCmdOut(BCCMD_GEN_RESET);
 }
 
 void loop() {
+  // Read the buttons
   buttonRecord.update();
   buttonMonitor.update();
   buttonBluetooth.update();
+  // Button press actions
   if(buttonRecord.fallingEdge()) {
-    Serial.println("Record button pressed");
-    if(workingState == STATE_IDLE) startRecording();
-    if(workingState == STATE_RECORDING) stopRecording();
+    Serial.print("Record button pressed: state = "); Serial.println(workingState);
+    switch(workingState) {
+      case STATE_IDLE:
+      startRecording();
+      break;
+
+      case STATE_RECORDING:
+      stopRecording();
+      break;
+
+      default:
+      break;
+    }
   }
-//  if(buttonMonitor.fallingEdge()) {
-//    Serial.println("Play button pressed");
+  if(buttonMonitor.fallingEdge()) {
+    Serial.print("Play button pressed: state = "); Serial.println(workingState);
 //    if(workingState == STATE_MONITORING) stopPlaying();
 //    if(workingState == STATE_IDLE) startPlaying();
-//  }
-//  if(buttonBluetooth.fallingEdge()) {
-//    Serial.println("Bluetooth button pressed");
+  }
+  if(buttonBluetooth.fallingEdge()) {
+    Serial.print("Bluetooth button pressed: state = "); Serial.println(workingState);
 //    if(workingState == STATE_MONITORING) stopBluetooth();
 //    else startBluetooth();
-//  }
+  }
+  // State actions
+  if(workingState == STATE_RECORDING) {
+    continueRecording();
+  }
+  if(workingState == STATE_MONITORING) {
+    
+  }
+  
   if (Serial4.available()) {
     String inMsg = Serial4.readStringUntil('\r');
     int outMsg = parseSerialIn(inMsg);
@@ -155,28 +191,28 @@ void loop() {
 }
 
 void startRecording() {
-  Serial.println("Starting recording...");
+  Serial.print("Start recording: wState = "); Serial.println(workingState);
   if(SD.exists("RECORD.RAW")) {
     SD.remove("RECORD.RAW");
   }
   frec = SD.open("RECORD.RAW", FILE_WRITE);
   if(frec) {
-    queueRec1.begin();
+    queue1.begin();
     workingState = STATE_RECORDING;
   }
 }
 
 void continueRecording() {
-  if(queueRec1.available() >= 2) {
+  if(queue1.available() >= 2) {
     byte buffer[512];
     // Fetch 2 blocks from the audio library and copy
     // into a 512 byte buffer.  The Arduino SD library
     // is most efficient when full 512 byte sector size
     // writes are used.
-    memcpy(buffer, queueRec1.readBuffer(), 256);
-    queueRec1.freeBuffer();
-    memcpy(buffer+256, queueRec1.readBuffer(), 256);
-    queueRec1.freeBuffer();
+    memcpy(buffer, queue1.readBuffer(), 256);
+    queue1.freeBuffer();
+    memcpy(buffer+256, queue1.readBuffer(), 256);
+    queue1.freeBuffer();
     // write all 512 bytes to the SD card
 //    elapsedMicros usec = 0;
     frec.write(buffer, 512);
@@ -190,18 +226,18 @@ void continueRecording() {
     // approximately 301700 us of audio, to allow time
     // for occasional high SD card latency, as long as
     // the average write time is under 5802 us.
-    //Serial.print("SD write, us=");
-    //Serial.println(usec);
+//    Serial.print("SD write, us=");
+//    Serial.println(usec);
   }
 }
 
 void stopRecording() {
-  Serial.println("Stop recording");
-  queueRec1.end();
+  Serial.print("Stop recording: state = "); Serial.println(workingState);
+  queue1.end();
   if(workingState == STATE_RECORDING) {
-    while(queueRec1.available() > 0) {
-      frec.write((byte*)queueRec1.readBuffer(), 256);
-      queueRec1.freeBuffer();
+    while(queue1.available() > 0) {
+      frec.write((byte*)queue1.readBuffer(), 256);
+      queue1.freeBuffer();
     }
     frec.close();
   }
@@ -242,13 +278,13 @@ int parseSerialIn(String input) {
   // Parsing & interpreting input
   // ================================================================
   if(part1.equalsIgnoreCase("Ready\n")) {
-    return BCCMD_BLE_ADVERTISE;
+//    return BCCMD_BLE_ADVERTISE;
   }
   else if(part1.equalsIgnoreCase("OK\n")) {
-    Serial.println("OK");
+//    Serial.println("OK");
   }
   else if(part1.equalsIgnoreCase("ERROR\n")) {
-    Serial.println("ERROR");
+    Serial.println("!!ERROR!!");
   }
   // Notifications from BC127!!
   else if(part1.equalsIgnoreCase("OPEN_OK")) {
