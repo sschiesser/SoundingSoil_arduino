@@ -85,16 +85,26 @@ enum outputMsg {
 // File where the recorded data is saved
 File                          frec;
 
-// Teensy's working state: 0 -> stopped, 2 -> recording, 4 -> monitoring
-enum wState {
-  STATE_IDLE = 0,
-  STATE_BLE_ADV,
-  STATE_BT_INQ,
-  STATE_RECORDING,
-  STATE_MONITORING,
-  STATE_MAX
-};
-volatile enum wState                   workingState = STATE_IDLE;
+// Working states
+enum btState {
+  BTSTATE_IDLE,
+  BTSTATE_INQ,
+  BTSTATE_CONN,
+  BTSTATE_PLAY
+} bt_state;
+
+enum bleState {
+  BLESTATE_IDLE,
+  BLESTATE_ADV,
+  BLESTATE_CONN
+} ble_state;
+
+volatile struct wState {
+  bool rec_state;
+  bool mon_state;
+  enum btState bt_state;
+  enum bleState ble_state;
+} workingState;
 
 void setup() {
   // Initialize both serial ports:
@@ -133,6 +143,11 @@ void setup() {
     }
   }
 
+  workingState.rec_state = false;
+  workingState.mon_state = false;
+  workingState.bt_state = BTSTATE_IDLE;
+  workingState.ble_state = BLESTATE_IDLE;
+
   // Reset BC127 module
 //  sendCmdOut(BCCMD_GEN_RESET);
 }
@@ -144,35 +159,23 @@ void loop() {
   buttonBluetooth.update();
   // Button press actions
   if(buttonRecord.fallingEdge()) {
-    Serial.print("Record button pressed: state = "); Serial.println(workingState);
-    switch(workingState) {
-      case STATE_IDLE:
-      startRecording();
-      break;
-
-      case STATE_RECORDING:
-      stopRecording();
-      break;
-
-      default:
-      break;
-    }
+    Serial.print("Record button pressed: rec_state = "); Serial.println(workingState.rec_state);
+    if(workingState.rec_state) stopRecording();
+    else startRecording();
   }
   if(buttonMonitor.fallingEdge()) {
-    Serial.print("Play button pressed: state = "); Serial.println(workingState);
-//    if(workingState == STATE_MONITORING) stopPlaying();
-//    if(workingState == STATE_IDLE) startPlaying();
+    Serial.print("Play button pressed: mon_state = "); Serial.println(workingState.mon_state);
+//    if(workingState.mon_state) stopMonitoring();
+//    else startMonitoring();
   }
   if(buttonBluetooth.fallingEdge()) {
-    Serial.print("Bluetooth button pressed: state = "); Serial.println(workingState);
-//    if(workingState == STATE_MONITORING) stopBluetooth();
-//    else startBluetooth();
+    Serial.print("Bluetooth button pressed: ble_state = "); Serial.println(workingState.ble_state);
   }
   // State actions
-  if(workingState == STATE_RECORDING) {
+  if(workingState.rec_state) {
     continueRecording();
   }
-  if(workingState == STATE_MONITORING) {
+  if(workingState.mon_state) {
     
   }
   
@@ -191,14 +194,14 @@ void loop() {
 }
 
 void startRecording() {
-  Serial.print("Start recording: wState = "); Serial.println(workingState);
+  Serial.print("Start recording: rec_state = "); Serial.println(workingState.rec_state);
   if(SD.exists("RECORD.RAW")) {
     SD.remove("RECORD.RAW");
   }
   frec = SD.open("RECORD.RAW", FILE_WRITE);
   if(frec) {
     queue1.begin();
-    workingState = STATE_RECORDING;
+    workingState.rec_state = true;
   }
 }
 
@@ -232,16 +235,16 @@ void continueRecording() {
 }
 
 void stopRecording() {
-  Serial.print("Stop recording: state = "); Serial.println(workingState);
+  Serial.print("Stop recording: rec_state = "); Serial.println(workingState.rec_state);
   queue1.end();
-  if(workingState == STATE_RECORDING) {
+  if(workingState.rec_state) {
     while(queue1.available() > 0) {
       frec.write((byte*)queue1.readBuffer(), 256);
       queue1.freeBuffer();
     }
     frec.close();
   }
-  workingState = STATE_IDLE;
+  workingState.rec_state = false;
 }
 
 int parseSerialIn(String input) {
