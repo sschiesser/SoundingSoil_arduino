@@ -13,19 +13,20 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
+#include "gpsRoutines.h"
+
 // Audio connections definition
-// GUItool: begin automatically generated code
-AudioInputI2S            i2s2;           //xy=105,63
-AudioAnalyzePeak         peak1;          //xy=278,108
-AudioRecordQueue         queue1;         //xy=281,63
-AudioPlaySdRaw           playRaw1;       //xy=302,157
-AudioOutputI2S           i2s1;           //xy=470,120
-AudioConnection          patchCord1(i2s2, 0, queue1, 0);
-AudioConnection          patchCord2(i2s2, 0, peak1, 0);
-AudioConnection          patchCord3(playRaw1, 0, i2s1, 0);
-AudioConnection          patchCord4(playRaw1, 0, i2s1, 1);
-AudioControlSGTL5000     sgtl5000_1;     //xy=265,212
-// GUItool: end automatically generated code
+AudioInputI2S                 i2sRec;
+AudioAnalyzePeak              peak1;
+AudioRecordQueue              queueRec;
+AudioPlaySdRaw                playRaw;
+AudioOutputI2S                i2sPlayRaw;
+AudioConnection               patchCord1(i2sRec, 0, queueRec, 0);
+AudioConnection               patchCord2(i2sRec, 0, peak1, 0);
+AudioConnection               patchCord3(playRaw, 0, i2sPlayRaw, 0);
+AudioConnection               patchCord4(playRaw, 0, i2sPlayRaw, 1);
+AudioControlSGTL5000          sgtl5000;     //xy=265,212
+const int                     audioInput = AUDIO_INPUT_LINEIN;
 
 // Buttons definition
 #define BUTTON_RECORD         24
@@ -34,10 +35,6 @@ AudioControlSGTL5000     sgtl5000_1;     //xy=265,212
 Bounce                        buttonRecord = Bounce(BUTTON_RECORD, 8);
 Bounce                        buttonMonitor = Bounce(BUTTON_MONITOR, 8);
 Bounce                        buttonBluetooth = Bounce(BUTTON_BLUETOOTH, 8);
-
-
-const int                     audioInput = AUDIO_INPUT_LINEIN;
-
 
 // LED definition
 #define LED_RECORD            26
@@ -82,8 +79,13 @@ enum outputMsg {
   MAX_OUTPUTS
 };
 
-// File where the recorded data is saved
+// SD card file variables
 File                          frec;
+//String                        fname = "";
+//String                        dirName = "";
+
+// GPS tag definition (in 'gpsRoutines.h')
+extern struct gps_rmc_tag     gps_tag;
 
 // Working states
 enum btState {
@@ -110,7 +112,7 @@ void setup() {
   // Initialize both serial ports:
   Serial.begin(9600); // Serial monitor port
   Serial4.begin(9600); // BC127 communication port
-//  Serial2.begin(9600); // GPS port
+  Serial1.begin(9600); // GPS port
 
   // Configure the pushbutton pins
   pinMode(BUTTON_RECORD, INPUT_PULLUP);
@@ -129,9 +131,9 @@ void setup() {
   AudioMemory(60);
 
   // Enable the audio shield, select input, enable output
-  sgtl5000_1.enable();
-  sgtl5000_1.inputSelect(audioInput);
-  sgtl5000_1.volume(0.5);
+  sgtl5000.enable();
+  sgtl5000.inputSelect(audioInput);
+  sgtl5000.volume(0.8);
 
   // Initialize the SD card
   SPI.setMOSI(SDCARD_MOSI_PIN);
@@ -160,8 +162,14 @@ void loop() {
   // Button press actions
   if(buttonRecord.fallingEdge()) {
     Serial.print("Record button pressed: rec_state = "); Serial.println(workingState.rec_state);
-    if(workingState.rec_state) stopRecording();
-    else startRecording();
+    if(workingState.rec_state) {
+      stopRecording();
+    }
+    else {
+      fetchGPS();
+      String recPath = createSDpath();
+      startRecording(recPath);
+    }
   }
   if(buttonMonitor.fallingEdge()) {
     Serial.print("Play button pressed: mon_state = "); Serial.println(workingState.mon_state);
@@ -193,29 +201,66 @@ void loop() {
   }
 }
 
-void startRecording() {
-  Serial.print("Start recording: rec_state = "); Serial.println(workingState.rec_state);
-  if(SD.exists("RECORD.RAW")) {
-    SD.remove("RECORD.RAW");
+String createSDpath() {
+  Serial.println("Creating new folder/file on the SD card");
+  String dirName = "";
+  String fileName = "";
+  String path = "/";
+  char buf[12];
+  sprintf(buf, "%02d", gps_tag.date.year);
+  dirName.concat(buf);
+  sprintf(buf, "%02d", gps_tag.date.month);
+  dirName.concat(buf);
+  sprintf(buf, "%02d", gps_tag.date.day);
+  dirName.concat(buf);
+
+  sprintf(buf, "%02d", gps_tag.time.h);
+  fileName.concat(buf);
+  sprintf(buf, "%02d", gps_tag.time.min);
+  fileName.concat(buf);
+  sprintf(buf, "%02d", gps_tag.time.sec);
+  fileName.concat(buf);
+  
+  path.concat(dirName);
+  path.concat("/");
+  path.concat(fileName);
+  path.concat(".raw");
+
+  if(SD.exists(dirName)) {
+    Serial.println("DIR exists!");
+    if(SD.exists(path)) {
+      Serial.println("PATH exists!");
+      SD.remove(path);
+    }
   }
-  frec = SD.open("RECORD.RAW", FILE_WRITE);
+  else {
+    Serial.println("DIR does NOT exist!");
+    SD.mkdir(dirName);
+  }
+  return path;
+}
+
+void startRecording(String path) {
+  Serial.print("Start recording: rec_state = "); Serial.println(workingState.rec_state);
+  
+  frec = SD.open(path, FILE_WRITE);
   if(frec) {
-    queue1.begin();
+    queueRec.begin();
     workingState.rec_state = true;
   }
 }
 
 void continueRecording() {
-  if(queue1.available() >= 2) {
+  if(queueRec.available() >= 2) {
     byte buffer[512];
     // Fetch 2 blocks from the audio library and copy
     // into a 512 byte buffer.  The Arduino SD library
     // is most efficient when full 512 byte sector size
     // writes are used.
-    memcpy(buffer, queue1.readBuffer(), 256);
-    queue1.freeBuffer();
-    memcpy(buffer+256, queue1.readBuffer(), 256);
-    queue1.freeBuffer();
+    memcpy(buffer, queueRec.readBuffer(), 256);
+    queueRec.freeBuffer();
+    memcpy(buffer+256, queueRec.readBuffer(), 256);
+    queueRec.freeBuffer();
     // write all 512 bytes to the SD card
 //    elapsedMicros usec = 0;
     frec.write(buffer, 512);
@@ -225,7 +270,7 @@ void continueRecording() {
     // take well under 5802 us.  Some will take more, as
     // the SD library also must write to the FAT tables
     // and the SD card controller manages media erase and
-    // wear leveling.  The queue1 object can buffer
+    // wear leveling.  The queueRec object can buffer
     // approximately 301700 us of audio, to allow time
     // for occasional high SD card latency, as long as
     // the average write time is under 5802 us.
@@ -236,11 +281,11 @@ void continueRecording() {
 
 void stopRecording() {
   Serial.print("Stop recording: rec_state = "); Serial.println(workingState.rec_state);
-  queue1.end();
+  queueRec.end();
   if(workingState.rec_state) {
-    while(queue1.available() > 0) {
-      frec.write((byte*)queue1.readBuffer(), 256);
-      queue1.freeBuffer();
+    while(queueRec.available() > 0) {
+      frec.write((byte*)queueRec.readBuffer(), 256);
+      queueRec.freeBuffer();
     }
     frec.close();
   }

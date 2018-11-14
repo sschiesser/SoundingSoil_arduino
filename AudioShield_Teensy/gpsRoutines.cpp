@@ -17,9 +17,10 @@ void fetchGPS(void)
   String gpsResp = "";
   boolean stringFound = false;
   while(!stringFound) {
-    gpsResp = Serial2.readStringUntil(GPS_NMEA_STOP_CHAR);
+//    gpsResp = Serial1.readStringUntil(GPS_NMEA_STOP_CHAR);
+    gpsResp = "$GPRMC,162614,A,5230.5900,N,01322.3900,E,10.0,90.0,131006,1.2,E,A*13";
     if(gpsResp.startsWith("$GPRMC")) {
-      Serial.println(gpsResp);
+//      Serial.println(gpsResp);
       stringFound = true;
     }
   }
@@ -36,13 +37,13 @@ void sliceTag(String rawTag)
   // Time
   len = tagGetNextPos(rawTag, pos, ',');
   if(len) {
-    gps_tag.time.h = (byte)rawTag.substring(pos+len+1, pos+len+3).toInt();
-    gps_tag.time.min = (byte)rawTag.substring(pos+len+3, pos+len+5).toInt();
-    gps_tag.time.sec = (byte)rawTag.substring(pos+len+5, pos+len+7).toInt();
-    pos = pos+len;
+    pos = pos + len;
+    gps_tag.time.h = (byte)rawTag.substring(pos+1, pos+3).toInt();
+    gps_tag.time.min = (byte)rawTag.substring(pos+3, pos+5).toInt();
+    gps_tag.time.sec = (byte)rawTag.substring(pos+5, pos+7).toInt();
     sprintf(printbuf, "Time: %dh%dm%ds", gps_tag.time.h, gps_tag.time.min, 
             gps_tag.time.sec);
-    Serial.println(printbuf);
+//    Serial.println(printbuf);
   }
   else if(len == 0) {
     pos++;
@@ -51,10 +52,10 @@ void sliceTag(String rawTag)
   // Status
   len = tagGetNextPos(rawTag, pos, ',');
   if(len) {
-    gps_tag.status_active = (rawTag.substring(pos+len+1,pos+len+2) == "A") ? true : false;
-    pos = pos+len;   
+    pos = pos + len;   
+    gps_tag.status_active = (rawTag.substring(pos+1,pos+2) == "A") ? true : false;
     sprintf(printbuf, "Status: %s", gps_tag.status_active ? "Active" : "Warning!");
-    Serial.println(printbuf);
+//    Serial.println(printbuf);
   }
   else if(len == 0) {
     pos++;
@@ -63,23 +64,30 @@ void sliceTag(String rawTag)
   // Latitude
   len = tagGetNextPos(rawTag, pos, ',');
   if(len) {
-    gps_tag.latitude.deg = (byte)rawTag.substring(pos+len+1, pos+len+3).toInt();
-    gps_tag.latitude.min = (byte)rawTag.substring(pos+len+3, pos+len+5).toInt();
-    gps_tag.latitude.sec = (unsigned int)rawTag.substring(pos+len+6, pos+len+10).toInt();    
-    pos = pos+len;   
-    sprintf(printbuf, "Latitude: %d°%d'%d''", gps_tag.latitude.deg, 
+    pos = pos + len;
+    gps_tag.latitude.deg = (byte)rawTag.substring(pos+1, pos+3).toInt();
+    gps_tag.latitude.min = (byte)rawTag.substring(pos+3, pos+5).toInt();
+    int flen = tagGetNextPos(rawTag, pos, '.');
+    if(flen) {
+      int fpos = pos + flen;
+      gps_tag.latitude.sec = (unsigned int)rawTag.substring(fpos+1, fpos+3).toInt(); 
+    }
+    else {
+      gps_tag.latitude.sec = 0;
+    }
+    sprintf(printbuf, "Latitude: %d:%d'%d''", gps_tag.latitude.deg, 
             gps_tag.latitude.min, gps_tag.latitude.sec);
-    Serial.println(printbuf);
+//    Serial.println(printbuf);
   }
   else if(len == 0) {
     pos++;
   }
   len = tagGetNextPos(rawTag, pos, ',');
   if(len) {
-    gps_tag.latitude.north = (rawTag.substring(pos+len+1,pos+len+2) == "N") ? true : false;
     pos = pos+len;  
+    gps_tag.latitude.north = (rawTag.substring(pos+1,pos+2) == "N") ? true : false;
     sprintf(printbuf, "Orientation: %c", gps_tag.latitude.north ? 'N' : 'S');
-    Serial.println(printbuf); 
+//    Serial.println(printbuf); 
   }
   else if(len == 0) {
     pos++;
@@ -88,13 +96,20 @@ void sliceTag(String rawTag)
   // Longitude
   len = tagGetNextPos(rawTag, pos, ',');
   if(len) {
-    gps_tag.longitude.deg = (byte)rawTag.substring(pos+len+1, pos+len+4).toInt();
-    gps_tag.longitude.min = (byte)rawTag.substring(pos+len+4, pos+len+6).toInt();
-    gps_tag.longitude.sec = (unsigned int)rawTag.substring(pos+len+7, pos+len+11).toInt();
     pos = pos+len;   
-    sprintf(printbuf, "Latitude: %d°%d'%d''", gps_tag.longitude.deg, 
+    gps_tag.longitude.deg = (byte)rawTag.substring(pos+1, pos+4).toInt();
+    gps_tag.longitude.min = (byte)rawTag.substring(pos+4, pos+6).toInt();
+    int flen = tagGetNextPos(rawTag, pos, '.');
+    if(flen) {
+      int fpos = pos + flen;
+      gps_tag.longitude.sec = (unsigned int)rawTag.substring(fpos+1, fpos+3).toInt();
+    }
+    else {
+      gps_tag.longitude.sec = 0;
+    }
+    sprintf(printbuf, "Latitude: %d:%d'%d''", gps_tag.longitude.deg, 
             gps_tag.longitude.min, gps_tag.longitude.sec);
-    Serial.println(printbuf);
+//    Serial.println(printbuf);
   }
   else if(len == 0) {
     pos++;
@@ -104,7 +119,7 @@ void sliceTag(String rawTag)
     gps_tag.longitude.east = (rawTag.substring(pos+len+1,pos+len+2) == "E") ? true : false;
     pos = pos+len;
     sprintf(printbuf, "Orientation: %c", gps_tag.longitude.east ? 'E' : 'W');
-    Serial.println(printbuf); 
+//    Serial.println(printbuf); 
   }
   else if(len == 0) {
     pos++;
@@ -114,12 +129,12 @@ void sliceTag(String rawTag)
   // Speed
   len = tagGetNextPos(rawTag, pos, ',');
   if(len) {
-    gps_tag.speed.knots = (float)rawTag.substring(pos+len+1, pos+len+5).toFloat();
+    gps_tag.speed.knots = (float)rawTag.substring(pos+len+1, pos+len+6).toFloat();
     gps_tag.speed.mph = gps_tag.speed.knots * GPS_CONV_KNOT_TO_MPH;
     gps_tag.speed.kmh = gps_tag.speed.knots * GPS_CONV_KNOT_TO_KMH;
     pos = pos+len;   
-    sprintf(printbuf, "Speed: %f km/h", gps_tag.speed.kmh);
-    Serial.println(printbuf);
+    sprintf(printbuf, "Speed: %.02f km/h", gps_tag.speed.kmh);
+//    Serial.println(printbuf);
   }
   else if(len == 0) {
     pos++;
@@ -130,8 +145,8 @@ void sliceTag(String rawTag)
   if(len) {
     gps_tag.track_angle = (float)rawTag.substring(pos+len+1, pos+len+6).toFloat();
     pos = pos+len;   
-    sprintf(printbuf, "Track angle: %f km/h", gps_tag.track_angle);
-    Serial.println(printbuf);
+    sprintf(printbuf, "Track angle: %.02fdeg", gps_tag.track_angle);
+//    Serial.println(printbuf);
   }
   else if(len == 0) {
     pos++;
@@ -146,7 +161,7 @@ void sliceTag(String rawTag)
     pos = pos+len;   
     sprintf(printbuf, "Date: %02d.%02d.%02d", gps_tag.date.day, gps_tag.date.month, 
             gps_tag.date.year);
-    Serial.println(printbuf);
+//    Serial.println(printbuf);
   }
   else if(len == 0) {
     pos++;
@@ -155,10 +170,10 @@ void sliceTag(String rawTag)
   // Magnetic variation
   len = tagGetNextPos(rawTag, pos, ',');
   if(len) {
-    gps_tag.mvar.angle = (float)rawTag.substring(pos+len+1,pos+len+3).toFloat();
+    gps_tag.mvar.angle = (float)rawTag.substring(pos+len+1,pos+len+6).toFloat();
     pos = pos+len;   
-    sprintf(printbuf, "Magnetic variation: %f°", gps_tag.mvar.angle);
-    Serial.println(printbuf);
+    sprintf(printbuf, "Magnetic variation: %.02fdeg", gps_tag.mvar.angle);
+//    Serial.println(printbuf);
   }
   else if(len == 0) {
     pos++;
@@ -168,7 +183,7 @@ void sliceTag(String rawTag)
     gps_tag.mvar.east = (rawTag.substring(pos+len+1,pos+len+2) == "E") ? true : false;
     pos = pos+len;   
     sprintf(printbuf, "Orientation: %c", gps_tag.mvar.east ? 'E' : 'W');
-    Serial.println(printbuf);
+//    Serial.println(printbuf);
   }
   else if(len == 0) {
     pos++;
@@ -179,7 +194,7 @@ void sliceTag(String rawTag)
   if(len) {
     char sigint = rawTag.charAt(pos+len+1);
     sprintf(printbuf, "Signal integrity: %c", sigint);
-    Serial.println(printbuf);
+//    Serial.println(printbuf);
   }
   else if(len == 0) {
     pos++;
@@ -197,5 +212,3 @@ int tagGetNextPos(String tag, byte pos, char delim)
   // Delimiter not found --> return -1
   return nextPos;
 }
-
-
