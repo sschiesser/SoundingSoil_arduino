@@ -158,6 +158,7 @@ void setup() {
   wavehd.srate = WAVE_SAMPLING_RATE;
   wavehd.bits_per_samp = WAVE_BITS_PER_SAMPLE;
   wavehd.bytes_per_sec = wavehd.srate * wavehd.bits_per_samp;
+  wavehd.bytes_per_samp = wavehd.num_chans * wavehd.bits_per_samp / 8;
 
   // Initializing states
   workingState.rec_state = false;
@@ -255,12 +256,16 @@ String createSDpath() {
 void startRecording(String path) {
   Serial.print("Start recording: rec_state = "); Serial.println(workingState.rec_state);
   
-  frec = SD.open(path, FILE_WRITE);
+  frec = SD.open(path, O_READ|O_WRITE|O_CREAT|O_APPEND);
   if(frec) {
     frec.write((byte*)&wavehd, 44);
     queueRec.begin();
     totRecBytes = 0;
     workingState.rec_state = true;
+  }
+  else {
+    Serial.println("file opening error");
+    while(1);
   }
 }
 
@@ -304,22 +309,102 @@ void stopRecording() {
       totRecBytes += 256;
     }
     writeWaveHeader();
-//    frec.close();
+    frec.close();
   }
   workingState.rec_state = false;
 }
 
 void writeWaveHeader() {
+  byte b1, b2, b3, b4;
+  byte buff[44];
+  char printbuff[256];
   wavehd.dlength = totRecBytes;
   wavehd.flength = wavehd.dlength + 36;
-  frec.seek(WAVE_FLENGTH_POS);
-  frec.write(wavehd.flength);
-  frec.seek(WAVE_DLENGTH_POS);
-  frec.write(wavehd.dlength);
-  frec.close();
-  Serial.print("Total amount of data: "); Serial.println(wavehd.dlength);
-  float mlen = (float)wavehd.dlength/(float)wavehd.bytes_per_sec;
-  Serial.print("Music time: "); Serial.println(mlen);
+//  frec.seek(0);
+//  frec.write("RIFF");
+//  b1 = wavehd.flength & 0xff;
+//  b2 = (wavehd.flength >> 8) & 0xff;
+//  b3 = (wavehd.flength >> 16) & 0xff;
+//  b4 = (wavehd.flength >> 24) & 0xff;
+//  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
+//  frec.write("WAVE");
+//  frec.write("fmt ");
+//  b1 = wavehd.chunk_size & 0xff;
+//  b2 = (wavehd.chunk_size >> 8) & 0xff;
+//  b3 = (wavehd.chunk_size >> 16) & 0xff;
+//  b4 = (wavehd.chunk_size >> 24) & 0xff;
+//  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
+//  b1 = wavehd.format_tag & 0xff;
+//  b2 = (wavehd.format_tag >> 8) & 0xff;
+//  frec.write(b1); frec.write(b2);
+//  b1 = wavehd.num_chans & 0xff;
+//  b2 = (wavehd.num_chans >> 8) & 0xff;
+//  frec.write(b1); frec.write(b2);
+//  b1 = wavehd.srate & 0xff;
+//  b2 = (wavehd.srate >> 8) & 0xff;
+//  b3 = (wavehd.srate >> 16) & 0xff;
+//  b4 = (wavehd.srate >> 24) & 0xff;
+//  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
+//  b1 = wavehd.bytes_per_sec & 0xff;
+//  b2 = (wavehd.bytes_per_sec >> 8) & 0xff;
+//  b3 = (wavehd.bytes_per_sec >> 16) & 0xff;
+//  b4 = (wavehd.bytes_per_sec >> 24) & 0xff;
+//  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
+//  b1 = wavehd.bytes_per_samp & 0xff;
+//  b2 = (wavehd.bytes_per_samp >> 8) & 0xff;
+//  frec.write(b1); frec.write(b2);
+//  b1 = wavehd.bits_per_samp & 0xff;
+//  b2 = (wavehd.bits_per_samp >> 8) & 0xff;
+//  frec.write(b1); frec.write(b2);
+//  frec.write("data");
+//  b1 = wavehd.dlength & 0xff;
+//  b2 = (wavehd.dlength >> 8) & 0xff;
+//  b3 = (wavehd.dlength >> 16) & 0xff;
+//  b4 = (wavehd.dlength >> 24) & 0xff;
+//  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
+  if(frec.seek(4)) {
+    b1 = wavehd.flength & 0xff;
+    b2 = (wavehd.flength >> 8) & 0xff;
+    b3 = (wavehd.flength >> 16) & 0xff;
+    b4 = (wavehd.flength >> 24) & 0xff;
+    frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
+  }
+  else {
+    Serial.println("Seek error!");
+  }
+  if(frec.seek(40)) {
+    b1 = wavehd.dlength & 0xff;
+    b2 = (wavehd.dlength >> 8) & 0xff;
+    b3 = (wavehd.dlength >> 16) & 0xff;
+    b4 = (wavehd.dlength >> 24) & 0xff;
+    frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
+  }
+  else {
+    Serial.println("Seek error!");
+  }
+  frec.seek(0);
+  frec.read(buff, 44);
+//  frec.close();
+  for(int i = 0; i < 44; i++) {
+    Serial.println(buff[i], HEX);
+  }
+  sprintf(printbuff, "%s", wavehd.riff);
+  sprintf(&printbuff[4], "%08x", (unsigned int)wavehd.flength);
+  Serial.println(printbuff);
+//  Serial.println("Wave header:");
+//  Serial.println(wavehd.riff);
+  Serial.print("flength = "); Serial.println(wavehd.flength);
+//  Serial.println(wavehd.wave);
+//  Serial.println(wavehd.fmt);
+//  Serial.print("chunk size = "); Serial.println(wavehd.chunk_size);
+//  Serial.print("format = "); Serial.println(wavehd.format_tag);
+//  Serial.print("num chans = "); Serial.println(wavehd.num_chans);
+//  Serial.print("sampling rate = "); Serial.println(wavehd.srate);
+//  Serial.print("byte/sec = "); Serial.println(wavehd.bytes_per_sec);
+//  Serial.print("byte/sample = "); Serial.println(wavehd.bytes_per_samp);
+//  Serial.print("bit/sample = "); Serial.println(wavehd.bits_per_samp);
+//  Serial.println(wavehd.data);
+//  Serial.print("dlength = "); Serial.println(wavehd.dlength);
 }
 
 int parseSerialIn(String input) {

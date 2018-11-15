@@ -203,7 +203,6 @@ void sliceTag(String rawTag)
 
 int tagGetNextPos(String tag, byte pos, char delim)
 {
-  int retVal;
   int nextPos = tag.indexOf(delim, pos+1);
   // Delimiter found --> return length between old & new delimiter
   if(nextPos >= 0) {
