@@ -51,6 +51,7 @@ Bounce                        buttonBluetooth = Bounce(BUTTON_BLUETOOTH, 8);
 
 // Total amount of recorded bytes
 unsigned long                 totRecBytes = 0;
+String                        recPath = "";
 
 // Bluetooth audio devices definition
 struct BTdev {
@@ -151,14 +152,16 @@ void setup() {
   strncpy(wavehd.riff,"RIFF",4);
   strncpy(wavehd.wave,"WAVE",4);
   strncpy(wavehd.fmt,"fmt ",4);
-  strncpy(wavehd.data,"data",4);
+  // <- missing here the filesize
   wavehd.chunk_size = WAVE_FMT_CHUNK_SIZE;
   wavehd.format_tag = WAVE_FORMAT_PCM;
   wavehd.num_chans = WAVE_NUM_CHANNELS;
   wavehd.srate = WAVE_SAMPLING_RATE;
-  wavehd.bits_per_samp = WAVE_BITS_PER_SAMPLE;
-  wavehd.bytes_per_sec = wavehd.srate * wavehd.bits_per_samp;
-  wavehd.bytes_per_samp = wavehd.num_chans * wavehd.bits_per_samp / 8;
+  wavehd.bytes_per_sec = WAVE_BYTES_PER_SEC;
+  wavehd.bytes_per_samp = WAVE_BYTES_PER_SAMP;
+  wavehd.bits_per_samp = WAVE_BITS_PER_SAMP;
+  strncpy(wavehd.data,"data",4);
+  // <- missing here the data size
 
   // Initializing states
   workingState.rec_state = false;
@@ -179,11 +182,11 @@ void loop() {
   if(buttonRecord.fallingEdge()) {
     Serial.print("Record button pressed: rec_state = "); Serial.println(workingState.rec_state);
     if(workingState.rec_state) {
-      stopRecording();
+      stopRecording(recPath);
     }
     else {
       fetchGPS();
-      String recPath = createSDpath();
+      recPath = createSDpath();
       startRecording(recPath);
     }
   }
@@ -256,9 +259,9 @@ String createSDpath() {
 void startRecording(String path) {
   Serial.print("Start recording: rec_state = "); Serial.println(workingState.rec_state);
   
-  frec = SD.open(path, O_READ|O_WRITE|O_CREAT|O_APPEND);
+  frec = SD.open(path, FILE_WRITE);
   if(frec) {
-    frec.write((byte*)&wavehd, 44);
+//    frec.write((byte*)&wavehd, 44);
     queueRec.begin();
     totRecBytes = 0;
     workingState.rec_state = true;
@@ -299,7 +302,7 @@ void continueRecording() {
   }
 }
 
-void stopRecording() {
+void stopRecording(String path) {
   Serial.print("Stop recording: rec_state = "); Serial.println(workingState.rec_state);
   queueRec.end();
   if(workingState.rec_state) {
@@ -308,18 +311,53 @@ void stopRecording() {
       queueRec.freeBuffer();
       totRecBytes += 256;
     }
-    writeWaveHeader();
     frec.close();
+
+    writeWaveHeader(path);
   }
   workingState.rec_state = false;
 }
 
-void writeWaveHeader() {
-  byte b1, b2, b3, b4;
-  byte buff[44];
-  char printbuff[256];
+void writeWaveHeader(String path) {
+//  unsigned long dl = totRecBytes;
+//  unsigned long fl = dl + 36;
+//  byte b1, b2, b3, b4;
+//  b1 = dl & 0xff;
+//  b2 = (dl >> 8) & 0xff;
+//  b3 = (dl >> 16) & 0xff;
+//  b4 = (dl >> 24) & 0xff;
+//  wavehd.dlength = ((unsigned long)b1 << 24) & 0xff000000;
+//  wavehd.dlength |= ((unsigned long)b2 << 16) & 0xff0000;
+//  wavehd.dlength |= ((unsigned long)b3 << 8) & 0xff00;
+//  wavehd.dlength |= ((unsigned long)b4) & 0xff;
+//  Serial.print("dl = 0x"); Serial.println(dl, HEX);
+//  Serial.print("dlength = 0x"); Serial.println(wavehd.dlength, HEX);
+//
+//  b1 = fl & 0xff;
+//  b2 = (fl >> 8) & 0xff;
+//  b3 = (fl >> 16) & 0xff;
+//  b4 = (fl >> 24) & 0xff;
+//  wavehd.flength = ((unsigned long)b1 << 24) & 0xff000000;
+//  wavehd.flength |= ((unsigned long)b2 << 16) & 0xff0000;
+//  wavehd.flength |= ((unsigned long)b3 << 8) & 0xff00;
+//  wavehd.flength |= ((unsigned long)b4) & 0xff;
+//  Serial.print("fl = 0x"); Serial.println(fl, HEX);
+//  Serial.print("flength = 0x"); Serial.println(wavehd.flength, HEX);
+
   wavehd.dlength = totRecBytes;
-  wavehd.flength = wavehd.dlength + 36;
+  wavehd.flength = totRecBytes + 36;
+  
+  frec = SD.open(path, O_WRITE);
+  frec.seek(0);
+  frec.write((byte*)&wavehd, 44);
+  frec.close();
+
+//  byte buf[4];
+//  byte buff[44];
+//  char printbuff[256];
+//  wavehd.dlength = totRecBytes;
+//  wavehd.flength = wavehd.dlength + 36;
+//  strncpy(buff, wavehd.riff, 4);
 //  frec.seek(0);
 //  frec.write("RIFF");
 //  b1 = wavehd.flength & 0xff;
@@ -362,38 +400,46 @@ void writeWaveHeader() {
 //  b3 = (wavehd.dlength >> 16) & 0xff;
 //  b4 = (wavehd.dlength >> 24) & 0xff;
 //  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
-  if(frec.seek(4)) {
-    b1 = wavehd.flength & 0xff;
-    b2 = (wavehd.flength >> 8) & 0xff;
-    b3 = (wavehd.flength >> 16) & 0xff;
-    b4 = (wavehd.flength >> 24) & 0xff;
-    frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
-  }
-  else {
-    Serial.println("Seek error!");
-  }
-  if(frec.seek(40)) {
-    b1 = wavehd.dlength & 0xff;
-    b2 = (wavehd.dlength >> 8) & 0xff;
-    b3 = (wavehd.dlength >> 16) & 0xff;
-    b4 = (wavehd.dlength >> 24) & 0xff;
-    frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
-  }
-  else {
-    Serial.println("Seek error!");
-  }
-  frec.seek(0);
-  frec.read(buff, 44);
+//  frec = SD.open(path, FILE_WRITE);
+//  frec.write((byte*)&wavehd, 44);
+//  if(frec.seek(4)) {
+//    Serial.print("Current position: "); Serial.println(frec.position());
+//    buf[0] = 0x10; //wavehd.flength & 0xff;
+//    Serial.println(buf[0], HEX);
+//    buf[1] = 0x13; //(wavehd.flength >> 8) & 0xff;
+//    Serial.println(buf[1], HEX);
+//    buf[2] = 0x33;//(wavehd.flength >> 16) & 0xff;
+//    Serial.println(buf[2], HEX);
+//    buf[3] = 0x63;//(wavehd.flength >> 24) & 0xff;
+//    Serial.println(buf[3], HEX);
+//    frec.write(buf, 4);
+//  }
+//  else {
+//    Serial.println("Seek error!");
+//  }
+//  if(frec.seek(40)) {
+//    buf[0] = wavehd.dlength & 0xff;
+//    buf[1] = (wavehd.dlength >> 8) & 0xff;
+//    buf[2] = (wavehd.dlength >> 16) & 0xff;
+//    buf[3] = (wavehd.dlength >> 24) & 0xff;
+//    frec.write(buf, 4);
+//  }
+//  else {
+//    Serial.println("Seek error!");
+//  }
 //  frec.close();
-  for(int i = 0; i < 44; i++) {
-    Serial.println(buff[i], HEX);
-  }
-  sprintf(printbuff, "%s", wavehd.riff);
-  sprintf(&printbuff[4], "%08x", (unsigned int)wavehd.flength);
-  Serial.println(printbuff);
+//  frec.seek(0);
+//  frec.read(buff, 52);
+//  frec.close();
+//  for(int i = 0; i < 52; i++) {
+//    Serial.println(buff[i], HEX);
+//  }
+//  sprintf(printbuff, "%s", wavehd.riff);
+//  sprintf(&printbuff[4], "%08x", (unsigned int)wavehd.flength);
+//  Serial.println(printbuff);
 //  Serial.println("Wave header:");
 //  Serial.println(wavehd.riff);
-  Serial.print("flength = "); Serial.println(wavehd.flength);
+//  Serial.print("flength = "); Serial.println(wavehd.flength);
 //  Serial.println(wavehd.wave);
 //  Serial.println(wavehd.fmt);
 //  Serial.print("chunk size = "); Serial.println(wavehd.chunk_size);
