@@ -10,9 +10,15 @@
 #include <Arduino.h>
 #include "gpsRoutines.h"
 
-struct gps_rmc_tag gps_tag;
+// struct gps_rmc_tag gps_tag;
 
-void fetchGPS(void)
+/* fetchGPS
+ * --------
+ * Capture NMEA strings on serial1 and slice them in tags
+ * IN:	- none
+ * OUT:	- none
+ */
+struct gps_rmc_tag fetchGPS(void)
 {
   String gpsResp = "";
   boolean stringFound = false;
@@ -24,14 +30,21 @@ void fetchGPS(void)
       stringFound = true;
     }
   }
-  sliceTag(gpsResp);
+  return sliceTag(gpsResp);
 }
 
-void sliceTag(String rawTag)
+/* sliceTag(rawTag)
+ * ----------------
+ * Slice raw NMEA string into single tags
+ * IN: 	- raw NMEA tag (string)
+ * OUT:	- none
+ */
+struct gps_rmc_tag sliceTag(String rawTag)
 {
   int pos = 0;
   int len;
   char printbuf[256];
+  struct gps_rmc_tag gps_tag;
   gps_tag.raw_tag = rawTag;
   
   // Time
@@ -125,7 +138,6 @@ void sliceTag(String rawTag)
     pos++;
   }
    
-
   // Speed
   len = tagGetNextPos(rawTag, pos, ',');
   if(len) {
@@ -199,8 +211,18 @@ void sliceTag(String rawTag)
   else if(len == 0) {
     pos++;
   }
+  
+  return gps_tag;
 }
 
+/* tagGetNextPos(tag, pos, delim)
+ * ------------------------------
+ * Get the next position to a defined delimiter within a string
+ * IN:	- feed string (string)
+ *		- starting position (byte)
+ *		- tag delimiter (char)
+ * OUT:	- length of the found tag (int)
+ */
 int tagGetNextPos(String tag, byte pos, char delim)
 {
   int nextPos = tag.indexOf(delim, pos+1);

@@ -14,6 +14,7 @@
 #include <SerialFlash.h>
 
 #include "gpsRoutines.h"
+#include "SDutils.h"
 #include "waveHeader.h"
 
 // Audio connections definition
@@ -93,7 +94,7 @@ enum outputMsg {
 File                          frec;
 
 // GPS tag definition (in 'gpsRoutines.h')
-extern struct gps_rmc_tag     gps_tag;
+// extern struct gps_rmc_tag     gps_tag;
 
 // Working states
 enum btState {
@@ -191,6 +192,7 @@ void loop() {
   buttonRecord.update();
   buttonMonitor.update();
   buttonBluetooth.update();
+  
   // Button press actions
   if(buttonRecord.fallingEdge()) {
     Serial.print("Record button pressed: rec_state = "); Serial.println(workingState.rec_state);
@@ -198,15 +200,15 @@ void loop() {
       stopRecording(recPath);
     }
     else {
-      fetchGPS();
-      recPath = createSDpath();
+			struct gps_rmc_tag rmc_tag = fetchGPS();
+      recPath = createSDpath(rmc_tag);
       startRecording(recPath);
     }
   }
   if(buttonMonitor.fallingEdge()) {
     Serial.print("Play button pressed: mon_state = "); Serial.println(workingState.mon_state);
-//    if(workingState.mon_state) stopMonitoring();
-//    else startMonitoring();
+	if(workingState.mon_state) stopMonitoring();
+	else startMonitoring();
   }
   if(buttonBluetooth.fallingEdge()) {
     Serial.print("Bluetooth button pressed: ble_state = "); Serial.println(workingState.ble_state);
@@ -233,41 +235,6 @@ void loop() {
   }
 }
 
-String createSDpath() {
-  Serial.println("Creating new folder/file on the SD card");
-  String dirName = "";
-  String fileName = "";
-  String path = "/";
-  char buf[12];
-  sprintf(buf, "%02d", gps_tag.date.year);
-  dirName.concat(buf);
-  sprintf(buf, "%02d", gps_tag.date.month);
-  dirName.concat(buf);
-  sprintf(buf, "%02d", gps_tag.date.day);
-  dirName.concat(buf);
-
-  sprintf(buf, "%02d", gps_tag.time.h);
-  fileName.concat(buf);
-  sprintf(buf, "%02d", gps_tag.time.min);
-  fileName.concat(buf);
-  sprintf(buf, "%02d", gps_tag.time.sec);
-  fileName.concat(buf);
-  
-  path.concat(dirName);
-  path.concat("/");
-  path.concat(fileName);
-  path.concat(".wav");
-
-  if(SD.exists(dirName)) {
-    if(SD.exists(path)) {
-      SD.remove(path);
-    }
-  }
-  else {
-    SD.mkdir(dirName);
-  }
-  return path;
-}
 
 void startRecording(String path) {
   Serial.print("Start recording: rec_state = "); Serial.println(workingState.rec_state);
@@ -276,7 +243,7 @@ void startRecording(String path) {
   if(frec) {
     queueSdc.begin();
     totRecBytes = 0;
-    mixer.gain(MIXER_CH_REC, 1);
+    // mixer.gain(MIXER_CH_REC, 1);
     workingState.rec_state = true;
   }
   else {
@@ -342,6 +309,16 @@ void writeWaveHeader(String path) {
   frec.close();
 }
 
+void startMonitoring() {
+    mixer.gain(MIXER_CH_REC, 1);
+	workingState.mon_state = true;
+}
+
+void stopMonitoring() {
+	mixer.gain(MIXER_CH_REC, 0);
+	workingState.mon_state = false;
+}
+	
 int parseSerialIn(String input) {
   // ================================================================
   // Slicing input string.

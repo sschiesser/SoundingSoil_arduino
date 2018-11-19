@@ -64,9 +64,9 @@ struct gps_rmc_tag {
   byte length;
 };
 
-void fetchGPS(void);
-void sliceTag(String rawTag);
+struct gps_rmc_tag fetchGPS(void);
+struct gps_rmc_tag  sliceTag(String tag);
 int tagGetNextPos(String tag, byte pos, char delim);
 
-#endif
+#endif /* _GPSROUTINES_H_ */
 
