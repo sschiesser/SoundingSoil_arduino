@@ -17,16 +17,21 @@
 #include "waveHeader.h"
 
 // Audio connections definition
-AudioInputI2S                 i2sRec;
-AudioAnalyzePeak              peak1;
-AudioRecordQueue              queueRec;
-AudioPlaySdRaw                playRaw;
-AudioOutputI2S                i2sPlayRaw;
-AudioConnection               patchCord1(i2sRec, 0, queueRec, 0);
-AudioConnection               patchCord2(i2sRec, 0, peak1, 0);
-AudioConnection               patchCord3(playRaw, 0, i2sPlayRaw, 0);
-AudioConnection               patchCord4(playRaw, 0, i2sPlayRaw, 1);
-AudioControlSGTL5000          sgtl5000;     //xy=265,212
+// GUItool: begin automatically generated code
+AudioInputI2S                 i2sRec;         //xy=172,125
+AudioRecordQueue              queueSdc;       //xy=512,120
+AudioAnalyzePeak              peak;          //xy=512,169
+AudioPlaySdWav                playWav;        //xy=172,225
+AudioMixer4                   mixer;         //xy=350,225
+AudioOutputI2S                i2sPlayMon;     //xy=512,228
+AudioConnection               patchCord1(playWav, 0, mixer, 1);
+AudioConnection               patchCord2(i2sRec, 0, queueSdc, 0);
+AudioConnection               patchCord3(i2sRec, 0, peak, 0);
+AudioConnection               patchCord4(i2sRec, 0, mixer, 0);
+AudioConnection               patchCord5(mixer, 0, i2sPlayMon, 0);
+AudioConnection               patchCord6(mixer, 0, i2sPlayMon, 1);
+AudioControlSGTL5000          sgtl5000;       //xy=172,323
+// GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 
 // Buttons definition
@@ -111,12 +116,18 @@ volatile struct wState {
   enum bleState ble_state;
 } workingState;
 
+#define MIXER_CH_REC          0
+#define MIXER_CH_SDC          1
+
 void setup() {
   // Initialize both serial ports:
   Serial.begin(9600); // Serial monitor port
   Serial4.begin(9600); // BC127 communication port
   Serial1.begin(9600); // GPS port
 
+  Serial.println("AudioShield v1.0");
+  Serial.println("----------------");
+  
   // Configure the pushbutton pins
   pinMode(BUTTON_RECORD, INPUT_PULLUP);
   pinMode(BUTTON_MONITOR, INPUT_PULLUP);
@@ -124,11 +135,11 @@ void setup() {
 
   // Configure the output pins
   pinMode(LED_RECORD, OUTPUT);
-  digitalWrite(LED_RECORD, LED_OFF);
+  digitalWrite(LED_RECORD, LED_ON);
   pinMode(LED_MONITOR, OUTPUT);
-  digitalWrite(LED_MONITOR, LED_OFF);
+  digitalWrite(LED_MONITOR, LED_ON);
   pinMode(LED_BLUETOOTH, OUTPUT);
-  digitalWrite(LED_BLUETOOTH, LED_OFF);
+  digitalWrite(LED_BLUETOOTH, LED_ON);
 
   // Memory buffer for the record queue
   AudioMemory(60);
@@ -136,7 +147,9 @@ void setup() {
   // Enable the audio shield, select input, enable output
   sgtl5000.enable();
   sgtl5000.inputSelect(audioInput);
-  sgtl5000.volume(0.8);
+  sgtl5000.volume(0.5);
+  mixer.gain(MIXER_CH_REC, 0);
+  mixer.gain(MIXER_CH_SDC, 0);
 
   // Initialize the SD card
   SPI.setMOSI(SDCARD_MOSI_PIN);
@@ -261,9 +274,9 @@ void startRecording(String path) {
   
   frec = SD.open(path, FILE_WRITE);
   if(frec) {
-//    frec.write((byte*)&wavehd, 44);
-    queueRec.begin();
+    queueSdc.begin();
     totRecBytes = 0;
+    mixer.gain(MIXER_CH_REC, 1);
     workingState.rec_state = true;
   }
   else {
@@ -273,16 +286,16 @@ void startRecording(String path) {
 }
 
 void continueRecording() {
-  if(queueRec.available() >= 2) {
+  if(queueSdc.available() >= 2) {
     byte buffer[512];
     // Fetch 2 blocks from the audio library and copy
     // into a 512 byte buffer.  The Arduino SD library
     // is most efficient when full 512 byte sector size
     // writes are used.
-    memcpy(buffer, queueRec.readBuffer(), 256);
-    queueRec.freeBuffer();
-    memcpy(buffer+256, queueRec.readBuffer(), 256);
-    queueRec.freeBuffer();
+    memcpy(buffer, queueSdc.readBuffer(), 256);
+    queueSdc.freeBuffer();
+    memcpy(buffer+256, queueSdc.readBuffer(), 256);
+    queueSdc.freeBuffer();
     // write all 512 bytes to the SD card
 //    elapsedMicros usec = 0;
     frec.write(buffer, 512);
@@ -293,7 +306,7 @@ void continueRecording() {
     // take well under 5802 us.  Some will take more, as
     // the SD library also must write to the FAT tables
     // and the SD card controller manages media erase and
-    // wear leveling.  The queueRec object can buffer
+    // wear leveling.  The queueSdc object can buffer
     // approximately 301700 us of audio, to allow time
     // for occasional high SD card latency, as long as
     // the average write time is under 5802 us.
@@ -304,46 +317,22 @@ void continueRecording() {
 
 void stopRecording(String path) {
   Serial.print("Stop recording: rec_state = "); Serial.println(workingState.rec_state);
-  queueRec.end();
+  queueSdc.end();
   if(workingState.rec_state) {
-    while(queueRec.available() > 0) {
-      frec.write((byte*)queueRec.readBuffer(), 256);
-      queueRec.freeBuffer();
+    while(queueSdc.available() > 0) {
+      frec.write((byte*)queueSdc.readBuffer(), 256);
+      queueSdc.freeBuffer();
       totRecBytes += 256;
     }
     frec.close();
 
     writeWaveHeader(path);
   }
+  mixer.gain(MIXER_CH_REC, 0);
   workingState.rec_state = false;
 }
 
 void writeWaveHeader(String path) {
-//  unsigned long dl = totRecBytes;
-//  unsigned long fl = dl + 36;
-//  byte b1, b2, b3, b4;
-//  b1 = dl & 0xff;
-//  b2 = (dl >> 8) & 0xff;
-//  b3 = (dl >> 16) & 0xff;
-//  b4 = (dl >> 24) & 0xff;
-//  wavehd.dlength = ((unsigned long)b1 << 24) & 0xff000000;
-//  wavehd.dlength |= ((unsigned long)b2 << 16) & 0xff0000;
-//  wavehd.dlength |= ((unsigned long)b3 << 8) & 0xff00;
-//  wavehd.dlength |= ((unsigned long)b4) & 0xff;
-//  Serial.print("dl = 0x"); Serial.println(dl, HEX);
-//  Serial.print("dlength = 0x"); Serial.println(wavehd.dlength, HEX);
-//
-//  b1 = fl & 0xff;
-//  b2 = (fl >> 8) & 0xff;
-//  b3 = (fl >> 16) & 0xff;
-//  b4 = (fl >> 24) & 0xff;
-//  wavehd.flength = ((unsigned long)b1 << 24) & 0xff000000;
-//  wavehd.flength |= ((unsigned long)b2 << 16) & 0xff0000;
-//  wavehd.flength |= ((unsigned long)b3 << 8) & 0xff00;
-//  wavehd.flength |= ((unsigned long)b4) & 0xff;
-//  Serial.print("fl = 0x"); Serial.println(fl, HEX);
-//  Serial.print("flength = 0x"); Serial.println(wavehd.flength, HEX);
-
   wavehd.dlength = totRecBytes;
   wavehd.flength = totRecBytes + 36;
   
@@ -351,106 +340,6 @@ void writeWaveHeader(String path) {
   frec.seek(0);
   frec.write((byte*)&wavehd, 44);
   frec.close();
-
-//  byte buf[4];
-//  byte buff[44];
-//  char printbuff[256];
-//  wavehd.dlength = totRecBytes;
-//  wavehd.flength = wavehd.dlength + 36;
-//  strncpy(buff, wavehd.riff, 4);
-//  frec.seek(0);
-//  frec.write("RIFF");
-//  b1 = wavehd.flength & 0xff;
-//  b2 = (wavehd.flength >> 8) & 0xff;
-//  b3 = (wavehd.flength >> 16) & 0xff;
-//  b4 = (wavehd.flength >> 24) & 0xff;
-//  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
-//  frec.write("WAVE");
-//  frec.write("fmt ");
-//  b1 = wavehd.chunk_size & 0xff;
-//  b2 = (wavehd.chunk_size >> 8) & 0xff;
-//  b3 = (wavehd.chunk_size >> 16) & 0xff;
-//  b4 = (wavehd.chunk_size >> 24) & 0xff;
-//  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
-//  b1 = wavehd.format_tag & 0xff;
-//  b2 = (wavehd.format_tag >> 8) & 0xff;
-//  frec.write(b1); frec.write(b2);
-//  b1 = wavehd.num_chans & 0xff;
-//  b2 = (wavehd.num_chans >> 8) & 0xff;
-//  frec.write(b1); frec.write(b2);
-//  b1 = wavehd.srate & 0xff;
-//  b2 = (wavehd.srate >> 8) & 0xff;
-//  b3 = (wavehd.srate >> 16) & 0xff;
-//  b4 = (wavehd.srate >> 24) & 0xff;
-//  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
-//  b1 = wavehd.bytes_per_sec & 0xff;
-//  b2 = (wavehd.bytes_per_sec >> 8) & 0xff;
-//  b3 = (wavehd.bytes_per_sec >> 16) & 0xff;
-//  b4 = (wavehd.bytes_per_sec >> 24) & 0xff;
-//  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
-//  b1 = wavehd.bytes_per_samp & 0xff;
-//  b2 = (wavehd.bytes_per_samp >> 8) & 0xff;
-//  frec.write(b1); frec.write(b2);
-//  b1 = wavehd.bits_per_samp & 0xff;
-//  b2 = (wavehd.bits_per_samp >> 8) & 0xff;
-//  frec.write(b1); frec.write(b2);
-//  frec.write("data");
-//  b1 = wavehd.dlength & 0xff;
-//  b2 = (wavehd.dlength >> 8) & 0xff;
-//  b3 = (wavehd.dlength >> 16) & 0xff;
-//  b4 = (wavehd.dlength >> 24) & 0xff;
-//  frec.write(b1); frec.write(b2); frec.write(b3); frec.write(b4);
-//  frec = SD.open(path, FILE_WRITE);
-//  frec.write((byte*)&wavehd, 44);
-//  if(frec.seek(4)) {
-//    Serial.print("Current position: "); Serial.println(frec.position());
-//    buf[0] = 0x10; //wavehd.flength & 0xff;
-//    Serial.println(buf[0], HEX);
-//    buf[1] = 0x13; //(wavehd.flength >> 8) & 0xff;
-//    Serial.println(buf[1], HEX);
-//    buf[2] = 0x33;//(wavehd.flength >> 16) & 0xff;
-//    Serial.println(buf[2], HEX);
-//    buf[3] = 0x63;//(wavehd.flength >> 24) & 0xff;
-//    Serial.println(buf[3], HEX);
-//    frec.write(buf, 4);
-//  }
-//  else {
-//    Serial.println("Seek error!");
-//  }
-//  if(frec.seek(40)) {
-//    buf[0] = wavehd.dlength & 0xff;
-//    buf[1] = (wavehd.dlength >> 8) & 0xff;
-//    buf[2] = (wavehd.dlength >> 16) & 0xff;
-//    buf[3] = (wavehd.dlength >> 24) & 0xff;
-//    frec.write(buf, 4);
-//  }
-//  else {
-//    Serial.println("Seek error!");
-//  }
-//  frec.close();
-//  frec.seek(0);
-//  frec.read(buff, 52);
-//  frec.close();
-//  for(int i = 0; i < 52; i++) {
-//    Serial.println(buff[i], HEX);
-//  }
-//  sprintf(printbuff, "%s", wavehd.riff);
-//  sprintf(&printbuff[4], "%08x", (unsigned int)wavehd.flength);
-//  Serial.println(printbuff);
-//  Serial.println("Wave header:");
-//  Serial.println(wavehd.riff);
-//  Serial.print("flength = "); Serial.println(wavehd.flength);
-//  Serial.println(wavehd.wave);
-//  Serial.println(wavehd.fmt);
-//  Serial.print("chunk size = "); Serial.println(wavehd.chunk_size);
-//  Serial.print("format = "); Serial.println(wavehd.format_tag);
-//  Serial.print("num chans = "); Serial.println(wavehd.num_chans);
-//  Serial.print("sampling rate = "); Serial.println(wavehd.srate);
-//  Serial.print("byte/sec = "); Serial.println(wavehd.bytes_per_sec);
-//  Serial.print("byte/sample = "); Serial.println(wavehd.bytes_per_samp);
-//  Serial.print("bit/sample = "); Serial.println(wavehd.bits_per_samp);
-//  Serial.println(wavehd.data);
-//  Serial.print("dlength = "); Serial.println(wavehd.dlength);
 }
 
 int parseSerialIn(String input) {
