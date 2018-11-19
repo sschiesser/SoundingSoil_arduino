@@ -18,8 +18,6 @@ String peerAddress;
 void initBC127(void) {
 	// Reset BC127 module
 	sendCmdOut(BCCMD_GEN_PWROFF);
-	delay(10000);
-	sendCmdOut(BCCMD_GEN_PWRON);
 }
 
 int parseSerialIn(String input) {

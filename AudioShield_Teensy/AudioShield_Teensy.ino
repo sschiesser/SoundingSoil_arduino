@@ -12,6 +12,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
+#include <timer.h>
 
 #include "gpsRoutines.h"
 #include "SDutils.h"
@@ -35,30 +36,8 @@ AudioConnection               patchCord6(mixer, 0, i2sPlayMon, 1);
 AudioControlSGTL5000          sgtl5000;       //xy=172,323
 // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
-
-// SD card file handle
-// File                          frec;
-
-// Buttons definition
-#define BUTTON_RECORD         24
-#define BUTTON_MONITOR        25
-#define BUTTON_BLUETOOTH      29
-Bounce                        buttonRecord = Bounce(BUTTON_RECORD, 8);
-Bounce                        buttonMonitor = Bounce(BUTTON_MONITOR, 8);
-Bounce                        buttonBluetooth = Bounce(BUTTON_BLUETOOTH, 8);
-
-// LED definition
-#define LED_RECORD            26
-#define LED_MONITOR           27
-#define LED_BLUETOOTH         28
-#define LED_OFF               HIGH
-#define LED_ON                LOW
-
-
-
-
-
-
+#define MIXER_CH_REC          0
+#define MIXER_CH_SDC          1
 
 // Working states
 enum btState {
@@ -81,9 +60,6 @@ volatile struct wState {
   enum bleState ble_state;
 } workingState;
 
-#define MIXER_CH_REC          0
-#define MIXER_CH_SDC          1
-
 void setup() {
   // Initialize both serial ports:
   Serial.begin(9600); // Serial monitor port
@@ -93,18 +69,7 @@ void setup() {
   Serial.println("AudioShield v1.0");
   Serial.println("----------------");
   
-  // Configure the pushbutton pins
-  pinMode(BUTTON_RECORD, INPUT_PULLUP);
-  pinMode(BUTTON_MONITOR, INPUT_PULLUP);
-  pinMode(BUTTON_BLUETOOTH, INPUT_PULLUP);
-
-  // Configure the output pins
-  pinMode(LED_RECORD, OUTPUT);
-  digitalWrite(LED_RECORD, LED_ON);
-  pinMode(LED_MONITOR, OUTPUT);
-  digitalWrite(LED_MONITOR, LED_ON);
-  pinMode(LED_BLUETOOTH, OUTPUT);
-  digitalWrite(LED_BLUETOOTH, LED_ON);
+	initLEDButtons();
 
 	initAudio();
 
@@ -119,9 +84,14 @@ void setup() {
   workingState.ble_state = BLESTATE_IDLE;
 	
 	initBC127();
+	recLedTimer.in(100, toggleRecLED, (void*)100);
 }
 
 void loop() {
+	recLedTimer.tick();
+	monLedTimer.tick();
+	btLedTimer.tick();
+	
   // Read the buttons
   buttonRecord.update();
   buttonMonitor.update();
