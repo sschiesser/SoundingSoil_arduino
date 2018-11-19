@@ -7,7 +7,7 @@
 
 #include <Arduino.h>
 #include <Bounce.h>
-#include <timer.h>
+// #include <timer.h>
 
 // Buttons definition
 #define BUTTON_RECORD         24
@@ -24,12 +24,33 @@ extern Bounce buttonBluetooth;
 #define LED_OFF               HIGH
 #define LED_ON                LOW
 
-auto recLedTimer = timer_create_default();
-auto monLedTimer = timer_create_default();
-auto btLedTimer = timer_create_default();
+#define LED_BLINK_FAST				(100 * 1000)
+#define LED_BLINK_MED					(500 * 1000)
+#define LED_BLINK_SLOW				(5000 * 1000)
+
+enum led_mode {
+	LED_MODE_BLINK_SLOW,
+	LED_MODE_BLINK_MED,
+	LED_MODE_BLINK_FAST,
+	LED_MODE_IDLE,
+	LED_MODE_ON,
+	LED_MODE_OFF
+};
+
+struct led_state {
+	bool on;
+	enum led_mode mode;
+	unsigned int cnt;
+};
+
+extern IntervalTimer recLedTimer;
+
+// auto recLedTimer = timer_create_default();
+// auto monLedTimer = timer_create_default();
+// auto btLedTimer = timer_create_default();
 
 
 void initLEDButtons(void);
-bool toggleRecLED(void *);
+void toggleRecLED(void);
 
 #endif

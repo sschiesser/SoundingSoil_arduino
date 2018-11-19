@@ -12,7 +12,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
-#include <timer.h>
+// #include <timer.h>
 
 #include "gpsRoutines.h"
 #include "SDutils.h"
@@ -60,6 +60,8 @@ volatile struct wState {
   enum bleState ble_state;
 } workingState;
 
+IntervalTimer recLedTimer;
+
 void setup() {
   // Initialize both serial ports:
   Serial.begin(9600); // Serial monitor port
@@ -84,13 +86,14 @@ void setup() {
   workingState.ble_state = BLESTATE_IDLE;
 	
 	initBC127();
-	recLedTimer.in(100, toggleRecLED, (void*)100);
+	// recLedTimer.in(100, toggleRecLED, (void*)100);
+	recLedTimer.begin(toggleRecLED, LED_BLINK_SLOW);
 }
 
 void loop() {
-	recLedTimer.tick();
-	monLedTimer.tick();
-	btLedTimer.tick();
+	// recLedTimer.tick();
+	// monLedTimer.tick();
+	// btLedTimer.tick();
 	
   // Read the buttons
   buttonRecord.update();
