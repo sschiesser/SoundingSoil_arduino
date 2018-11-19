@@ -10,16 +10,13 @@
 #include <Arduino.h>
 #include "gpsRoutines.h"
 
-// struct gps_rmc_tag gps_tag;
-
 /* fetchGPS
  * --------
  * Capture NMEA strings on serial1 and slice them in tags
  * IN:	- none
  * OUT:	- none
  */
-struct gps_rmc_tag fetchGPS(void)
-{
+struct gps_rmc_tag fetchGPS(void) {
   String gpsResp = "";
   boolean stringFound = false;
   while(!stringFound) {
@@ -39,8 +36,7 @@ struct gps_rmc_tag fetchGPS(void)
  * IN: 	- raw NMEA tag (string)
  * OUT:	- none
  */
-struct gps_rmc_tag sliceTag(String rawTag)
-{
+struct gps_rmc_tag sliceTag(String rawTag) {
   int pos = 0;
   int len;
   char printbuf[256];
@@ -223,8 +219,7 @@ struct gps_rmc_tag sliceTag(String rawTag)
  *		- tag delimiter (char)
  * OUT:	- length of the found tag (int)
  */
-int tagGetNextPos(String tag, byte pos, char delim)
-{
+int tagGetNextPos(String tag, byte pos, char delim) {
   int nextPos = tag.indexOf(delim, pos+1);
   // Delimiter found --> return length between old & new delimiter
   if(nextPos >= 0) {

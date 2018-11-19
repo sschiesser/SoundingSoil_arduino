@@ -64,6 +64,11 @@ struct gps_rmc_tag {
   byte length;
 };
 
+
+/* ======================
+ * FUNCTIONS DECLARATIONS
+ * ====================== */
+
 struct gps_rmc_tag fetchGPS(void);
 struct gps_rmc_tag  sliceTag(String tag);
 int tagGetNextPos(String tag, byte pos, char delim);

@@ -15,7 +15,6 @@
 
 #include "gpsRoutines.h"
 #include "SDutils.h"
-#include "waveHeader.h"
 
 // Audio connections definition
 // GUItool: begin automatically generated code
@@ -35,6 +34,9 @@ AudioControlSGTL5000          sgtl5000;       //xy=172,323
 // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 
+// SD card file handle
+// File                          frec;
+
 // Buttons definition
 #define BUTTON_RECORD         24
 #define BUTTON_MONITOR        25
@@ -50,14 +52,13 @@ Bounce                        buttonBluetooth = Bounce(BUTTON_BLUETOOTH, 8);
 #define LED_OFF               HIGH
 #define LED_ON                LOW
 
-// SDcard pins definition (Audio Shield slot)
-#define SDCARD_CS_PIN         10
-#define SDCARD_MOSI_PIN       7
-#define SDCARD_SCK_PIN        14
 
-// Total amount of recorded bytes
-unsigned long                 totRecBytes = 0;
-String                        recPath = "";
+
+// // Total amount of recorded bytes
+// unsigned long                 totRecBytes = 0;
+// // Path name of the recorded file, defined by GPS or remote data
+// String                        recPath = "";
+
 
 // Bluetooth audio devices definition
 struct BTdev {
@@ -90,11 +91,6 @@ enum outputMsg {
   MAX_OUTPUTS
 };
 
-// SD card file variables
-File                          frec;
-
-// GPS tag definition (in 'gpsRoutines.h')
-// extern struct gps_rmc_tag     gps_tag;
 
 // Working states
 enum btState {
@@ -152,30 +148,9 @@ void setup() {
   mixer.gain(MIXER_CH_REC, 0);
   mixer.gain(MIXER_CH_SDC, 0);
 
-  // Initialize the SD card
-  SPI.setMOSI(SDCARD_MOSI_PIN);
-  SPI.setSCK(SDCARD_SCK_PIN);
-  if(!(SD.begin(SDCARD_CS_PIN))) {
-    while(1) {
-      Serial.println("Unable to access the SD card");
-      delay(500);
-    }
-  }
+	initSDcard();
 
-  // Initialize the wave header
-  strncpy(wavehd.riff,"RIFF",4);
-  strncpy(wavehd.wave,"WAVE",4);
-  strncpy(wavehd.fmt,"fmt ",4);
-  // <- missing here the filesize
-  wavehd.chunk_size = WAVE_FMT_CHUNK_SIZE;
-  wavehd.format_tag = WAVE_FORMAT_PCM;
-  wavehd.num_chans = WAVE_NUM_CHANNELS;
-  wavehd.srate = WAVE_SAMPLING_RATE;
-  wavehd.bytes_per_sec = WAVE_BYTES_PER_SEC;
-  wavehd.bytes_per_samp = WAVE_BYTES_PER_SAMP;
-  wavehd.bits_per_samp = WAVE_BITS_PER_SAMP;
-  strncpy(wavehd.data,"data",4);
-  // <- missing here the data size
+	initWaveHeader();
 
   // Initializing states
   workingState.rec_state = false;
@@ -196,13 +171,13 @@ void loop() {
   // Button press actions
   if(buttonRecord.fallingEdge()) {
     Serial.print("Record button pressed: rec_state = "); Serial.println(workingState.rec_state);
-    if(workingState.rec_state) {
-      stopRecording(recPath);
-    }
-    else {
+    if(!workingState.rec_state) {
 			struct gps_rmc_tag rmc_tag = fetchGPS();
       recPath = createSDpath(rmc_tag);
       startRecording(recPath);
+    }
+    else {
+      stopRecording(recPath);
     }
   }
   if(buttonMonitor.fallingEdge()) {
@@ -237,7 +212,7 @@ void loop() {
 
 
 void startRecording(String path) {
-  Serial.print("Start recording: rec_state = "); Serial.println(workingState.rec_state);
+  Serial.println("Start recording");
   
   frec = SD.open(path, FILE_WRITE);
   if(frec) {
@@ -293,20 +268,9 @@ void stopRecording(String path) {
     }
     frec.close();
 
-    writeWaveHeader(path);
+    writeWaveHeader(path, totRecBytes);
   }
-  mixer.gain(MIXER_CH_REC, 0);
   workingState.rec_state = false;
-}
-
-void writeWaveHeader(String path) {
-  wavehd.dlength = totRecBytes;
-  wavehd.flength = totRecBytes + 36;
-  
-  frec = SD.open(path, O_WRITE);
-  frec.seek(0);
-  frec.write((byte*)&wavehd, 44);
-  frec.close();
 }
 
 void startMonitoring() {
