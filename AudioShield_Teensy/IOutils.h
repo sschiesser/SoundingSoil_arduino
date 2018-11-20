@@ -7,7 +7,6 @@
 
 #include <Arduino.h>
 #include <Bounce.h>
-// #include <timer.h>
 
 // Buttons definition
 #define BUTTON_RECORD         24
@@ -18,39 +17,56 @@ extern Bounce buttonMonitor;
 extern Bounce buttonBluetooth;
 
 // LED definition
-#define LED_RECORD            26
-#define LED_MONITOR           27
-#define LED_BLUETOOTH         28
+#define LED_RECORD_PIN        26
+#define LED_MONITOR_PIN       27
+#define LED_BLUETOOTH_PIN     28
+#define LED_MAX_NUMBER				3
+
 #define LED_OFF               HIGH
 #define LED_ON                LOW
 
-#define LED_BLINK_FAST				(100 * 1000)
-#define LED_BLINK_MED					(500 * 1000)
-#define LED_BLINK_SLOW				(5000 * 1000)
+#define LED_BLINK_FAST_MS			(100 * 1000)
+#define LED_BLINK_MED_MS			(500 * 1000)
+#define LED_BLINK_SLOW_MS			(5000 * 1000)
 
-enum led_mode {
-	LED_MODE_BLINK_SLOW,
-	LED_MODE_BLINK_MED,
-	LED_MODE_BLINK_FAST,
-	LED_MODE_IDLE,
-	LED_MODE_ON,
-	LED_MODE_OFF
+enum led_enum {
+	LED_RECORD = 0,
+	LED_MONITOR,
+	LED_BLUETOOTH,
+	LED_MAX_SIZE
 };
 
-struct led_state {
-	bool on;
+enum led_blink {
+	LED_BLINK_OFF,
+	LED_BLINK_SLOW,
+	LED_BLINK_MED,
+	LED_BLINK_FAST,
+	LED_BLINK_FLASH
+};
+
+enum led_mode {
+	LED_MODE_OFF,
+	LED_MODE_SOLID,
+	LED_MODE_WAITING,
+	LED_MODE_WARNING,
+	LED_MODE_ERROR,
+	LED_MODE_IDLE
+};
+
+struct leds {
+	unsigned int pin; 
+	bool status;
 	enum led_mode mode;
+	enum led_blink blink;
+	IntervalTimer timer;
 	unsigned int cnt;
 };
 
-extern IntervalTimer recLedTimer;
-
-// auto recLedTimer = timer_create_default();
-// auto monLedTimer = timer_create_default();
-// auto btLedTimer = timer_create_default();
+// extern struct led_state as_led_state[LED_MAX_NUMBER];
+// extern IntervalTimer as_led_timer[LED_MAX_NUMBER];
 
 
 void initLEDButtons(void);
-void toggleRecLED(void);
+// void toggleRecLED(void);
 
 #endif

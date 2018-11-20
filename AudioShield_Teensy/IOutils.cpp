@@ -11,15 +11,10 @@ Bounce buttonRecord = Bounce(BUTTON_RECORD, 8);
 Bounce buttonMonitor = Bounce(BUTTON_MONITOR, 8);
 Bounce buttonBluetooth = Bounce(BUTTON_BLUETOOTH, 8);
 
-
-volatile struct led_state rec_led_state;
-volatile struct led_state mon_led_state;
-volatile struct led_state bt_led_state;
+struct leds as_leds[LED_MAX_SIZE];
+IntervalTimer as_led_timers[LED_MAX_SIZE];
+enum led_enum led_cnt;
 	
-// auto recLedTimer = timer_create_default();
-// auto monLedTimer = timer_create_default();
-// auto btLedTimer = timer_create_default();
-
 /* initLEDButtons(void)
  * --------------------
  * Initialize pin direction & mode for LED and buttons
@@ -32,84 +27,79 @@ void initLEDButtons(void) {
 	pinMode(BUTTON_MONITOR, INPUT_PULLUP);
 	pinMode(BUTTON_BLUETOOTH, INPUT_PULLUP);
 
-	// Configure the output pins
-	pinMode(LED_RECORD, OUTPUT);
-	digitalWrite(LED_RECORD, LED_OFF);
-	rec_led_state.on = LED_OFF;
-	rec_led_state.mode = LED_MODE_IDLE;
-	rec_led_state.cnt = 0;
-	pinMode(LED_MONITOR, OUTPUT);
-	digitalWrite(LED_MONITOR, LED_OFF);
-	pinMode(LED_BLUETOOTH, OUTPUT);
-	digitalWrite(LED_BLUETOOTH, LED_OFF);
+	for(int i = 0; i < LED_MAX_SIZE; i++) {
+		as_leds[i].status = LED_OFF;
+		as_leds[i].mode = LED_MODE_OFF;
+		as_leds[i].blink = LED_BLINK_OFF;
+		as_leds[i].timer = as_led_timers[i];
+		as_leds[i].cnt = 0;
+		switch(i) {
+			case LED_RECORD:
+			as_leds[i].pin = LED_RECORD_PIN;
+			break;
+			
+			case LED_MONITOR:
+			as_leds[i].pin = LED_MONITOR_PIN;
+			break;
+			
+			case LED_BLUETOOTH:
+			as_leds[i].pin = LED_BLUETOOTH_PIN;
+			break;
+			
+			default:
+			break;
+		}
+		pinMode(as_leds[i].pin, OUTPUT);
+		digitalWrite(as_leds[i].pin, as_leds[i].status);
+	}
 }
 
-// bool toggleRecLED(void *next) {
-	// int cur_int = (int)next;
-	// int next_int = 0;
-	// bool ret_val = true;
-	// Serial.print("Toggle. Current = "); Serial.println(cur_int);
-	// switch(cur_int) {
-		// case 0:
-		// ret_val = false;
+
+// void toggleRecLED(void) {
+	// switch(rec_led_state.blink) {
+		// case LED_BLINK_FAST:
+		// case LED_BLINK_MED:
+		// case LED_BLINK_SLOW:
+		// Serial.print("LED state: "); Serial.println(rec_led_state.status);
 		// break;
-		
-		// case 100:
-		// next_int = 500;
-		// break;
-		
-		// case 500:
-		// next_int = 1000;
-		// break;
-		
-		// case 1000:
-		// next_int = 100;
+				
+		// case LED_BLINK_FLASH:
+		// if(rec_led_state.status == LED_ON) {
+			// rec_led_timer.update(LED_BLINK_FAST_MS);
+		// }
+		// else {
+			// rec_led_timer.update(LED_BLINK_SLOW_MS);
+		// }
 		// break;
 		
 		// default:
 		// break;
 	// }
-	// recLedTimer.in(next_int, toggleRecLED, (void*)next_int);
-	// digitalWrite(LED_RECORD, !digitalRead(LED_RECORD));
-	// return true;
+	// rec_led_state.status = !rec_led_state.status;
+	// digitalWrite(LED_RECORD_PIN, rec_led_state.status);
 // }
 
-void toggleRecLED(void) {
-	switch(rec_led_state.mode) {
-		case LED_MODE_BLINK_FAST:
-		case LED_MODE_BLINK_MED:
-		case LED_MODE_BLINK_SLOW:
-		Serial.print("LED state: "); Serial.println(rec_led_state.on);
-		break;
-				
-		case LED_MODE_IDLE:
-		if(rec_led_state.on == LED_ON) {
-			recLedTimer.update(LED_BLINK_FAST);
-		}
-		else {
-			recLedTimer.update(LED_BLINK_SLOW);
-		}
-		break;
+// void startLED(enum leds ld, enum led_mode) {
+	// switch(led_mode) {
+		// case LED_MODE_OFF:
+		// break;
 		
-		default:
-		break;
-	}
-	rec_led_state.on = !rec_led_state.on;
-	digitalWrite(LED_RECORD, rec_led_state.on);
-}
-
-void blinkLED(int LEDnr, int duration) {
-	switch(LEDnr) {
-		case LED_RECORD:
-		break;
+		// case LED_MODE_SOLID:
+		// break;
 		
-		case LED_MONITOR:
-		break;
+		// case LED_MODE_WAITING:
+		// break;
 		
-		case LED_BLUETOOTH:
-		break;
+		// case LED_MODE_WARNING:
+		// break;
 		
-		default:
-		break;
-	}
-}
+		// case LED_MODE_ERROR:
+		// break;
+		
+		// case LED_MODE_IDLE:
+		// break;
+		
+		// default:
+		// break;
+	// }
+// }

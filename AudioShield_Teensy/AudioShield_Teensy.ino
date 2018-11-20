@@ -60,8 +60,6 @@ volatile struct wState {
   enum bleState ble_state;
 } workingState;
 
-IntervalTimer recLedTimer;
-
 void setup() {
   // Initialize both serial ports:
   Serial.begin(9600); // Serial monitor port
@@ -86,12 +84,14 @@ void setup() {
   workingState.ble_state = BLESTATE_IDLE;
 	
 	initBC127();
-	// recLedTimer.in(100, toggleRecLED, (void*)100);
-	recLedTimer.begin(toggleRecLED, LED_BLINK_SLOW);
+	// rec_led_timer.in(100, toggleRecLED, (void*)100);
+	// rec_led_state.mode = LED_MODE_IDLE;
+	// rec_led_state.blink = LED_BLINK_FLASH;
+	// rec_led_timer.begin(toggleRecLED, LED_BLINK_FAST_MS);
 }
 
 void loop() {
-	// recLedTimer.tick();
+	// rec_led_timer.tick();
 	// monLedTimer.tick();
 	// btLedTimer.tick();
 	
