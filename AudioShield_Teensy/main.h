@@ -21,7 +21,7 @@ enum btState {
   BTSTATE_PLAY,
 	BTSTATE_STOP
 };
-extern enum btState bt_state;
+extern enum btState 					bt_state;
 // low energy (BLE)
 enum bleState {
   BLESTATE_IDLE,
@@ -29,7 +29,7 @@ enum bleState {
   BLESTATE_CONNECTING,
 	BLESTATE_CONNECTED
 };
-extern enum bleState ble_state;
+extern enum bleState 					ble_state;
 // Working states
 struct wState {
   bool rec_state;
@@ -37,7 +37,7 @@ struct wState {
   enum btState bt_state;
 	enum bleState ble_state;
 };
-extern struct wState working_state;
+extern struct wState					working_state;
 
 
 #endif /* _MAIN_H_ */

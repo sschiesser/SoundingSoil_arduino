@@ -37,7 +37,7 @@ AudioControlSGTL5000					sgtl5000;						//xy=172,323
 // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 
-struct wState working_state;
+struct wState 								working_state;
 
 void setup() {
   // Initialize both serial ports:
@@ -49,42 +49,37 @@ void setup() {
   Serial.println("AudioShield v1.0");
   Serial.println("----------------");
   
-	// Initialize I/O ports and assign
+	// Initialize peripheral & variables
 	initLEDButtons();
-
 	initAudio();
-
 	initSDcard();
-
 	initWaveHeader();
-
 	initStates();
-	
 	bc127Init();
 }
 
 void loop() {
   // Read the buttons
-  buttonRecord.update();
-  buttonMonitor.update();
-  buttonBluetooth.update();
+  but_rec.update();
+  but_mon.update();
+  but_blue.update();
   
   // Button press actions
-  if(buttonRecord.fallingEdge()) {
+  if(but_rec.fallingEdge()) {
     Serial.print("Record button pressed: rec_state = "); Serial.println(working_state.rec_state);
     if(!working_state.rec_state) {
 			startLED(&leds[LED_RECORD], LED_MODE_WAITING);
-			struct gps_rmc_tag rmc_tag = fetchGPS();
-      recPath = createSDpath(rmc_tag);
+			struct gpsRMCtag rmc_tag = fetchGPS();
+      rec_path = createSDpath(rmc_tag);
 			startLED(&leds[LED_RECORD], LED_MODE_WARNING);
-      startRecording(recPath);
+      startRecording(rec_path);
     }
     else {
-      stopRecording(recPath);
+      stopRecording(rec_path);
 			stopLED(&leds[LED_RECORD]);
     }
   }
-  if(buttonMonitor.fallingEdge()) {
+  if(but_mon.fallingEdge()) {
     Serial.print("Monitor button pressed: mon_state = "); Serial.println(working_state.mon_state);
 		if(!working_state.mon_state) {
 			startLED(&leds[LED_MONITOR], LED_MODE_ON);
@@ -95,8 +90,8 @@ void loop() {
 			stopLED(&leds[LED_MONITOR]);
 		}
 	}
-  if(buttonBluetooth.fallingEdge()) {
-    Serial.print("Bluetooth button pressed: ble_state = "); Serial.println(working_state.ble_state);
+  if(but_blue.fallingEdge()) {
+    // Serial.print("Bluetooth button pressed: ble_state = "); Serial.println(working_state.ble_state);
 		if(working_state.ble_state == BLESTATE_IDLE) {
 			startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
 			startBLE();
@@ -123,8 +118,7 @@ void loop() {
     if(!sendCmdOut(outMsg)) {
       Serial.println("Sending command error!!");
     }
-  }
-	
+  }	
   if (Serial.available()) {
     String manInput = Serial.readStringUntil('\n');
     int len = manInput.length() - 1;
@@ -132,6 +126,9 @@ void loop() {
   }
 }
 
+/* initAudio(void)
+ * ---------------
+ */
 void initAudio(void) {
   // Memory buffer for the record queue
   AudioMemory(60);
@@ -144,6 +141,9 @@ void initAudio(void) {
   mixer.gain(MIXER_CH_SDC, 0);
 }
 
+/* initStates(void)
+ * ----------------
+ */
 void initStates(void) {
   working_state.rec_state = false;
   working_state.mon_state = false;
@@ -151,13 +151,16 @@ void initStates(void) {
   working_state.ble_state = BLESTATE_IDLE;
 }
 
+/* startRecording(String)
+ *
+ */
 void startRecording(String path) {
   Serial.println("Start recording");
   
   frec = SD.open(path, FILE_WRITE);
   if(frec) {
     queueSdc.begin();
-    totRecBytes = 0;
+    tot_rec_bytes = 0;
     // mixer.gain(MIXER_CH_REC, 1);
     working_state.rec_state = true;
   }
@@ -167,6 +170,9 @@ void startRecording(String path) {
   }
 }
 
+/* continueRecording(void)
+ *
+ */
 void continueRecording(void) {
   if(queueSdc.available() >= 2) {
     byte buffer[512];
@@ -181,7 +187,7 @@ void continueRecording(void) {
     // write all 512 bytes to the SD card
 //    elapsedMicros usec = 0;
     frec.write(buffer, 512);
-    totRecBytes += 512;
+    tot_rec_bytes += 512;
     // Uncomment these lines to see how long SD writes
     // are taking.  A pair of audio blocks arrives every
     // 5802 microseconds, so hopefully most of the writes
@@ -197,6 +203,9 @@ void continueRecording(void) {
   }
 }
 
+/* stopRecording(String)
+ *
+ */
 void stopRecording(String path) {
   Serial.println("Stop recording");
   queueSdc.end();
@@ -204,30 +213,42 @@ void stopRecording(String path) {
     while(queueSdc.available() > 0) {
       frec.write((byte*)queueSdc.readBuffer(), 256);
       queueSdc.freeBuffer();
-      totRecBytes += 256;
+      tot_rec_bytes += 256;
     }
     frec.close();
 
-    writeWaveHeader(path, totRecBytes);
+    writeWaveHeader(path, tot_rec_bytes);
   }
   working_state.rec_state = false;
 }
 
+/* startMonitoring(void)
+ *
+ */
 void startMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 1);
 	working_state.mon_state = true;
 }
 
+/* stopMonitoring(void)
+ *
+ */
 void stopMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 0);
 	working_state.mon_state = false;
 }
 
+/* startBLE(void)
+ *
+ */
 void startBLE(void) {
 	bc127Start();
 	working_state.ble_state = BLESTATE_ADV;
 }
 
+/* stopBLE(void)
+ *
+ */
 void stopBLE(void) {
 	bc127Stop();
 	working_state.ble_state = BLESTATE_IDLE;

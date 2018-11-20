@@ -8,27 +8,27 @@
 #include "SDutils.h"
 
 /*Wave header for PCM sound file */
-struct wave_header {
-  char  riff[4];                /* "RIFF"                                  */
-  unsigned long  flength;       /* file length in bytes                    */
-  char  wave[4];                /* "WAVE"                                  */
-  char  fmt[4];                 /* "fmt "                                  */
-  unsigned long  chunk_size;    /* size of FMT chunk in bytes (usually 16) */
-  short format_tag;             /* 1=PCM, 257=Mu-Law, 258=A-Law, 259=ADPCM */
-  short num_chans;              /* 1=mono, 2=stereo                        */
-  unsigned long  srate;         /* Sampling rate in samples per second     */
-  unsigned long  bytes_per_sec; /* bytes per second = srate*num_chan*bytes_per_samp */
-  short bytes_per_samp;         /* 2=16-bit mono, 4=16-bit stereo          */
-  short bits_per_samp;          /* Number of bits per sample               */
-  char  data[4];                /* "data"                                  */
-  unsigned long  dlength;       /* data length in bytes (filelength - 44)  */
-}wavehd;
+struct waveHd {
+  char  riff[4];                /* "RIFF"                                  					*/
+  unsigned long  flength;       /* file length in bytes                    					*/
+  char  wave[4];                /* "WAVE"                                  					*/
+  char  fmt[4];                 /* "fmt "                                  					*/
+  unsigned long  chunk_size;    /* size of FMT chunk in bytes (usually 16) 					*/
+  short format_tag;             /* 1=PCM, 257=Mu-Law, 258=A-Law, 259=ADPCM 					*/
+  short num_chans;              /* 1=mono, 2=stereo                        					*/
+  unsigned long  srate;         /* Sampling rate in samples per second     					*/
+  unsigned long  bytes_per_sec; /* bytes per second = srate*num_chan*bytes_per_samp	*/
+  short bytes_per_samp;         /* 2=16-bit mono, 4=16-bit stereo          					*/
+  short bits_per_samp;          /* Number of bits per sample               					*/
+  char  data[4];                /* "data"                                  					*/
+  unsigned long  dlength;       /* data length in bytes (filelength - 44)  					*/
+}wave_header;
 // SD card file handle
 File frec;
 // Total amount of recorded bytes
-unsigned long totRecBytes = 0;
+unsigned long tot_rec_bytes = 0;
 // Path name of the recorded file, defined by GPS or remote data
-String recPath = "";
+String rec_path = "";
 
 /* initSDcard(void)
  * ----------------
@@ -47,14 +47,14 @@ void initSDcard(void) {
   }
 }
 
-/* createSDpath(struct gps_rmc_tag)
+/* createSDpath(struct gpsRMCtag)
  * -----------------
  * Create the folder/file path of the new recording
  * out of retrieved GPS or sent remote values.
- * IN:	- raw GPS tag (struct gps_rmc_tag)
+ * IN:	- raw GPS tag (struct gpsRMCtag)
  * OUT:	- complete path (String)
  */
-String createSDpath(struct gps_rmc_tag tag) {
+String createSDpath(struct gpsRMCtag tag) {
 	Serial.println("Creating new folder/file on the SD card");
 	String dirName = "";
 	String fileName = "";
@@ -99,22 +99,22 @@ String createSDpath(struct gps_rmc_tag tag) {
  */
 void initWaveHeader(void) {
 	// Initialize the wave header
-	strncpy(wavehd.riff,"RIFF",4);
-	strncpy(wavehd.wave,"WAVE",4);
-	strncpy(wavehd.fmt,"fmt ",4);
+	strncpy(wave_header.riff,"RIFF",4);
+	strncpy(wave_header.wave,"WAVE",4);
+	strncpy(wave_header.fmt,"fmt ",4);
 	// <- missing here the filesize
-	wavehd.chunk_size = WAVE_FMT_CHUNK_SIZE;
-	wavehd.format_tag = WAVE_FORMAT_PCM;
-	wavehd.num_chans = WAVE_NUM_CHANNELS;
-	wavehd.srate = WAVE_SAMPLING_RATE;
-	wavehd.bytes_per_sec = WAVE_BYTES_PER_SEC;
-	wavehd.bytes_per_samp = WAVE_BYTES_PER_SAMP;
-	wavehd.bits_per_samp = WAVE_BITS_PER_SAMP;
-	strncpy(wavehd.data,"data",4);
+	wave_header.chunk_size = WAVE_FMT_CHUNK_SIZE;
+	wave_header.format_tag = WAVE_FORMAT_PCM;
+	wave_header.num_chans = WAVE_NUM_CHANNELS;
+	wave_header.srate = WAVE_SAMPLING_RATE;
+	wave_header.bytes_per_sec = WAVE_BYTES_PER_SEC;
+	wave_header.bytes_per_samp = WAVE_BYTES_PER_SAMP;
+	wave_header.bits_per_samp = WAVE_BITS_PER_SAMP;
+	strncpy(wave_header.data,"data",4);
 	// <- missing here the data size
 }
 
-/* writeWaveHeader(path, dataLength)
+/* writeWaveHeader(path, dlen)
  * ---------------------------------
  * Write data & file length values to the wave header
  * when recording stop has been called
@@ -122,13 +122,13 @@ void initWaveHeader(void) {
  *			- number of recorded bytes (unsigned long)
  * OUT:	- none
  */
-void writeWaveHeader(String path, unsigned long dataLength) {
+void writeWaveHeader(String path, unsigned long dlen) {
 	File fh;
-  wavehd.dlength = dataLength;
-  wavehd.flength = dataLength + 36;
+  wave_header.dlength = dlen;
+  wave_header.flength = dlen + 36;
   
   fh = SD.open(path, O_WRITE);
   fh.seek(0);
-  fh.write((byte*)&wavehd, 44);
+  fh.write((byte*)&wave_header, 44);
   fh.close();
 }

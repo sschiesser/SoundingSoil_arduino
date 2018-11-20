@@ -16,7 +16,7 @@
  * IN:	- none
  * OUT:	- none
  */
-struct gps_rmc_tag fetchGPS(void) {
+struct gpsRMCtag fetchGPS(void) {
   String gpsResp = "";
   boolean stringFound = false;
   while(!stringFound) {
@@ -38,11 +38,11 @@ struct gps_rmc_tag fetchGPS(void) {
  * IN: 	- raw NMEA tag (string)
  * OUT:	- none
  */
-struct gps_rmc_tag sliceTag(String rawTag) {
+struct gpsRMCtag sliceTag(String rawTag) {
   int pos = 0;
   int len;
   char printbuf[256];
-  struct gps_rmc_tag gps_tag;
+  struct gpsRMCtag gps_tag;
   gps_tag.raw_tag = rawTag;
   
   // Time

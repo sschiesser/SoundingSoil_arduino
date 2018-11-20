@@ -5,60 +5,60 @@
 #ifndef _GPSROUTINES_H_
 #define _GPSROUTINES_H_
 
-#define GPS_NMEA_START_CHAR       0x24 // $
-#define GPS_NMEA_STOP_CHAR        0x0A // LF
-#define GPS_CONV_KNOT_TO_KMH      (1.852)
-#define GPS_CONV_KNOT_TO_MPH      (1.15078)
+#define GPS_NMEA_START_CHAR		0x24 // $
+#define GPS_NMEA_STOP_CHAR		0x0A // LF
+#define GPS_CONV_KNOT_TO_KMH	(1.852)
+#define GPS_CONV_KNOT_TO_MPH	(1.15078)
 
-struct gps_time {
+struct gpsTime {
   byte h;
   byte min;
   byte sec;
   byte msec;
 };
-struct gps_date {
+struct gpsDate {
   byte day;
   byte month;
   unsigned int year;
 };
-struct gps_lat {
+struct gpsLat {
   byte deg;
   byte min;
   unsigned int sec;
   bool north;
 };
-struct gps_long {
+struct gpsLong {
   byte deg;
   byte min;
   unsigned int sec;
   bool east;
 };
-struct gps_altitude {
+struct gpsAlt {
   float number;
   bool m_unit;
 };
-struct gps_geoid {
+struct gpsGeoid {
   float number;
   bool m_unit;
 };
-struct gps_speed {
+struct gpsSpeed {
   float knots;
   float mph;
   float kmh;
 };
-struct gps_variation {
+struct gpsVar {
   float angle;
   bool east;
 };
-struct gps_rmc_tag {
-  struct gps_time time;
+struct gpsRMCtag {
+  struct gpsTime time;
   bool status_active;
-  struct gps_lat latitude;
-  struct gps_long longitude;
-  struct gps_speed speed;
+  struct gpsLat latitude;
+  struct gpsLong longitude;
+  struct gpsSpeed speed;
   float track_angle;
-  struct gps_date date;
-  struct gps_variation mvar;
+  struct gpsDate date;
+  struct gpsVar mvar;
   char sig_int;
   String raw_tag;
   byte length;
@@ -69,8 +69,8 @@ struct gps_rmc_tag {
  * FUNCTIONS DECLARATIONS
  * ====================== */
 
-struct gps_rmc_tag fetchGPS(void);
-struct gps_rmc_tag  sliceTag(String tag);
+struct gpsRMCtag fetchGPS(void);
+struct gpsRMCtag  sliceTag(String tag);
 int tagGetNextPos(String tag, byte pos, char delim);
 
 #endif /* _GPSROUTINES_H_ */

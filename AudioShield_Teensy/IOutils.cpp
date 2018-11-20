@@ -7,13 +7,13 @@
 
 #include "IOutils.h"
 
-Bounce buttonRecord = Bounce(BUTTON_RECORD, 8);
-Bounce buttonMonitor = Bounce(BUTTON_MONITOR, 8);
-Bounce buttonBluetooth = Bounce(BUTTON_BLUETOOTH, 8);
+Bounce													but_rec = Bounce(BUTTON_RECORD, 8);
+Bounce 													but_mon = Bounce(BUTTON_MONITOR, 8);
+Bounce 													but_blue = Bounce(BUTTON_BLUETOOTH, 8);
 
-IntervalTimer led_timers[LED_MAX_NUMBER];
-byte led_pins[LED_MAX_NUMBER] = { LED_RECORD_PIN, LED_MONITOR_PIN, LED_BLUETOOTH_PIN };
-struct leds_s leds[LED_MAX_NUMBER];
+IntervalTimer										led_timers[LED_MAX_NUMBER];
+byte 														led_pins[LED_MAX_NUMBER] = { LED_RECORD_PIN, LED_MONITOR_PIN, LED_BLUETOOTH_PIN };
+struct leds_s 									leds[LED_MAX_NUMBER];
 	
 /* initLEDButtons(void)
  * --------------------

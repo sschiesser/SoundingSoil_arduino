@@ -10,10 +10,10 @@
 #include "main.h"
 
 // Bluetooth audio devices definition
-#define DEVLIST_MAXLEN 6
-extern struct BTdev devList[DEVLIST_MAXLEN];
-extern unsigned int foundDevices;
-extern String peerAddress;
+#define DEVLIST_MAXLEN				6
+extern struct btDev 					dev_list[DEVLIST_MAXLEN];
+extern unsigned int 					found_dev;
+extern String									peer_address;
 
 // Serial command messages
 enum outputMsg {
@@ -38,6 +38,9 @@ enum outputMsg {
   MAX_OUTPUTS
 };
 
+/* ======================
+ * FUNCTIONS DECLARATIONS
+ * ====================== */
 
 void bc127Init(void);
 void bc127Start(void);

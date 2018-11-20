@@ -7,15 +7,15 @@
 
 #include "BC127.h"
 
-struct BTdev {
+struct btDev {
   String address;
   String capabilities;
   unsigned int strength;
 };
-struct BTdev devList[DEVLIST_MAXLEN];
+struct btDev dev_list[DEVLIST_MAXLEN];
 
-unsigned int foundDevices;
-String peerAddress;
+unsigned int found_dev;
+String peer_address;
 
 /* bc127Init(void)
  * ---------------
@@ -143,8 +143,8 @@ int parseSerialIn(String input) {
 		// "conn xxxx" -> open A2DP connection to xxxx
     else if(part2.substring(0, 4).equalsIgnoreCase("conn")) {
       int len = part2.substring(5).length()-1;
-      peerAddress = part2.substring(5, (5+len));
-      Serial.print("peerAddress: "); Serial.println(peerAddress);
+      peer_address = part2.substring(5, (5+len));
+      Serial.print("peer_address: "); Serial.println(peer_address);
       return BCCMD_BT_OPEN;
     }
   }
@@ -197,19 +197,19 @@ bool sendCmdOut(int msg) {
     case BCCMD_BT_INQUIRY:
     // Serial.println("Start inquiry");
     for(int i = 0; i < DEVLIST_MAXLEN; i++) {
-      devList[i].address = "";
-      devList[i].capabilities = "";
-      devList[i].strength = 0;
+      dev_list[i].address = "";
+      dev_list[i].capabilities = "";
+      dev_list[i].strength = 0;
     }
-    foundDevices = 0;
-    peerAddress = "";
+    found_dev = 0;
+    peer_address = "";
     devString = "";
     cmdLine = "INQUIRY 10\r";
     break;
-		// Open A2DP connection with 'peerAddress'
+		// Open A2DP connection with 'peer_address'
     case BCCMD_BT_OPEN:
-    Serial.print("Opening BT connection @"); Serial.println(peerAddress);
-    cmdLine = "OPEN " + peerAddress + " A2DP\r";
+    Serial.print("Opening BT connection @"); Serial.println(peer_address);
+    cmdLine = "OPEN " + peer_address + " A2DP\r";
     break;
 		// Start monitoring -> AVRCP play
     case BCCMD_BT_STARTMON:
@@ -235,10 +235,10 @@ bool sendCmdOut(int msg) {
     break;
     // Results of the inquiry -> store devices with address & signal strength
     case ANNOT_INQ_STATE:
-    for(unsigned int i = 0; i < foundDevices; i++) {
-      devString = devList[i].address;
+    for(unsigned int i = 0; i < found_dev; i++) {
+      devString = dev_list[i].address;
       devString.concat(" ");
-      devString.concat(devList[i].strength);
+      devString.concat(dev_list[i].strength);
       cmdLine = "SEND BLE " + devString + "\r";
       Serial4.print(cmdLine);
     }
@@ -270,13 +270,13 @@ void populateDevlist(String addr, String caps, unsigned int stren) {
   int lastPos = 0;
   for(int i = 0; i < DEVLIST_MAXLEN; i++) {
 		// Received address matches to an already existing one.
-    if(addr.equals(devList[i].address)) {
-      devList[i].strength = stren;
+    if(addr.equals(dev_list[i].address)) {
+      dev_list[i].strength = stren;
       found = true;
       break;
     }
 		// No address matched and the current position is empty.
-    else if(devList[i].address.equals("")) {
+    else if(dev_list[i].address.equals("")) {
       lastPos = i;
       break;
     }
@@ -284,17 +284,17 @@ void populateDevlist(String addr, String caps, unsigned int stren) {
 
 	// If not matching device has been found, fill the next emplacement.
   if(!found) {
-    devList[lastPos].address = addr;
-    devList[lastPos].capabilities = caps;
-    devList[lastPos].strength = stren;
-    foundDevices += 1;
+    dev_list[lastPos].address = addr;
+    dev_list[lastPos].capabilities = caps;
+    dev_list[lastPos].strength = stren;
+    found_dev += 1;
   }
   
   // Serial.println("Device list:");
-  // for(unsigned int i = 0; i < foundDevices; i++) {
+  // for(unsigned int i = 0; i < found_dev; i++) {
     // Serial.print(i); Serial.print(": ");
-    // Serial.print(devList[i].address); Serial.print(", ");
-    // Serial.print(devList[i].capabilities); Serial.print(", ");
-    // Serial.println(devList[i].strength);
+    // Serial.print(dev_list[i].address); Serial.print(", ");
+    // Serial.print(dev_list[i].capabilities); Serial.print(", ");
+    // Serial.println(dev_list[i].strength);
   // }
 }

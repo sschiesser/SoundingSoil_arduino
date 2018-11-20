@@ -12,9 +12,9 @@
 #define BUTTON_RECORD					24
 #define BUTTON_MONITOR				25
 #define BUTTON_BLUETOOTH			29
-extern Bounce									buttonRecord;
-extern Bounce									buttonMonitor;
-extern Bounce									buttonBluetooth;
+extern Bounce									but_rec;
+extern Bounce									but_mon;
+extern Bounce									but_blue;
 
 // LED definitions
 #define LED_RECORD_PIN				26
@@ -46,7 +46,7 @@ enum led_mode {
 };
 
 // LED struct containing all the related elements
-typedef void (*addToggle)(void);
+typedef void 									(*addToggle)(void);
 struct leds_s {
 	unsigned int pin; 
 	bool status;
@@ -55,7 +55,7 @@ struct leds_s {
 	addToggle toggle;
 	unsigned int cnt;
 };
-extern struct leds_s leds[LED_MAX_NUMBER];
+extern struct leds_s 					leds[LED_MAX_NUMBER];
 
 
 /* ======================
@@ -70,4 +70,4 @@ void initLEDButtons(void);
 void startLED(struct leds_s *ld, enum led_mode mode);
 void stopLED(struct leds_s *ld);
 
-#endif
+#endif /* _IOUTILS_H_ */
