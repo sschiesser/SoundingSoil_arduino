@@ -17,22 +17,45 @@ struct BTdev devList[DEVLIST_MAXLEN];
 unsigned int foundDevices;
 String peerAddress;
 
-
-void initBC127(void) {
-	// Reset BC127 module
-	sendCmdOut(BCCMD_GEN_PWROFF);
+/* bc127Init(void)
+ * ---------------
+ * Initialize BC127, ...by switching it off!
+ * IN:	- none
+ * OUT:	- none
+ */
+void bc127Init(void) {
+	bc127Stop();
 }
 
+/* bc127Start(void)
+ * ----------------
+ * Start BC127, then start advertising on the BLE channel.
+ * IN:	- none
+ * OUT:	- none
+ */
 void bc127Start(void) {
 	sendCmdOut(BCCMD_GEN_PWRON);
 	delay(200);
-	sendCmdOut(BCCMD_BLE_ADVERTISE);
+	sendCmdOut(BCCMD_BLE_ADV_ON);
 }
 
+/* bc127Stop(void)
+ * ---------------
+ * Stop BC127 (switch off)
+ * IN:	- none
+ * OUT:	- none
+ */
 void bc127Stop(void) {
 	sendCmdOut(BCCMD_GEN_PWROFF);
 }
 
+/* parseSerialIn(String)
+ * ---------------------
+ * Parse received string and read information along
+ * minimal keywords.
+ * IN:	- received input (String)
+ * OUT:	- message to send back (int)
+ */
 int parseSerialIn(String input) {
   // ================================================================
   // Slicing input string.
@@ -44,47 +67,39 @@ int parseSerialIn(String input) {
   String part1, part2;
   int slice1 = input.indexOf(" ");
   int slice2 = input.indexOf(" ", slice1+1);
-  // 2-words notifications
+  // 2nd space not found -> 2-word notification
   if(slice2 == -1) {
     part1 = input.substring(0, slice1);
     part2 = input.substring(slice1 + 1);
   }
+	// more than 2 words...
   else {
     part1 = input.substring(0, slice1);
     part2 = input.substring(slice1 + 1, slice2);
-    // "RECV BLE" case
+    // "RECV BLE" case -> part2 contains everything coming after "RECV BLE"
     if(part1.equals("RECV") && part2.equals("BLE")) {
       part1.concat(" BLE");
       part2 = input.substring(slice2+1);
     }
-    // other cases
+    // other cases -> part2 contains all words after the first space
     else {
       part2 = input.substring(slice1+1);
     }
   }
 
-  // ================================================================
-  // Parsing & interpreting input
-  // ================================================================
-  if(part1.equalsIgnoreCase("Ready\n")) {
-//    return BCCMD_BLE_ADVERTISE;
-  }
-  else if(part1.equalsIgnoreCase("OK\n")) {
-//    Serial.println("OK");
-  }
-  else if(part1.equalsIgnoreCase("ERROR\n")) {
-    Serial.println("!!ERROR!!");
-  }
   // Notifications from BC127!!
-  else if(part1.equalsIgnoreCase("OPEN_OK")) {
+  // ==========================
+  if(part1.equalsIgnoreCase("OPEN_OK")) {
+		// "OPEN_OK BLE" -> connection established with phone app
     if(part2.equalsIgnoreCase("BLE\n")) {
-      Serial.println("BLE connection done!");
 			working_state.ble_state = BLESTATE_CONNECTING;
     }
+		// "OPEN_OK AVRCP" -> A2DP & AVRCP connections established with audio receiver 
     else if(part2.equalsIgnoreCase("AVRCP\n")) {
       Serial.println("AVRCP protocol open!");
     }
   }
+	// "INQUIRY xxxx yyyyyy -zzdB" -> TODO: make addr/caps/stren parsing more robust!
   else if(part1.equalsIgnoreCase("INQUIRY")) {
     int len = part2.length()-1;
     String addr = part2.substring(0,12);
@@ -93,30 +108,39 @@ int parseSerialIn(String input) {
     populateDevlist(addr, caps, stren);
     return ANNOT_INQ_STATE;
   }
-  // Commands from Android
+  // Commands from Android ("RECV BLE")
+  // ==================================
   else if(part1.equalsIgnoreCase("RECV BLE")) {
+		// "inq" -> start BT inquiry
     if(part2.equalsIgnoreCase("inq\n")) {
       Serial.println("Received BT inquiry command");
       return BCCMD_BT_INQUIRY;
     }
+		// "start_mon" -> start monitoring
     else if(part2.equalsIgnoreCase("start_mon\n")) {
       return BCCMD_BT_STARTMON;
     }
+		// "stop_mon" -> stop monitoring
     else if(part2.equalsIgnoreCase("stop_mon\n")) {
       return BCCMD_BT_STOPMON;
     }
+		// "start_rec" -> start recording
     else if(part2.equalsIgnoreCase("start_rec\n")) {
       return BCCMD_BT_STARTREC;
     }
+		// "stop_rec" -> stop recording
     else if(part2.equalsIgnoreCase("stop_rec\n")) {
       return BCCMD_BT_STOPREC;
     }
+		// "vol+" -> volume up
     else if(part2.equalsIgnoreCase("vol+\n")) {
       return BCCMD_BT_VOLUP;
     }
+		// "vol-" -> volume down
     else if(part2.equalsIgnoreCase("vol-\n")) {
       return BCCMD_BT_VOLDOWN;
     }
+		// "conn xxxx" -> open A2DP connection to xxxx
     else if(part2.substring(0, 4).equalsIgnoreCase("conn")) {
       int len = part2.substring(5).length()-1;
       peerAddress = part2.substring(5, (5+len));
@@ -131,8 +155,13 @@ int parseSerialIn(String input) {
   return BCCMD_NOTHING;
 }
 
+/* sendCmdOut(int)
+ * ---------------
+ * Send specific commands to the BC127 UART
+ * IN:	- message (int)
+ * OUT:	- command confirmation (bool)
+ */
 bool sendCmdOut(int msg) {
-  bool retVal = true;
   String devString = "";
   String cmdLine = "";
   
@@ -140,28 +169,33 @@ bool sendCmdOut(int msg) {
     case BCCMD_NOTHING:
     break;
 
+		// Reset
     case BCCMD_GEN_RESET:
-    Serial.println("Resetting BC127...");
+    // Serial.println("Resetting BC127...");
     cmdLine = "RESET\r";
     break;
-		
+		// Power-off
 		case BCCMD_GEN_PWROFF:
-		Serial.println("Switching BC127 off");
+		// Serial.println("Switching BC127 off");
 		cmdLine = "POWER OFF\r";
 		break;
-		
+		// Power-on
 		case BCCMD_GEN_PWRON:
-		Serial.println("Waking BC127 up");
+		// Serial.println("Waking BC127 up");
 		cmdLine = "POWER ON\r";
 		break;
-    
-    case BCCMD_BLE_ADVERTISE:
-    Serial.println("Starting BLE advertising");
+    // Start advertising on BLE
+    case BCCMD_BLE_ADV_ON:
+    // Serial.println("Starting BLE advertising");
     cmdLine = "ADVERTISING ON\r";
     break;
-    
+		// Stop advertising
+		case BCCMD_BLE_ADV_OFF:
+		cmdLine = "ADVERTISING OFF\r";
+		break;
+    // Start inquiry on BT for 10 s, first clear the device list
     case BCCMD_BT_INQUIRY:
-    Serial.println("Start inquiry");
+    // Serial.println("Start inquiry");
     for(int i = 0; i < DEVLIST_MAXLEN; i++) {
       devList[i].address = "";
       devList[i].capabilities = "";
@@ -172,34 +206,34 @@ bool sendCmdOut(int msg) {
     devString = "";
     cmdLine = "INQUIRY 10\r";
     break;
-
+		// Open A2DP connection with 'peerAddress'
     case BCCMD_BT_OPEN:
     Serial.print("Opening BT connection @"); Serial.println(peerAddress);
     cmdLine = "OPEN " + peerAddress + " A2DP\r";
     break;
-
+		// Start monitoring -> AVRCP play
     case BCCMD_BT_STARTMON:
     cmdLine = "MUSIC PLAY\r";
     break;
-
+		// Stop monitoring -> AVRCP pause
     case BCCMD_BT_STOPMON:
     cmdLine = "MUSIC PAUSE\r";
     break;
-
+		// Start recording
     case BCCMD_BT_STARTREC:
     break;
-
+		// Stop recording
     case BCCMD_BT_STOPREC:
     break;
-
+		// Volume up -> AVRCP volume up
     case BCCMD_BT_VOLUP:
     cmdLine = "VOLUME UP\r";
     break;
-
+		// Volume down -> AVRCP volume down
     case BCCMD_BT_VOLDOWN:
     cmdLine = "VOLUME DOWN\r";
     break;
-    
+    // Results of the inquiry -> store devices with address & signal strength
     case ANNOT_INQ_STATE:
     for(unsigned int i = 0; i < foundDevices; i++) {
       devString = devList[i].address;
@@ -210,32 +244,45 @@ bool sendCmdOut(int msg) {
     }
     cmdLine = "";
     break;
-
+		// No recognised command -> send negative confirmation
     default:
-    retVal = false;
+    return false;
     break;
   }
-
+	// Send the prepared command line to UART
   Serial4.print(cmdLine);
-  
-  return retVal;
+  // Send positive confirmation
+  return true;
 }
 
+/* populateDevlist(String, String, unsigned int)
+ * ---------------------------------------------
+ * Search if received device address is already existing.
+ * If not, fill the list at the next empty place, otherwise
+ * just update the signal strength value.
+ * IN:	- device address (String)
+ *			- device capabilities (String)
+ *			- absolute signal stregth value (unsigned int)
+ * OUT:	- none
+ */
 void populateDevlist(String addr, String caps, unsigned int stren) {
   bool found = false;
   int lastPos = 0;
   for(int i = 0; i < DEVLIST_MAXLEN; i++) {
+		// Received address matches to an already existing one.
     if(addr.equals(devList[i].address)) {
       devList[i].strength = stren;
       found = true;
       break;
     }
+		// No address matched and the current position is empty.
     else if(devList[i].address.equals("")) {
       lastPos = i;
       break;
     }
   }
 
+	// If not matching device has been found, fill the next emplacement.
   if(!found) {
     devList[lastPos].address = addr;
     devList[lastPos].capabilities = caps;
@@ -243,11 +290,11 @@ void populateDevlist(String addr, String caps, unsigned int stren) {
     foundDevices += 1;
   }
   
-  Serial.println("Device list:");
-  for(unsigned int i = 0; i < foundDevices; i++) {
-    Serial.print(i); Serial.print(": ");
-    Serial.print(devList[i].address); Serial.print(", ");
-    Serial.print(devList[i].capabilities); Serial.print(", ");
-    Serial.println(devList[i].strength);
-  }
+  // Serial.println("Device list:");
+  // for(unsigned int i = 0; i < foundDevices; i++) {
+    // Serial.print(i); Serial.print(": ");
+    // Serial.print(devList[i].address); Serial.print(", ");
+    // Serial.print(devList[i].capabilities); Serial.print(", ");
+    // Serial.println(devList[i].strength);
+  // }
 }

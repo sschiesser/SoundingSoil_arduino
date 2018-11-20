@@ -21,7 +21,8 @@ enum outputMsg {
   BCCMD_GEN_RESET,
 	BCCMD_GEN_PWROFF,
 	BCCMD_GEN_PWRON,
-  BCCMD_BLE_ADVERTISE,
+  BCCMD_BLE_ADV_ON,
+	BCCMD_BLE_ADV_OFF,
   BCCMD_BLE_SEND,
   BCCMD_BT_INQUIRY,
   BCCMD_BT_LIST,
@@ -38,7 +39,7 @@ enum outputMsg {
 };
 
 
-void initBC127(void);
+void bc127Init(void);
 void bc127Start(void);
 void bc127Stop(void);
 void bc127Inquiry(void);

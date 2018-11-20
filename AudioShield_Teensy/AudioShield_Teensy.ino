@@ -60,7 +60,7 @@ void setup() {
 
 	initStates();
 	
-	initBC127();
+	bc127Init();
 }
 
 void loop() {
