@@ -88,8 +88,8 @@ void setup() {
 	// rec_led_state.mode = LED_MODE_IDLE;
 	// rec_led_state.blink = LED_BLINK_FLASH;
 	// rec_led_timer.begin(toggleRecLED, LED_BLINK_FAST_MS);
-	// as_leds[LED_RECORD].blink = LED_BLINK_MED;
-	// as_leds[LED_RECORD].timer.begin(as_leds[LED_RECORD].toggle, LED_BLINK_MED_MS);
+	// leds[LED_RECORD].blink = LED_BLINK_MED;
+	// leds[LED_RECORD].timer.begin(leds[LED_RECORD].toggle, LED_BLINK_MED_MS);
 }
 
 void loop() {
@@ -106,25 +106,26 @@ void loop() {
   if(buttonRecord.fallingEdge()) {
     Serial.print("Record button pressed: rec_state = "); Serial.println(workingState.rec_state);
     if(!workingState.rec_state) {
+			startLED(&leds[LED_RECORD], LED_MODE_WAITING);
 			struct gps_rmc_tag rmc_tag = fetchGPS();
       recPath = createSDpath(rmc_tag);
-			startLED(&as_leds[LED_RECORD], LED_MODE_WAITING);
+			startLED(&leds[LED_RECORD], LED_MODE_WARNING);
       startRecording(recPath);
     }
     else {
       stopRecording(recPath);
-			stopLED(&as_leds[LED_RECORD]);
+			stopLED(&leds[LED_RECORD]);
     }
   }
   if(buttonMonitor.fallingEdge()) {
     Serial.print("Monitor button pressed: mon_state = "); Serial.println(workingState.mon_state);
 		if(!workingState.mon_state) {
-			startLED(&as_leds[LED_MONITOR], LED_MODE_ON);
+			startLED(&leds[LED_MONITOR], LED_MODE_ON);
 			startMonitoring();
 		}
 		else {
 			stopMonitoring();
-			stopLED(&as_leds[LED_MONITOR]);
+			stopLED(&leds[LED_MONITOR]);
 		}
 	}
   if(buttonBluetooth.fallingEdge()) {

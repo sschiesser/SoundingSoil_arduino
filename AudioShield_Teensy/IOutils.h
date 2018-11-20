@@ -29,20 +29,11 @@ extern Bounce buttonBluetooth;
 #define LED_BLINK_MED_MS			(500 * 1000)
 #define LED_BLINK_SLOW_MS			(5000 * 1000)
 
-enum led_enum {
+enum led_list {
 	LED_RECORD = 0,
 	LED_MONITOR,
 	LED_BLUETOOTH,
-	LED_MAX_SIZE
 };
-
-// enum led_blink {
-	// LED_BLINK_OFF,
-	// LED_BLINK_SLOW,
-	// LED_BLINK_MED,
-	// LED_BLINK_FAST,
-	// LED_BLINK_FLASH
-// };
 
 enum led_mode {
 	LED_MODE_OFF = 0,
@@ -54,12 +45,8 @@ enum led_mode {
 	LED_MODE_IDLE_SLOW
 };
 
-void toggleRecLED(void);
-void toggleMonLED(void);
-void toggleBtLED(void);
 typedef void (*addToggle)(void);
-
-struct leds {
+struct leds_s {
 	unsigned int pin; 
 	bool status;
 	enum led_mode mode;
@@ -69,11 +56,16 @@ struct leds {
 	unsigned int cnt;
 };
 
-extern struct leds as_leds[LED_MAX_SIZE];
+extern struct leds_s leds[LED_MAX_NUMBER];
+
+void toggleRecLED(void);
+void toggleMonLED(void);
+void toggleBtLED(void);
+
 
 
 void initLEDButtons(void);
-void startLED(struct leds *ld, enum led_mode mode);
-void stopLED(struct leds *ld);
+void startLED(struct leds_s *ld, enum led_mode mode);
+void stopLED(struct leds_s *ld);
 
 #endif

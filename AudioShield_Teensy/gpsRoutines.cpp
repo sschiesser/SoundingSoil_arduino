@@ -21,6 +21,8 @@ struct gps_rmc_tag fetchGPS(void) {
   boolean stringFound = false;
   while(!stringFound) {
 //    gpsResp = Serial1.readStringUntil(GPS_NMEA_STOP_CHAR);
+		elapsedMillis msec = 0;
+		while(msec < 2000);;
     gpsResp = "$GPRMC,162614,A,5230.5900,N,01322.3900,E,10.0,90.0,131006,1.2,E,A*13";
     if(gpsResp.startsWith("$GPRMC")) {
 //      Serial.println(gpsResp);
