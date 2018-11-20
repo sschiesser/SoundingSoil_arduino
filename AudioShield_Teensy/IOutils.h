@@ -36,21 +36,22 @@ enum led_enum {
 	LED_MAX_SIZE
 };
 
-enum led_blink {
-	LED_BLINK_OFF,
-	LED_BLINK_SLOW,
-	LED_BLINK_MED,
-	LED_BLINK_FAST,
-	LED_BLINK_FLASH
-};
+// enum led_blink {
+	// LED_BLINK_OFF,
+	// LED_BLINK_SLOW,
+	// LED_BLINK_MED,
+	// LED_BLINK_FAST,
+	// LED_BLINK_FLASH
+// };
 
 enum led_mode {
-	LED_MODE_OFF,
-	LED_MODE_SOLID,
+	LED_MODE_OFF = 0,
+	LED_MODE_ON,
 	LED_MODE_WAITING,
 	LED_MODE_WARNING,
 	LED_MODE_ERROR,
-	LED_MODE_IDLE
+	LED_MODE_IDLE_FAST,
+	LED_MODE_IDLE_SLOW
 };
 
 void toggleRecLED(void);
@@ -62,18 +63,17 @@ struct leds {
 	unsigned int pin; 
 	bool status;
 	enum led_mode mode;
-	enum led_blink blink;
+	// enum led_blink blink;
 	IntervalTimer timer;
 	addToggle toggle;
 	unsigned int cnt;
 };
 
 extern struct leds as_leds[LED_MAX_SIZE];
-// extern struct led_state as_led_state[LED_MAX_NUMBER];
-// extern IntervalTimer as_led_timer[LED_MAX_NUMBER];
 
 
 void initLEDButtons(void);
-void startLED(struct leds ld, enum led_mode mode);
+void startLED(struct leds *ld, enum led_mode mode);
+void stopLED(struct leds *ld);
 
 #endif
