@@ -53,20 +53,27 @@ enum led_mode {
 	LED_MODE_IDLE
 };
 
+void toggleRecLED(void);
+void toggleMonLED(void);
+void toggleBtLED(void);
+typedef void (*addToggle)(void);
+
 struct leds {
 	unsigned int pin; 
 	bool status;
 	enum led_mode mode;
 	enum led_blink blink;
 	IntervalTimer timer;
+	addToggle toggle;
 	unsigned int cnt;
 };
 
+extern struct leds as_leds[LED_MAX_SIZE];
 // extern struct led_state as_led_state[LED_MAX_NUMBER];
 // extern IntervalTimer as_led_timer[LED_MAX_NUMBER];
 
 
 void initLEDButtons(void);
-// void toggleRecLED(void);
+void startLED(struct leds ld, enum led_mode mode);
 
 #endif

@@ -88,6 +88,8 @@ void setup() {
 	// rec_led_state.mode = LED_MODE_IDLE;
 	// rec_led_state.blink = LED_BLINK_FLASH;
 	// rec_led_timer.begin(toggleRecLED, LED_BLINK_FAST_MS);
+	as_leds[LED_RECORD].blink = LED_BLINK_MED;
+	as_leds[LED_RECORD].timer.begin(as_leds[LED_RECORD].toggle, LED_BLINK_MED_MS);
 }
 
 void loop() {
