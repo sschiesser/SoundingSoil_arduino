@@ -50,7 +50,6 @@ struct leds_s {
 	unsigned int pin; 
 	bool status;
 	enum led_mode mode;
-	// enum led_blink blink;
 	IntervalTimer timer;
 	addToggle toggle;
 	unsigned int cnt;
@@ -58,12 +57,10 @@ struct leds_s {
 
 extern struct leds_s leds[LED_MAX_NUMBER];
 
+void toggleCb(struct leds_s *ld);
 void toggleRecLED(void);
 void toggleMonLED(void);
 void toggleBtLED(void);
-
-
-
 void initLEDButtons(void);
 void startLED(struct leds_s *ld, enum led_mode mode);
 void stopLED(struct leds_s *ld);

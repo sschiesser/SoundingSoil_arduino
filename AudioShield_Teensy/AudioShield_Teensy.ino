@@ -130,15 +130,22 @@ void loop() {
 	}
   if(buttonBluetooth.fallingEdge()) {
     Serial.print("Bluetooth button pressed: ble_state = "); Serial.println(workingState.ble_state);
+		if(!workingState.ble_state) {
+			startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
+			startBLE();
+		}
+		else {
+			stopLED(&leds[LED_BLUETOOTH]);
+			stopBLE();
+		}
   }
+	
   // State actions
   if(workingState.rec_state) {
     continueRecording();
   }
-  if(workingState.mon_state) {
-    
-  }
-  
+
+	// Serial messaging
   if (Serial4.available()) {
     String inMsg = Serial4.readStringUntil('\r');
     int outMsg = parseSerialIn(inMsg);
@@ -182,7 +189,7 @@ void startRecording(String path) {
   }
 }
 
-void continueRecording() {
+void continueRecording(void) {
   if(queueSdc.available() >= 2) {
     byte buffer[512];
     // Fetch 2 blocks from the audio library and copy
@@ -228,12 +235,18 @@ void stopRecording(String path) {
   workingState.rec_state = false;
 }
 
-void startMonitoring() {
+void startMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 1);
 	workingState.mon_state = true;
 }
 
-void stopMonitoring() {
+void stopMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 0);
 	workingState.mon_state = false;
+}
+
+void startBLE(void) {
+}
+
+void stopBLE(void) {
 }
