@@ -8,18 +8,18 @@
 #include <Arduino.h>
 #include <Bounce.h>
 
-// Buttons definition
-#define BUTTON_RECORD         24
-#define BUTTON_MONITOR        25
-#define BUTTON_BLUETOOTH      29
-extern Bounce buttonRecord;
-extern Bounce buttonMonitor;
-extern Bounce buttonBluetooth;
+// Buttons definitions
+#define BUTTON_RECORD					24
+#define BUTTON_MONITOR				25
+#define BUTTON_BLUETOOTH			29
+extern Bounce									buttonRecord;
+extern Bounce									buttonMonitor;
+extern Bounce									buttonBluetooth;
 
-// LED definition
-#define LED_RECORD_PIN        26
-#define LED_MONITOR_PIN       27
-#define LED_BLUETOOTH_PIN     28
+// LED definitions
+#define LED_RECORD_PIN				26
+#define LED_MONITOR_PIN				27
+#define LED_BLUETOOTH_PIN			28
 #define LED_MAX_NUMBER				3
 
 #define LED_OFF               HIGH
@@ -45,6 +45,7 @@ enum led_mode {
 	LED_MODE_IDLE_SLOW
 };
 
+// LED struct containing all the related elements
 typedef void (*addToggle)(void);
 struct leds_s {
 	unsigned int pin; 
@@ -54,8 +55,12 @@ struct leds_s {
 	addToggle toggle;
 	unsigned int cnt;
 };
-
 extern struct leds_s leds[LED_MAX_NUMBER];
+
+
+/* ======================
+ * FUNCTIONS DECLARATIONS
+ * ====================== */
 
 void toggleCb(struct leds_s *ld);
 void toggleRecLED(void);

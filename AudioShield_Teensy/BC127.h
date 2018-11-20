@@ -7,13 +7,13 @@
 #define _BC127_H_
 
 #include <Arduino.h>
+#include "main.h"
 
 // Bluetooth audio devices definition
 #define DEVLIST_MAXLEN 6
 extern struct BTdev devList[DEVLIST_MAXLEN];
 extern unsigned int foundDevices;
 extern String peerAddress;
-
 
 // Serial command messages
 enum outputMsg {
@@ -39,6 +39,9 @@ enum outputMsg {
 
 
 void initBC127(void);
+void bc127Start(void);
+void bc127Stop(void);
+void bc127Inquiry(void);
 int parseSerialIn(String input);
 bool sendCmdOut(int msg);
 void populateDevlist(String addr, String caps, unsigned int stren);

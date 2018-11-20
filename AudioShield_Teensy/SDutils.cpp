@@ -47,7 +47,7 @@ void initSDcard(void) {
   }
 }
 
-/* createSDpath(tag)
+/* createSDpath(struct gps_rmc_tag)
  * -----------------
  * Create the folder/file path of the new recording
  * out of retrieved GPS or sent remote values.

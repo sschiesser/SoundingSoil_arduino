@@ -11,13 +11,15 @@ Bounce buttonRecord = Bounce(BUTTON_RECORD, 8);
 Bounce buttonMonitor = Bounce(BUTTON_MONITOR, 8);
 Bounce buttonBluetooth = Bounce(BUTTON_BLUETOOTH, 8);
 
-struct leds_s leds[LED_MAX_NUMBER];
 IntervalTimer led_timers[LED_MAX_NUMBER];
 byte led_pins[LED_MAX_NUMBER] = { LED_RECORD_PIN, LED_MONITOR_PIN, LED_BLUETOOTH_PIN };
+struct leds_s leds[LED_MAX_NUMBER];
 	
 /* initLEDButtons(void)
  * --------------------
- * Initialize pin direction & mode for LED and buttons
+ * Assign and initialize all the LED-related elements
+ * (pin#, status, mode, cnt, timer, callback_fn)
+ * ...and initialize the button inputs
  * IN:	- none
  * OUT:	- none
  */
@@ -58,6 +60,13 @@ void initLEDButtons(void) {
 	// Serial.print("toggleBtLED address: 0x"); Serial.println(a, HEX);
 }
 
+/* toggleCb(struct leds_s *)
+ * -------------------------
+ * LED timer callback function! Parse the
+ * callbacks along LED-mode and process next action.
+ * IN:	- pointer to LED (struct leds_s *)
+ * OUT:	- none
+ */
 void toggleCb(struct leds_s *ld) {
 	// Serial.print("toggleCb called with led#"); Serial.println(ld->pin);
 	// Serial.print("address: 0x"); Serial.println((unsigned long)toggleCb, HEX);
@@ -114,18 +123,31 @@ void toggleCb(struct leds_s *ld) {
 	digitalWrite(ld->pin, ld->status);
 }
 
+/* toggleXxxLED(void)
+ * ------------------
+ * Redirect the callback function of each LED to
+ * a generic one with assignment by reference
+ * IN:	- none
+ * OUT:	- none
+ */
 void toggleRecLED(void) {
 	toggleCb(&leds[LED_RECORD]);
 }
-
 void toggleMonLED(void) {
 	toggleCb(&leds[LED_MONITOR]);
 }
-
 void toggleBtLED(void) {
 	toggleCb(&leds[LED_BLUETOOTH]);
 }
 
+/* startLED(struct leds_s *, enum led_mode)
+ * ----------------------------------------
+ * Start a LED switch action (bloinking or solid):
+ * set the wanted LED-mode and start the corresponding timer.
+ * IN:	- pointer to LED (struct leds_s *)
+ *			- LED-mode (enum led_mode)
+ * OUT:	- none
+ */
 void startLED(struct leds_s *ld, enum led_mode mode) {
 	// Serial.print("startLED: LED#"); Serial.print(ld->pin);
 	// Serial.print(", mode = "); Serial.println(mode);
@@ -165,6 +187,12 @@ void startLED(struct leds_s *ld, enum led_mode mode) {
 	digitalWrite(ld->pin, ld->status);
 }
 
+/* stopLED(struct leds_s *)
+ * ------------------------
+ * Stop a specific LED and reset all corresponding parameters.
+ * IN:	- pointer to LED (struct leds_s *)
+ * OUT:	- none
+ */
 void stopLED(struct leds_s *ld) {
 	// Serial.print("StopLED: LED#"); Serial.println(ld->pin);
 	ld->timer.end();

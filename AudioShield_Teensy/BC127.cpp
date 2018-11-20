@@ -6,17 +6,30 @@
  */
 
 #include "BC127.h"
+
 struct BTdev {
   String address;
   String capabilities;
   unsigned int strength;
 };
 struct BTdev devList[DEVLIST_MAXLEN];
+
 unsigned int foundDevices;
 String peerAddress;
 
+
 void initBC127(void) {
 	// Reset BC127 module
+	sendCmdOut(BCCMD_GEN_PWROFF);
+}
+
+void bc127Start(void) {
+	sendCmdOut(BCCMD_GEN_PWRON);
+	delay(200);
+	sendCmdOut(BCCMD_BLE_ADVERTISE);
+}
+
+void bc127Stop(void) {
 	sendCmdOut(BCCMD_GEN_PWROFF);
 }
 
@@ -66,6 +79,7 @@ int parseSerialIn(String input) {
   else if(part1.equalsIgnoreCase("OPEN_OK")) {
     if(part2.equalsIgnoreCase("BLE\n")) {
       Serial.println("BLE connection done!");
+			working_state.ble_state = BLESTATE_CONNECTING;
     }
     else if(part2.equalsIgnoreCase("AVRCP\n")) {
       Serial.println("AVRCP protocol open!");

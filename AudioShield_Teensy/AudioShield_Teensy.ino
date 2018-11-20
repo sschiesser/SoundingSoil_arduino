@@ -12,8 +12,8 @@
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
-// #include <timer.h>
 
+#include "main.h"
 #include "gpsRoutines.h"
 #include "SDutils.h"
 #include "BC127.h"
@@ -21,54 +21,35 @@
 
 // Audio connections definition
 // GUItool: begin automatically generated code
-AudioInputI2S                 i2sRec;         //xy=172,125
-AudioRecordQueue              queueSdc;       //xy=512,120
-AudioAnalyzePeak              peak;          //xy=512,169
-AudioPlaySdWav                playWav;        //xy=172,225
-AudioMixer4                   mixer;         //xy=350,225
-AudioOutputI2S                i2sPlayMon;     //xy=512,228
-AudioConnection               patchCord1(playWav, 0, mixer, 1);
-AudioConnection               patchCord2(i2sRec, 0, queueSdc, 0);
-AudioConnection               patchCord3(i2sRec, 0, peak, 0);
-AudioConnection               patchCord4(i2sRec, 0, mixer, 0);
-AudioConnection               patchCord5(mixer, 0, i2sPlayMon, 0);
-AudioConnection               patchCord6(mixer, 0, i2sPlayMon, 1);
-AudioControlSGTL5000          sgtl5000;       //xy=172,323
+AudioInputI2S									i2sRec;							//xy=172,125
+AudioRecordQueue							queueSdc;						//xy=512,120
+AudioAnalyzePeak							peak;								//xy=512,169
+AudioPlaySdWav								playWav;						//xy=172,225
+AudioMixer4										mixer;							//xy=350,225
+AudioOutputI2S								i2sPlayMon;					//xy=512,228
+AudioConnection								patchCord1(playWav, 0, mixer, 1);
+AudioConnection								patchCord2(i2sRec, 0, queueSdc, 0);
+AudioConnection								patchCord3(i2sRec, 0, peak, 0);
+AudioConnection								patchCord4(i2sRec, 0, mixer, 0);
+AudioConnection								patchCord5(mixer, 0, i2sPlayMon, 0);
+AudioConnection								patchCord6(mixer, 0, i2sPlayMon, 1);
+AudioControlSGTL5000					sgtl5000;						//xy=172,323
 // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
-#define MIXER_CH_REC          0
-#define MIXER_CH_SDC          1
 
-// Working states
-enum btState {
-  BTSTATE_IDLE,
-  BTSTATE_INQ,
-  BTSTATE_CONN,
-  BTSTATE_PLAY
-} bt_state;
-
-enum bleState {
-  BLESTATE_IDLE,
-  BLESTATE_ADV,
-  BLESTATE_CONN
-} ble_state;
-
-volatile struct wState {
-  bool rec_state;
-  bool mon_state;
-  enum btState bt_state;
-  enum bleState ble_state;
-} workingState;
+struct wState working_state;
 
 void setup() {
   // Initialize both serial ports:
-  Serial.begin(9600); // Serial monitor port
-  Serial4.begin(9600); // BC127 communication port
-  Serial1.begin(9600); // GPS port
+  Serial.begin(9600);															// Serial monitor port
+  Serial4.begin(9600);														// BC127 communication port
+  Serial1.begin(9600);														// GPS port
 
+	// Say hello
   Serial.println("AudioShield v1.0");
   Serial.println("----------------");
   
+	// Initialize I/O ports and assign
 	initLEDButtons();
 
 	initAudio();
@@ -77,26 +58,12 @@ void setup() {
 
 	initWaveHeader();
 
-  // Initializing states
-  workingState.rec_state = false;
-  workingState.mon_state = false;
-  workingState.bt_state = BTSTATE_IDLE;
-  workingState.ble_state = BLESTATE_IDLE;
+	initStates();
 	
 	initBC127();
-	// rec_led_timer.in(100, toggleRecLED, (void*)100);
-	// rec_led_state.mode = LED_MODE_IDLE;
-	// rec_led_state.blink = LED_BLINK_FLASH;
-	// rec_led_timer.begin(toggleRecLED, LED_BLINK_FAST_MS);
-	// leds[LED_RECORD].blink = LED_BLINK_MED;
-	// leds[LED_RECORD].timer.begin(leds[LED_RECORD].toggle, LED_BLINK_MED_MS);
 }
 
 void loop() {
-	// rec_led_timer.tick();
-	// monLedTimer.tick();
-	// btLedTimer.tick();
-	
   // Read the buttons
   buttonRecord.update();
   buttonMonitor.update();
@@ -104,8 +71,8 @@ void loop() {
   
   // Button press actions
   if(buttonRecord.fallingEdge()) {
-    Serial.print("Record button pressed: rec_state = "); Serial.println(workingState.rec_state);
-    if(!workingState.rec_state) {
+    Serial.print("Record button pressed: rec_state = "); Serial.println(working_state.rec_state);
+    if(!working_state.rec_state) {
 			startLED(&leds[LED_RECORD], LED_MODE_WAITING);
 			struct gps_rmc_tag rmc_tag = fetchGPS();
       recPath = createSDpath(rmc_tag);
@@ -118,8 +85,8 @@ void loop() {
     }
   }
   if(buttonMonitor.fallingEdge()) {
-    Serial.print("Monitor button pressed: mon_state = "); Serial.println(workingState.mon_state);
-		if(!workingState.mon_state) {
+    Serial.print("Monitor button pressed: mon_state = "); Serial.println(working_state.mon_state);
+		if(!working_state.mon_state) {
 			startLED(&leds[LED_MONITOR], LED_MODE_ON);
 			startMonitoring();
 		}
@@ -129,8 +96,8 @@ void loop() {
 		}
 	}
   if(buttonBluetooth.fallingEdge()) {
-    Serial.print("Bluetooth button pressed: ble_state = "); Serial.println(workingState.ble_state);
-		if(!workingState.ble_state) {
+    Serial.print("Bluetooth button pressed: ble_state = "); Serial.println(working_state.ble_state);
+		if(working_state.ble_state == BLESTATE_IDLE) {
 			startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
 			startBLE();
 		}
@@ -141,9 +108,13 @@ void loop() {
   }
 	
   // State actions
-  if(workingState.rec_state) {
+  if(working_state.rec_state) {
     continueRecording();
   }
+	if(working_state.ble_state == BLESTATE_CONNECTING) {
+		startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
+		working_state.ble_state = BLESTATE_CONNECTED;
+	}
 
 	// Serial messaging
   if (Serial4.available()) {
@@ -173,6 +144,13 @@ void initAudio(void) {
   mixer.gain(MIXER_CH_SDC, 0);
 }
 
+void initStates(void) {
+  working_state.rec_state = false;
+  working_state.mon_state = false;
+  working_state.bt_state = BTSTATE_IDLE;
+  working_state.ble_state = BLESTATE_IDLE;
+}
+
 void startRecording(String path) {
   Serial.println("Start recording");
   
@@ -181,7 +159,7 @@ void startRecording(String path) {
     queueSdc.begin();
     totRecBytes = 0;
     // mixer.gain(MIXER_CH_REC, 1);
-    workingState.rec_state = true;
+    working_state.rec_state = true;
   }
   else {
     Serial.println("file opening error");
@@ -222,7 +200,7 @@ void continueRecording(void) {
 void stopRecording(String path) {
   Serial.println("Stop recording");
   queueSdc.end();
-  if(workingState.rec_state) {
+  if(working_state.rec_state) {
     while(queueSdc.available() > 0) {
       frec.write((byte*)queueSdc.readBuffer(), 256);
       queueSdc.freeBuffer();
@@ -232,21 +210,25 @@ void stopRecording(String path) {
 
     writeWaveHeader(path, totRecBytes);
   }
-  workingState.rec_state = false;
+  working_state.rec_state = false;
 }
 
 void startMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 1);
-	workingState.mon_state = true;
+	working_state.mon_state = true;
 }
 
 void stopMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 0);
-	workingState.mon_state = false;
+	working_state.mon_state = false;
 }
 
 void startBLE(void) {
+	bc127Start();
+	working_state.ble_state = BLESTATE_ADV;
 }
 
 void stopBLE(void) {
+	bc127Stop();
+	working_state.ble_state = BLESTATE_IDLE;
 }
