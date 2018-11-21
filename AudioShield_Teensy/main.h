@@ -5,7 +5,17 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
+#include <Bounce.h>
+#include <Audio.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <SD.h>
+#include <SerialFlash.h>
+
+#include "gpsRoutines.h"
+#include "SDutils.h"
 #include "BC127.h"
+#include "IOutils.h"
 
 // Audio mixer channels
 #define MIXER_CH_REC          0

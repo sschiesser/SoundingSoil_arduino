@@ -8,6 +8,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <SPI.h>
+#include "main.h"
 #include "gpsRoutines.h"
 
 // Wave header values
@@ -41,7 +42,7 @@ extern String 								rec_path;
  * ====================== */
 
 void initSDcard(void);
-String createSDpath(struct gpsRMCtag tag);
+String createSDpath(bool fix_found);
 void initWaveHeader(void);
 void writeWaveHeader(String path, unsigned long dlen);
 

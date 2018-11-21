@@ -5,19 +5,7 @@
   - Serial_monitor (ICST)
   - Teensy_recorder (PJRC)
 */
-
-#include <Bounce.h>
-#include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
-#include <SD.h>
-#include <SerialFlash.h>
-
 #include "main.h"
-#include "gpsRoutines.h"
-#include "SDutils.h"
-#include "BC127.h"
-#include "IOutils.h"
 
 // Audio connections definition
 // GUItool: begin automatically generated code
@@ -43,7 +31,7 @@ void setup() {
   // Initialize both serial ports:
   Serial.begin(9600);															// Serial monitor port
   Serial4.begin(9600);														// BC127 communication port
-  Serial1.begin(9600);														// GPS port
+  gpsPort.begin(9600);														// GPS port
 
 	// Say hello
   Serial.println("AudioShield v1.0");
@@ -119,8 +107,8 @@ void loop() {
 	}
 	if(working_state.rec_state == RECSTATE_REQ_ON) {
 		startLED(&leds[LED_RECORD], LED_MODE_WAITING);
-		struct gpsRMCtag rmc_tag = fetchGPS();
-		rec_path = createSDpath(rmc_tag);
+		rec_path = createSDpath(fetchGPS());
+		Serial.print("rec path = "); Serial.println(rec_path);
 		startLED(&leds[LED_RECORD], LED_MODE_WARNING);
 		startRecording(rec_path);
 		working_state.rec_state = RECSTATE_ON;

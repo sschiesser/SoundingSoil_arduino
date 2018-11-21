@@ -47,45 +47,95 @@ void initSDcard(void) {
   }
 }
 
-/* createSDpath(struct gpsRMCtag)
+/* createSDpath(bool)
  * -----------------
  * Create the folder/file path of the new recording
  * out of retrieved GPS or sent remote values.
- * IN:	- raw GPS tag (struct gpsRMCtag)
- * OUT:	- complete path (String)
+ * IN:	- GPS fix found (bool)
+ * OUT:	- complete recording path (String)
  */
-String createSDpath(struct gpsRMCtag tag) {
-	Serial.println("Creating new folder/file on the SD card");
-	String dirName = "";
-	String fileName = "";
-	String path = "/";
-	char buf[12];
-	sprintf(buf, "%02d", tag.date.year);
-	dirName.concat(buf);
-	sprintf(buf, "%02d", tag.date.month);
-	dirName.concat(buf);
-	sprintf(buf, "%02d", tag.date.day);
-	dirName.concat(buf);
+String createSDpath(bool fix_found) {
+	String dir_name = "";
+	String file_name = "";
+	String path = "";
 
-	sprintf(buf, "%02d", tag.time.h);
-	fileName.concat(buf);
-	sprintf(buf, "%02d", tag.time.min);
-	fileName.concat(buf);
-	sprintf(buf, "%02d", tag.time.sec);
-	fileName.concat(buf);
+	// FIX FOUND:
+	// Use date/time value to create the record path
+	// with the format "YYMMDD/hhmmss.wav"
+	if(fix_found) {
+		int year;
+		byte month, day, hour, minute, second, hundredths;
+		unsigned long fix_age;
+		char buf[24];
 
-	path.concat(dirName);
-	path.concat("/");
-	path.concat(fileName);
-	path.concat(".wav");
-
-	if(SD.exists(dirName)) {
-		if(SD.exists(path)) {
-			SD.remove(path);
+		gps.crack_datetime(&year, &month, &day, &hour, &minute, &second, &hundredths, &fix_age);
+		sprintf(buf, "%02d%02d%02d", (year-2000), month, day);
+		dir_name.concat(buf);
+		sprintf(buf, "%02d%02d%02d.wav", hour, minute, second);
+		file_name.concat(buf);
+		sprintf(buf, "/%s/%s", dir_name.c_str(), file_name.c_str());
+		path.concat(buf);	
+		if(SD.exists(dir_name)) {
+			if(SD.exists(path)) {
+				SD.remove(path);
+			}
+		}
+		else {
+			SD.mkdir(dir_name);
 		}
 	}
+	// NO FIX FOUND:
+	// Automatically increase the directory and file names with the following rules:
+	// -	if new recording (e.g. REC button press) has been called,
+	//		create a new empty directory at the lowest disponible value.
+	// -	if within a window recording process (e.g. 1 minute/1 hour during 3 days),
+	//		stay in the last directory and increase the file name.
 	else {
-		SD.mkdir(dirName);
+		dir_name.concat("000000");
+		file_name.concat("000000");
+		unsigned int dir_val = 0;
+		unsigned int file_val = 0;
+		char buf[24];
+		// Increase dir_name until no matching directory exists
+		while(SD.exists(dir_name)) {
+			dir_val = dir_name.toInt();
+			dir_val += 1;
+			sprintf(buf, "%06d", dir_val);
+			dir_name.remove(0);
+			dir_name.concat(buf);
+		}
+		// If NOT currently withing a window recording, create a fresh directory
+		// if(working_state.mon_state != MONSTATE_ON) { // <-- for test purposes...
+		if(working_state.rec_state != RECSTATE_WAIT) {
+			SD.mkdir(dir_name);
+		}
+		// If waiting for the next window recording, stay in the same directory and increase file_name
+		else {
+			// Decrease dir_name to find the last existing directory
+			dir_val = dir_name.toInt();
+			dir_val -= 1;
+			sprintf(buf, "%06d", dir_val);
+			dir_name.remove(0);
+			dir_name.concat(buf);
+			// Generate whole path and check if it exists
+			sprintf(buf, "/%s/%s.wav", dir_name.c_str(), file_name.c_str());
+			path.remove(0);
+			path.concat(buf);
+			// Increase path until no name matches
+			while(SD.exists(path)) {
+				file_val = file_name.toInt();
+				file_val += 1;
+				sprintf(buf, "%06d", file_val);
+				file_name.remove(0);
+				file_name.concat(buf);
+				sprintf(buf, "/%s/%s.wav", dir_name.c_str(), file_name.c_str());
+				path.remove(0);
+				path.concat(buf);
+			}
+		}
+		sprintf(buf, "/%s/%s.wav", dir_name.c_str(), file_name.c_str());
+		path.remove(0);
+		path.concat(buf);
 	}
 	return path;
 }
