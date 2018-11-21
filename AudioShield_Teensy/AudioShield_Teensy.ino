@@ -67,27 +67,31 @@ void loop() {
   // Button press actions
   if(but_rec.fallingEdge()) {
     Serial.print("Record button pressed: rec_state = "); Serial.println(working_state.rec_state);
-    if(!working_state.rec_state) {
-			startLED(&leds[LED_RECORD], LED_MODE_WAITING);
-			struct gpsRMCtag rmc_tag = fetchGPS();
-      rec_path = createSDpath(rmc_tag);
-			startLED(&leds[LED_RECORD], LED_MODE_WARNING);
-      startRecording(rec_path);
+    if(working_state.rec_state == RECSTATE_OFF) {
+			working_state.rec_state = RECSTATE_REQ_ON;
+			// startLED(&leds[LED_RECORD], LED_MODE_WAITING);
+			// struct gpsRMCtag rmc_tag = fetchGPS();
+      // rec_path = createSDpath(rmc_tag);
+			// startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+      // startRecording(rec_path);
     }
     else {
-      stopRecording(rec_path);
-			stopLED(&leds[LED_RECORD]);
+			working_state.rec_state = RECSTATE_REQ_OFF;
+      // stopRecording(rec_path);
+			// stopLED(&leds[LED_RECORD]);
     }
   }
   if(but_mon.fallingEdge()) {
     Serial.print("Monitor button pressed: mon_state = "); Serial.println(working_state.mon_state);
-		if(!working_state.mon_state) {
-			startLED(&leds[LED_MONITOR], LED_MODE_ON);
-			startMonitoring();
+		if(working_state.mon_state == MONSTATE_OFF) {
+			working_state.mon_state = MONSTATE_REQ_ON;
+			// startLED(&leds[LED_MONITOR], LED_MODE_ON);
+			// startMonitoring();
 		}
 		else {
-			stopMonitoring();
-			stopLED(&leds[LED_MONITOR]);
+			working_state.mon_state = MONSTATE_REQ_OFF;
+			// stopMonitoring();
+			// stopLED(&leds[LED_MONITOR]);
 		}
 	}
   if(but_blue.fallingEdge()) {
@@ -103,10 +107,33 @@ void loop() {
   }
 	
   // State actions
-  if(working_state.rec_state) {
+	if(working_state.mon_state == MONSTATE_REQ_ON) {
+		startLED(&leds[LED_MONITOR], LED_MODE_ON);
+		startMonitoring();
+		working_state.mon_state = MONSTATE_ON;
+	}
+	if(working_state.mon_state == MONSTATE_REQ_OFF) {
+		stopMonitoring();
+		stopLED(&leds[LED_MONITOR]);
+		working_state.mon_state = MONSTATE_OFF;
+	}
+	if(working_state.rec_state == RECSTATE_REQ_ON) {
+		startLED(&leds[LED_RECORD], LED_MODE_WAITING);
+		struct gpsRMCtag rmc_tag = fetchGPS();
+		rec_path = createSDpath(rmc_tag);
+		startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+		startRecording(rec_path);
+		working_state.rec_state = RECSTATE_ON;
+	}
+	if(working_state.rec_state == RECSTATE_REQ_OFF) {
+		stopRecording(rec_path);
+		stopLED(&leds[LED_RECORD]);
+		working_state.rec_state = RECSTATE_OFF;
+	}
+	if(working_state.rec_state == RECSTATE_ON) {
     continueRecording();
   }
-	if(working_state.ble_state == BLESTATE_CONNECTING) {
+	if(working_state.ble_state == BLESTATE_REQ_CONN) {
 		startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
 		working_state.ble_state = BLESTATE_CONNECTED;
 	}
@@ -145,8 +172,8 @@ void initAudio(void) {
  * ----------------
  */
 void initStates(void) {
-  working_state.rec_state = false;
-  working_state.mon_state = false;
+  working_state.rec_state = RECSTATE_OFF;
+  working_state.mon_state = MONSTATE_OFF;
   working_state.bt_state = BTSTATE_IDLE;
   working_state.ble_state = BLESTATE_IDLE;
 }
@@ -162,7 +189,7 @@ void startRecording(String path) {
     queueSdc.begin();
     tot_rec_bytes = 0;
     // mixer.gain(MIXER_CH_REC, 1);
-    working_state.rec_state = true;
+    // working_state.rec_state = true;
   }
   else {
     Serial.println("file opening error");
@@ -219,7 +246,7 @@ void stopRecording(String path) {
 
     writeWaveHeader(path, tot_rec_bytes);
   }
-  working_state.rec_state = false;
+  // working_state.rec_state = false;
 }
 
 /* startMonitoring(void)
@@ -227,7 +254,7 @@ void stopRecording(String path) {
  */
 void startMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 1);
-	working_state.mon_state = true;
+	// working_state.mon_state = true;
 }
 
 /* stopMonitoring(void)
@@ -235,7 +262,7 @@ void startMonitoring(void) {
  */
 void stopMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 0);
-	working_state.mon_state = false;
+	// working_state.mon_state = false;
 }
 
 /* startBLE(void)

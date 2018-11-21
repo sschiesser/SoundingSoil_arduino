@@ -90,7 +90,8 @@ void toggleCb(struct leds_s *ld) {
 		case LED_MODE_WARNING:
 		// Serial.print("Warning mode: "); Serial.print(ld->cnt); Serial.println(" toggles");
 		if(ld->cnt++ > 12) {
-			stopLED(ld);
+			// stopLED(ld);
+			startLED(ld, LED_MODE_ON);
 		}
 		else {
 			ld->status = !ld->status;

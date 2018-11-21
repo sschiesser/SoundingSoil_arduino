@@ -92,16 +92,20 @@ int parseSerialIn(String input) {
   if(part1.equalsIgnoreCase("OPEN_OK")) {
 		// "OPEN_OK BLE" -> connection established with phone app
     if(part2.equalsIgnoreCase("BLE\n")) {
-			working_state.ble_state = BLESTATE_CONNECTING;
+			working_state.ble_state = BLESTATE_REQ_CONN;
     }
 		// "OPEN_OK AVRCP" -> A2DP & AVRCP connections established with audio receiver 
     else if(part2.equalsIgnoreCase("AVRCP\n")) {
       Serial.println("AVRCP protocol open!");
     }
   }
-	else if(part1.equalsIgnoreCase("AVRCP_PLAY")) {
-		// "AVRCP_PLAY" -> A2DP stream open, need to start monitor on Teensy
-		
+	// "AVRCP_PLAY" -> A2DP stream open, need to start monitor on Teensy
+	else if(part1.equalsIgnoreCase("AVRCP_PLAY\n")) {
+		working_state.mon_state = MONSTATE_REQ_ON;
+	}
+	// "AVRCP_PAUSE" -> A2DP stream closed, stopping monitor on Teensy
+	else if(part1.equalsIgnoreCase("AVRCP_PAUSE\n")) {
+		working_state.mon_state = MONSTATE_REQ_OFF;
 	}
 	// "INQUIRY xxxx yyyyyy -zzdB" -> TODO: make addr/caps/stren parsing more robust!
   else if(part1.equalsIgnoreCase("INQUIRY")) {
