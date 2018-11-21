@@ -83,49 +83,93 @@ void loop() {
 		}
 	}
   if(but_blue.fallingEdge()) {
-    // Serial.print("Bluetooth button pressed: ble_state = "); Serial.println(working_state.ble_state);
+    Serial.print("Bluetooth button pressed: ble_state = "); Serial.println(working_state.ble_state);
 		if(working_state.ble_state == BLESTATE_IDLE) {
 			startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
-			startBLE();
+			bc127Start();
 		}
 		else {
+			bc127Stop();
 			stopLED(&leds[LED_BLUETOOTH]);
-			stopBLE();
 		}
   }
 	
-  // State actions
+  // State actions...
+	// monitoring START request
 	if(working_state.mon_state == MONSTATE_REQ_ON) {
 		startLED(&leds[LED_MONITOR], LED_MODE_ON);
 		startMonitoring();
 		working_state.mon_state = MONSTATE_ON;
 	}
+	// monitoring STOP request
 	if(working_state.mon_state == MONSTATE_REQ_OFF) {
 		stopMonitoring();
 		stopLED(&leds[LED_MONITOR]);
 		working_state.mon_state = MONSTATE_OFF;
 	}
+	// recording START request
 	if(working_state.rec_state == RECSTATE_REQ_ON) {
 		startLED(&leds[LED_RECORD], LED_MODE_WAITING);
-		rec_path = createSDpath(fetchGPS());
-		Serial.print("rec path = "); Serial.println(rec_path);
-		startLED(&leds[LED_RECORD], LED_MODE_WARNING);
-		startRecording(rec_path);
+		bool ret = fetchGPS();
+		if(!ret) startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+		rec_path = createSDpath(ret);
 		working_state.rec_state = RECSTATE_ON;
+		startRecording(rec_path);
 	}
+	// recording STOP request
 	if(working_state.rec_state == RECSTATE_REQ_OFF) {
 		stopRecording(rec_path);
 		stopLED(&leds[LED_RECORD]);
 		working_state.rec_state = RECSTATE_OFF;
 	}
+	// recording running
 	if(working_state.rec_state == RECSTATE_ON) {
     continueRecording();
   }
-	if(working_state.ble_state == BLESTATE_REQ_CONN) {
+	// Bluetooth general
+	if((working_state.ble_state == BLESTATE_CONNECTED) && 
+		(working_state.bt_state == BTSTATE_CONNECTED)) {
 		startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
+	}
+	// BLE connection request
+	if(working_state.ble_state == BLESTATE_REQ_CONN) {
+		if(working_state.bt_state == BTSTATE_CONNECTED) {
+			startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
+		}
+		else {
+			startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_SLOW);
+		}
 		working_state.ble_state = BLESTATE_CONNECTED;
 	}
-
+	// BLE disconnection request
+	if(working_state.ble_state == BLESTATE_REQ_DIS) {
+		// if(working_state.bt_state == BTSTATE_CONNECTED) {
+			// startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
+		// }
+		// else {
+			startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
+		// }
+		sendCmdOut(BCCMD_BLE_ADV_ON);
+		working_state.ble_state = BLESTATE_ADV;
+	}
+	// BT connection request
+	if(working_state.bt_state == BTSTATE_REQ_CONN) {
+		startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
+		working_state.bt_state = BTSTATE_CONNECTED;
+	}
+	// BT disconnection request
+	if(working_state.bt_state == BTSTATE_REQ_DIS) {
+		if(working_state.ble_state == BLESTATE_CONNECTED) {
+			startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_SLOW);
+		}
+		else {
+			bc127Stop();
+			stopLED(&leds[LED_BLUETOOTH]);
+		}
+		working_state.bt_state = BTSTATE_IDLE;
+	}
+	
+	
 	// Serial messaging
   if (Serial4.available()) {
     String inMsg = Serial4.readStringUntil('\r');
@@ -251,20 +295,4 @@ void startMonitoring(void) {
 void stopMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 0);
 	// working_state.mon_state = false;
-}
-
-/* startBLE(void)
- *
- */
-void startBLE(void) {
-	bc127Start();
-	working_state.ble_state = BLESTATE_ADV;
-}
-
-/* stopBLE(void)
- *
- */
-void stopBLE(void) {
-	bc127Stop();
-	working_state.ble_state = BLESTATE_IDLE;
 }

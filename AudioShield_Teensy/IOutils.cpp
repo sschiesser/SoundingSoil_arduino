@@ -105,6 +105,13 @@ void toggleCb(struct leds_s *ld) {
 		
 		case LED_MODE_IDLE_FAST:
 		// Serial.println("Fast flashing mode: irregular flash toggle");
+		if(ld->status == LED_ON) {
+			ld->timer.update(LED_BLINK_FAST_MS);
+		}
+		else {
+			ld->timer.update(LED_BLINK_MED_MS);
+		}
+		ld->status = !ld->status;
 		break;
 		
 		case LED_MODE_IDLE_SLOW:
@@ -177,9 +184,11 @@ void startLED(struct leds_s *ld, enum led_mode mode) {
 		break;
 		
 		case LED_MODE_IDLE_FAST: // 5
+		ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
 		break;
 		
 		case LED_MODE_IDLE_SLOW: // 6
+		ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
 		break;
 		
 		default:

@@ -23,38 +23,42 @@
 
 // Recording states...
 enum recState {
-	RECSTATE_OFF,
-	RECSTATE_REQ_ON,
-	RECSTATE_WAIT,
-	RECSTATE_REQ_OFF,
-	RECSTATE_ON
+	RECSTATE_OFF,								// 0
+	RECSTATE_REQ_ON,						// 1
+	RECSTATE_WAIT,							// 2
+	RECSTATE_REQ_OFF,						// 3
+	RECSTATE_ON									// 4
 };
 extern enum recState					rec_state;
 // Monitoring states...
 enum monState {
-	MONSTATE_OFF,
-	MONSTATE_REQ_ON,
-	MONSTATE_REQ_OFF,
-	MONSTATE_ON
+	MONSTATE_OFF,								// 0
+	MONSTATE_REQ_ON,						// 1
+	MONSTATE_REQ_OFF,						// 2
+	MONSTATE_ON									// 3
 };
 extern enum monState					mon_state;
 // Bluetooth states...
 // classic (BT)
 enum btState {
-  BTSTATE_IDLE,
-  BTSTATE_INQUIRY,
-  BTSTATE_REQ_CONN,
-	BTSTATE_CONNECTED,
-  BTSTATE_PLAY,
-	BTSTATE_STOP
+	BTSTATE_OFF,								// 0
+  BTSTATE_IDLE,								// 1
+  BTSTATE_INQUIRY,						// 2
+  BTSTATE_REQ_CONN,						// 3
+	BTSTATE_CONNECTED,					// 4
+	BTSTATE_REQ_DIS,						// 5
+  BTSTATE_MUS_PLAY,						// 6
+	BTSTATE_MUS_STOP						// 7
 };
 extern enum btState 					bt_state;
 // low energy (BLE)
 enum bleState {
-  BLESTATE_IDLE,
-  BLESTATE_ADV,
-  BLESTATE_REQ_CONN,
-	BLESTATE_CONNECTED
+	BLESTATE_OFF,								// 0
+  BLESTATE_IDLE,							// 1
+  BLESTATE_ADV,								// 2
+  BLESTATE_REQ_CONN,					// 3
+	BLESTATE_CONNECTED,					// 4
+	BLESTATE_REQ_DIS						// 5
 };
 extern enum bleState 					ble_state;
 // Working states

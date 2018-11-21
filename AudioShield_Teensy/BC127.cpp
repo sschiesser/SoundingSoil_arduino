@@ -35,8 +35,9 @@ void bc127Init(void) {
  */
 void bc127Start(void) {
 	sendCmdOut(BCCMD_GEN_PWRON);
-	delay(200);
+	delay(1000);
 	sendCmdOut(BCCMD_BLE_ADV_ON);
+	working_state.ble_state = BLESTATE_ADV;
 }
 
 /* bc127Stop(void)
@@ -46,6 +47,10 @@ void bc127Start(void) {
  * OUT:	- none
  */
 void bc127Stop(void) {
+	if(working_state.ble_state == BLESTATE_ADV) {
+		sendCmdOut(BCCMD_BLE_ADV_OFF);
+	}
+	working_state.ble_state = BLESTATE_IDLE;
 	sendCmdOut(BCCMD_GEN_PWROFF);
 }
 
@@ -64,6 +69,7 @@ int parseSerialIn(String input) {
   // - RECV BLE  --> commands received from phone over BLE
   // - other     --> 3+ words inputs like "INQUIRY xxxx 240404 -54dB"
   // ================================================================
+  Serial.print(input);
   String part1, part2;
   int slice1 = input.indexOf(" ");
   int slice2 = input.indexOf(" ", slice1+1);
@@ -96,9 +102,22 @@ int parseSerialIn(String input) {
     }
 		// "OPEN_OK AVRCP" -> A2DP & AVRCP connections established with audio receiver 
     else if(part2.equalsIgnoreCase("AVRCP\n")) {
-      Serial.println("AVRCP protocol open!");
+      // Serial.println("AVRCP protocol open!");
+			working_state.bt_state = BTSTATE_REQ_CONN;
     }
   }
+	else if(part1.equalsIgnoreCase("CLOSE_OK")) {
+		if(part2.equalsIgnoreCase("BLE\n")) {
+			if(working_state.ble_state != BLESTATE_IDLE) {
+				working_state.ble_state = BLESTATE_REQ_DIS;
+			}
+		}
+		if(part2.equalsIgnoreCase("AVRCP\n")) {
+			if(working_state.bt_state != BTSTATE_IDLE) {
+				working_state.bt_state = BTSTATE_REQ_DIS;
+			}
+		}
+	}
 	// "AVRCP_PLAY" -> A2DP stream open, need to start monitor on Teensy
 	else if(part1.equalsIgnoreCase("AVRCP_PLAY\n")) {
 		working_state.mon_state = MONSTATE_REQ_ON;
@@ -107,12 +126,16 @@ int parseSerialIn(String input) {
 	else if(part1.equalsIgnoreCase("AVRCP_PAUSE\n")) {
 		working_state.mon_state = MONSTATE_REQ_OFF;
 	}
-	// "INQUIRY xxxx yyyyyy -zzdB" -> TODO: make addr/caps/stren parsing more robust!
+	// "INQUIRY xxxxxxxxxxxx yyyyyy -zzdB"
   else if(part1.equalsIgnoreCase("INQUIRY")) {
-    int len = part2.length()-1;
-    String addr = part2.substring(0,12);
-    String caps = part2.substring(13, 19);
-    unsigned int stren = part2.substring(len-4, len-2).toInt();
+    slice1 = part2.indexOf(" ");
+    String addr = part2.substring(0, slice1);
+		part2 = part2.substring(slice1+1);
+		slice1 = part2.indexOf(" ");
+    String caps = part2.substring(0, slice1);
+		part2 = part2.substring(slice1+1);
+		slice1 = part2.indexOf("dB");
+    unsigned int stren = part2.substring(1, slice1).toInt();
     populateDevlist(addr, caps, stren);
     return ANNOT_INQ_STATE;
   }
