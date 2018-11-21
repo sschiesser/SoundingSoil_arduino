@@ -99,6 +99,10 @@ int parseSerialIn(String input) {
       Serial.println("AVRCP protocol open!");
     }
   }
+	else if(part1.equalsIgnoreCase("AVRCP_PLAY")) {
+		// "AVRCP_PLAY" -> A2DP stream open, need to start monitor on Teensy
+		
+	}
 	// "INQUIRY xxxx yyyyyy -zzdB" -> TODO: make addr/caps/stren parsing more robust!
   else if(part1.equalsIgnoreCase("INQUIRY")) {
     int len = part2.length()-1;

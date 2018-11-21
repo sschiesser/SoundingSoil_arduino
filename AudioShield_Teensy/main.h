@@ -30,6 +30,21 @@ enum bleState {
 	BLESTATE_CONNECTED
 };
 extern enum bleState 					ble_state;
+// // Monitoring states...
+// enum monState {
+	// MONSTATE_OFF,
+	// MONSTATE_REQ,
+	// MONSTATE_STREAM
+// };
+// extern enum monState					mon_state;
+// // Recording states...
+// enum recState {
+	// RECSTATE_OFF,
+	// RECSTATE_REQ,
+	// RECSTATE_WAIT,
+	// RECSTATE_RUN
+// }
+// extern enum recState					rec_state;
 // Working states
 struct wState {
   bool rec_state;
