@@ -103,9 +103,9 @@ int parseSerialIn(String input) {
     if(part2.equalsIgnoreCase("BLE\n")) {
 			working_state.ble_state = BLESTATE_REQ_CONN;
     }
-		// "OPEN_OK AVRCP" -> A2DP & AVRCP connections established with audio receiver 
-    else if(part2.equalsIgnoreCase("AVRCP\n")) {
-      // Serial.println("AVRCP protocol open!");
+		// "OPEN_OK A2DP" -> A2DP connection established with audio receiver 
+    else if(part2.equalsIgnoreCase("A2DP\n")) {
+      // Serial.println("A2DP protocol open!");
 			working_state.bt_state = BTSTATE_REQ_CONN;
     }
   }
@@ -115,7 +115,7 @@ int parseSerialIn(String input) {
 				working_state.ble_state = BLESTATE_REQ_DIS;
 			}
 		}
-		if(part2.equalsIgnoreCase("AVRCP\n")) {
+		if(part2.equalsIgnoreCase("A2DP\n")) {
 			if(working_state.bt_state != BTSTATE_IDLE) {
 				working_state.bt_state = BTSTATE_REQ_DIS;
 			}
