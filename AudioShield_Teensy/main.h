@@ -5,12 +5,13 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-#include <Bounce.h>
 #include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
+#include <Bounce.h>
 #include <SD.h>
 #include <SerialFlash.h>
+#include <Snooze.h>
+#include <SPI.h>
+#include <Wire.h>
 
 #include "gpsRoutines.h"
 #include "SDutils.h"
@@ -71,6 +72,5 @@ struct wState {
 	enum bleState ble_state;
 };
 extern struct wState					working_state;
-
 
 #endif /* _MAIN_H_ */
