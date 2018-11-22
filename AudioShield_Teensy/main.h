@@ -72,5 +72,13 @@ struct wState {
 	enum bleState ble_state;
 };
 extern struct wState					working_state;
+// Button calls
+enum bCalls {
+	BCALL_NONE = 0,
+	BCALL_REC = BUTTON_RECORD_PIN,
+	BCALL_MON = BUTTON_MONITOR_PIN,
+	BCALL_BLUE = BUTTON_BLUETOOTH_PIN
+};
+extern enum bCalls						button_call;
 
 #endif /* _MAIN_H_ */
