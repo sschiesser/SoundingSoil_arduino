@@ -24,34 +24,37 @@ String peer_address;
  * OUT:	- none
  */
 void bc127Init(void) {
-	bc127Stop();
+	bc127PowerOff();
 }
 
-/* bc127Start(void)
- * ----------------
- * Start BC127, then start advertising on the BLE channel.
- * IN:	- none
- * OUT:	- none
- */
-void bc127Start(void) {
+void bc127PowerOn(void) {
 	sendCmdOut(BCCMD_GEN_PWRON);
-	delay(1000);
-	sendCmdOut(BCCMD_BLE_ADV_ON);
-	working_state.ble_state = BLESTATE_ADV;
 }
 
-/* bc127Stop(void)
- * ---------------
- * Stop BC127 (switch off)
+void bc127PowerOff(void) {
+	sendCmdOut(BCCMD_GEN_PWROFF);
+}
+
+/* bc127AdvStart(void)
+ * -------------------
+ * Start advertising on the BLE channel.
  * IN:	- none
  * OUT:	- none
  */
-void bc127Stop(void) {
+void bc127AdvStart(void) {
+	sendCmdOut(BCCMD_BLE_ADV_ON);
+}
+
+/* bc127AdvStop(void)
+ * ------------------
+ * Stop advertising on the BLE channel.
+ * IN:	- none
+ * OUT:	- none
+ */
+void bc127AdvStop(void) {
 	if(working_state.ble_state == BLESTATE_ADV) {
 		sendCmdOut(BCCMD_BLE_ADV_OFF);
 	}
-	working_state.ble_state = BLESTATE_IDLE;
-	sendCmdOut(BCCMD_GEN_PWROFF);
 }
 
 /* parseSerialIn(String)
@@ -180,7 +183,7 @@ int parseSerialIn(String input) {
     }
   }
   else {
-    Serial.print(input);
+    // Serial.print(input);
   }
   
   return BCCMD_NOTHING;

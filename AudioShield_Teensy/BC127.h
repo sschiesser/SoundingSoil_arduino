@@ -43,8 +43,10 @@ enum outputMsg {
  * ====================== */
 
 void bc127Init(void);
-void bc127Start(void);
-void bc127Stop(void);
+void bc127PowerOn(void);
+void bc127PowerOff(void);
+void bc127AdvStart(void);
+void bc127AdvStop(void);
 void bc127Inquiry(void);
 int parseSerialIn(String input);
 bool sendCmdOut(int msg);

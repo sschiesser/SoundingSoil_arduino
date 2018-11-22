@@ -55,10 +55,12 @@ extern enum btState 					bt_state;
 enum bleState {
 	BLESTATE_OFF,								// 0
   BLESTATE_IDLE,							// 1
-  BLESTATE_ADV,								// 2
-  BLESTATE_REQ_CONN,					// 3
-	BLESTATE_CONNECTED,					// 4
-	BLESTATE_REQ_DIS						// 5
+	BLESTATE_REQ_ADV,						// 2
+  BLESTATE_ADV,								// 3
+  BLESTATE_REQ_CONN,					// 4
+	BLESTATE_CONNECTED,					// 5
+	BLESTATE_REQ_DIS,						// 6
+	BLESTATE_REQ_OFF						// 7
 };
 extern enum bleState 					ble_state;
 // Working states

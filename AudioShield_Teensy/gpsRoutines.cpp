@@ -11,7 +11,7 @@
 
 TinyGPS												gps;
 
-#define GPS_STATIC						1
+#define GPS_STATIC						0
 
 #if(GPS_STATIC==1)
 	const char str1[] PROGMEM = "$GPRMC,201547.000,A,3014.5527,N,09749.5808,W,0.24,163.05,040109,,*1A";
