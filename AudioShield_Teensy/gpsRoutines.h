@@ -16,7 +16,9 @@ extern TinyGPS								gps;
  * FUNCTIONS DECLARATIONS
  * ====================== */
 
-bool fetchGPS(void);
+void gpsPowerOn(void);
+void gpsPowerOff(void);
+bool gpsGetData(void);
 void gpsEncodeData(unsigned long timeout);
 void gpsSendString(TinyGPS &gps, const char *str);
 

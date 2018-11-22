@@ -62,6 +62,9 @@ void setup() {
 	digitalWakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
 	digitalWakeup.pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP, FALLING);
   digitalWakeup.pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP, FALLING);
+	pinMode(GPS_SWITCH_PIN, OUTPUT);
+	digitalWrite(GPS_SWITCH_PIN, LOW);
+	pinMode(AUDIO_VOLUME_PIN, INPUT);
 
 	initAudio();
 	initSDcard();
@@ -89,9 +92,11 @@ SLEEP:
 	button_call = (enum bCalls)who;
 	// if not sleeping anymore, re-enable i2s clock
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
+	delay(10);
 		
 WORK:
 	bool ret;
+	float gain;
 	
 	but_rec.update();
 	but_mon.update();
@@ -138,8 +143,11 @@ WORK:
 	switch(working_state.rec_state) {
 		case RECSTATE_REQ_ON:
 			startLED(&leds[LED_RECORD], LED_MODE_WAITING);
-			ret = fetchGPS();
+			gpsPowerOn();
+			delay(2000);
+			ret = gpsGetData();
 			if(!ret) startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+			gpsPowerOff();
 			rec_path = createSDpath(ret);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(rec_path);
@@ -164,6 +172,12 @@ WORK:
 			startLED(&leds[LED_MONITOR], LED_MODE_ON);
 			startMonitoring();
 			working_state.mon_state = MONSTATE_ON;
+			break;
+		
+		case MONSTATE_ON:
+			vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
+			gain = (float)vol_ctrl / 1023.0;
+			mixer.gain(MIXER_CH_REC, gain);
 			break;
 		
 		case MONSTATE_REQ_OFF:

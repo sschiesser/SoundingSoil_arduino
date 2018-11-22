@@ -21,13 +21,21 @@ TinyGPS												gps;
 	const char *teststrs[4] = {str1, str2, str3, str4};
 #endif
 
-/* fetchGPS
- * --------
+void gpsPowerOn(void) {
+	digitalWrite(GPS_SWITCH_PIN, HIGH);
+}
+
+void gpsPowerOff(void) {
+	digitalWrite(GPS_SWITCH_PIN, LOW);
+}
+
+/* gpsGetData
+ * ----------
  * Capture NMEA strings on gps port and test validity
  * IN:	- none
  * OUT:	- valid data confirmation (bool)
  */
-bool fetchGPS(void) {
+bool gpsGetData(void) {
 	float flat, flon;
 	unsigned long age;
 	byte retries = 0;

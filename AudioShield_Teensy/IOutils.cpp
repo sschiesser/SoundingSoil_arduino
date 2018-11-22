@@ -11,6 +11,8 @@ Bounce													but_rec = Bounce(BUTTON_RECORD_PIN, BUTTON_BOUNCE_TIME_MS);
 Bounce 													but_mon = Bounce(BUTTON_MONITOR_PIN, BUTTON_BOUNCE_TIME_MS);
 Bounce 													but_blue = Bounce(BUTTON_BLUETOOTH_PIN, BUTTON_BOUNCE_TIME_MS);
 
+int															vol_ctrl;
+
 IntervalTimer										led_timers[LED_MAX_NUMBER];
 byte 														led_pins[LED_MAX_NUMBER] = { LED_RECORD_PIN, LED_MONITOR_PIN, LED_BLUETOOTH_PIN };
 struct leds_s 									leds[LED_MAX_NUMBER];

@@ -8,6 +8,13 @@
 #include <Arduino.h>
 #include <Bounce.h>
 
+// Switches definitions
+#define GPS_SWITCH_PIN				3
+
+// Volume controle
+#define AUDIO_VOLUME_PIN			A1
+extern int										vol_ctrl;
+
 // Buttons definitions
 #define BUTTON_RECORD_PIN			2 //24
 #define BUTTON_MONITOR_PIN		4 //25

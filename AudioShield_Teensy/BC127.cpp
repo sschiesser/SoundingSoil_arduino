@@ -29,10 +29,12 @@ void bc127Init(void) {
 
 void bc127PowerOn(void) {
 	sendCmdOut(BCCMD_GEN_PWRON);
+	delay(200);
 }
 
 void bc127PowerOff(void) {
 	sendCmdOut(BCCMD_GEN_PWROFF);
+	delay(200);
 }
 
 /* bc127AdvStart(void)
@@ -128,6 +130,14 @@ int parseSerialIn(String input) {
 	// "AVRCP_PAUSE" -> A2DP stream closed, stopping monitor on Teensy
 	else if(part1.equalsIgnoreCase("AVRCP_PAUSE\n")) {
 		working_state.mon_state = MONSTATE_REQ_OFF;
+	}
+	// "AVRCP_FORWARD" -> USED AS REC START!!!
+	else if(part1.equalsIgnoreCase("AVRCP_FORWARD\n")) {
+		return BCCMD_BT_STARTREC;
+	}
+	// "AVRCP_BACKWARD" -> USED AS REC STOP!!!
+	else if(part1.equalsIgnoreCase("AVRCP_BACKWARD\n")) {
+		return BCCMD_BT_STOPREC;
 	}
 	// "INQUIRY xxxxxxxxxxxx yyyyyy -zzdB"
   else if(part1.equalsIgnoreCase("INQUIRY")) {
@@ -255,9 +265,11 @@ bool sendCmdOut(int msg) {
     break;
 		// Start recording
     case BCCMD_BT_STARTREC:
+		working_state.rec_state = RECSTATE_REQ_ON;
     break;
 		// Stop recording
     case BCCMD_BT_STOPREC:
+		working_state.rec_state = RECSTATE_REQ_OFF;
     break;
 		// Volume up -> AVRCP volume up
     case BCCMD_BT_VOLUP:
