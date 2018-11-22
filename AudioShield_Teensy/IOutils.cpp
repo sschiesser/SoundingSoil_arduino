@@ -7,9 +7,9 @@
 
 #include "IOutils.h"
 
-Bounce													but_rec = Bounce(BUTTON_RECORD, 8);
-Bounce 													but_mon = Bounce(BUTTON_MONITOR, 8);
-Bounce 													but_blue = Bounce(BUTTON_BLUETOOTH, 8);
+Bounce													but_rec = Bounce(BUTTON_RECORD_PIN, BUTTON_BOUNCE_TIME_MS);
+Bounce 													but_mon = Bounce(BUTTON_MONITOR_PIN, BUTTON_BOUNCE_TIME_MS);
+Bounce 													but_blue = Bounce(BUTTON_BLUETOOTH_PIN, BUTTON_BOUNCE_TIME_MS);
 
 IntervalTimer										led_timers[LED_MAX_NUMBER];
 byte 														led_pins[LED_MAX_NUMBER] = { LED_RECORD_PIN, LED_MONITOR_PIN, LED_BLUETOOTH_PIN };
@@ -25,9 +25,9 @@ struct leds_s 									leds[LED_MAX_NUMBER];
  */
 void initLEDButtons(void) {
 	// Configure the pushbutton pins
-	pinMode(BUTTON_RECORD, INPUT_PULLUP);
-	pinMode(BUTTON_MONITOR, INPUT_PULLUP);
-	pinMode(BUTTON_BLUETOOTH, INPUT_PULLUP);
+	pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP);
+	pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP);
+	pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP);
 
 	for(int i = 0; i < LED_MAX_NUMBER; i++) {
 		leds[i].pin = led_pins[i];
@@ -51,6 +51,7 @@ void initLEDButtons(void) {
 		pinMode(leds[i].pin, OUTPUT);
 		digitalWrite(leds[i].pin, leds[i].status);
 	}
+	pinMode(LED_BUILTIN, OUTPUT);
 	// unsigned long a;
 	// a = (unsigned long)&toggleRecLED;
 	// Serial.print("toggleRecLED address: 0x"); Serial.println(a, HEX);

@@ -9,12 +9,19 @@
 #include <Bounce.h>
 
 // Buttons definitions
-#define BUTTON_RECORD					24
-#define BUTTON_MONITOR				25
-#define BUTTON_BLUETOOTH			29
+#define BUTTON_RECORD_PIN			2 //24
+#define BUTTON_MONITOR_PIN		4 //25
+#define BUTTON_BLUETOOTH_PIN	21 //29
+#define BUTTON_BOUNCE_TIME_MS	8
 extern Bounce									but_rec;
 extern Bounce									but_mon;
 extern Bounce									but_blue;
+
+enum button_list {
+	BUTTON_RECORD,
+	BUTTON_MONITOR,
+	BUTTON_BLUETOOTH
+};
 
 // LED definitions
 #define LED_RECORD_PIN				26
