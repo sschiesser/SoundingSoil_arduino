@@ -11,9 +11,12 @@
 
 // Bluetooth audio devices definition
 #define DEVLIST_MAXLEN				6
+#define DEFAULT_TIME_DEC			946684800 // 01.01.2000, 00h00m00s
 extern struct btDev 					dev_list[DEVLIST_MAXLEN];
 extern unsigned int 					found_dev;
 extern String									peer_address;
+extern unsigned int						cur_time;
+extern bool										valid_time;
 
 // Serial command messages
 enum outputMsg {

@@ -14,8 +14,10 @@ struct btDev {
 };
 struct btDev dev_list[DEVLIST_MAXLEN];
 
-unsigned int found_dev;
-String peer_address;
+unsigned int									found_dev;
+String 												peer_address;
+unsigned int									cur_time = 0;
+bool													valid_time = false;
 
 /* bc127Init(void)
  * ---------------
@@ -100,7 +102,8 @@ int parseSerialIn(String input) {
 
   // Notifications from BC127!!
   // ==========================
-  if(part1.equalsIgnoreCase("OPEN_OK")) {
+  // "OPEN_OK" -> Bluetooth protocol opened succesfully
+	if(part1.equalsIgnoreCase("OPEN_OK")) {
 		// "OPEN_OK BLE" -> connection established with phone app
     if(part2.equalsIgnoreCase("BLE\n")) {
 			working_state.ble_state = BLESTATE_REQ_CONN;
@@ -111,6 +114,7 @@ int parseSerialIn(String input) {
 			working_state.bt_state = BTSTATE_REQ_CONN;
     }
   }
+	// "CLOSE_OK" -> Bluetooth protocol closed succesfully
 	else if(part1.equalsIgnoreCase("CLOSE_OK")) {
 		if(part2.equalsIgnoreCase("BLE\n")) {
 			if(working_state.ble_state != BLESTATE_IDLE) {
@@ -157,7 +161,7 @@ int parseSerialIn(String input) {
   else if(part1.equalsIgnoreCase("RECV BLE")) {
 		// "inq" -> start BT inquiry
     if(part2.equalsIgnoreCase("inq\n")) {
-      Serial.println("Received BT inquiry command");
+      // Serial.println("Received BT inquiry command");
       return BCCMD_BT_INQUIRY;
     }
 		// "start_mon" -> start monitoring
@@ -191,6 +195,15 @@ int parseSerialIn(String input) {
       Serial.print("peer_address: "); Serial.println(peer_address);
       return BCCMD_BT_OPEN;
     }
+		// "time xxxxxxxx" -> received current time (Unix time in DEC)
+		else if(part2.substring(0, 4).equalsIgnoreCase("time")) {
+			int len = part2.substring(5).length()-1;
+			cur_time = part2.substring(5, (5+len)).toInt();
+			if(cur_time > DEFAULT_TIME_DEC) valid_time = true;
+			else valid_time = false;
+			Serial.printf("current time: 0x%x(d'%ld), valid: %d\n", cur_time, cur_time, valid_time);
+		}
+		
   }
   else {
     // Serial.print(input);

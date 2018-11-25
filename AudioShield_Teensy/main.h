@@ -11,6 +11,7 @@
 #include <SerialFlash.h>
 #include <Snooze.h>
 #include <SPI.h>
+#include <TimeLib.h>
 #include <Wire.h>
 
 #include "gpsRoutines.h"

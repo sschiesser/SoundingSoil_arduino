@@ -37,25 +37,24 @@ struct wState 								working_state;
 enum bCalls										button_call;
 
 void setup() {
-    // // Configure pin 2 for bounce library
-    // pinMode(21, INPUT_PULLUP);
-    // debug led
-    // pinMode(LED_BUILTIN, OUTPUT);
-    // while (!Serial);
-    // delay(100);
-    // Serial.println("start...");
-    // delay(20);
-    //pin, mode, type
-  // Initialize both serial ports:
-  Serial.begin(9600);															// Serial monitor port
-  Serial4.begin(9600);														// BC127 communication port
-  gpsPort.begin(9600);														// GPS port
+	setSyncProvider(getTeensy3Time);
+	
+  // Initialize serial ports:
+  Serial.begin(115200);				// Serial monitor port
+  Serial4.begin(9600);				// BC127 communication port
+  gpsPort.begin(9600);				// GPS port
 
 	// Say hello
+	// while(!Serial);
 	delay(100);
   Serial.println("AudioShield v1.0");
   Serial.println("----------------");
 	delay(20);
+	// if(timeStatus() != timeSet) {
+		// Serial.println("Unable to sync with the RTC");
+	// } else {
+		// Serial.println("RTC has set the system time");
+	// }
   
 	// Initialize peripheral & variables
 	initLEDButtons();
@@ -144,10 +143,10 @@ WORK:
 		case RECSTATE_REQ_ON:
 			startLED(&leds[LED_RECORD], LED_MODE_WAITING);
 			gpsPowerOn();
-			delay(2000);
+			delay(60000);
 			ret = gpsGetData();
 			if(!ret) startLED(&leds[LED_RECORD], LED_MODE_WARNING);
-			gpsPowerOff();
+			// gpsPowerOff();
 			rec_path = createSDpath(ret);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(rec_path);
@@ -273,6 +272,16 @@ WORK:
     int len = manInput.length() - 1;
     Serial4.print(manInput.substring(0, len)+'\r');
   }
+
+	// time_t t = processSyncMessage();
+	// if(t != 0) {
+		// Teensy3Clock.set(t);
+		// setTime(t);
+	// }
+	// char buf[64];
+	// sprintf(buf, "%02d.%02d.%d, %02d:%02d'%02d''", day(), month(), year(), hour(), minute(), second());
+	// Serial.println(buf);
+	// delay(500);
 	
 	// Stay awake or go to sleep?
 	if( (working_state.rec_state == RECSTATE_OFF) &&
@@ -286,6 +295,23 @@ WORK:
 	}
 }
 
+time_t getTeensy3Time() {
+	return Teensy3Clock.get();
+}
+
+
+unsigned long processSyncMessage() {
+	unsigned long pctime = 0L;
+	const unsigned long DEFAULT_TIME = 1357041600;
+	if(Serial.find("T")) {
+		pctime = Serial.parseInt();
+		return pctime;
+		if(pctime < DEFAULT_TIME) {
+			pctime = 0L;
+		}
+	}
+	return pctime;
+}
 
 /* initAudio(void)
  * ---------------
