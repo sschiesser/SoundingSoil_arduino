@@ -16,8 +16,7 @@ struct btDev dev_list[DEVLIST_MAXLEN];
 
 unsigned int									found_dev;
 String 												peer_address;
-unsigned int									cur_time = 0;
-bool													valid_time = false;
+unsigned int									ble_time = 0;
 
 /* bc127Init(void)
  * ---------------
@@ -198,10 +197,11 @@ int parseSerialIn(String input) {
 		// "time xxxxxxxx" -> received current time (Unix time in DEC)
 		else if(part2.substring(0, 4).equalsIgnoreCase("time")) {
 			int len = part2.substring(5).length()-1;
-			cur_time = part2.substring(5, (5+len)).toInt();
-			if(cur_time > DEFAULT_TIME_DEC) valid_time = true;
-			else valid_time = false;
-			Serial.printf("current time: 0x%x(d'%ld), valid: %d\n", cur_time, cur_time, valid_time);
+			ble_time = part2.substring(5, (5+len)).toInt();
+			if(ble_time > DEFAULT_TIME_DEC) {
+				adjustTime(TSOURCE_BLE);
+			}
+			Serial.printf("current time: 0x%x(d'%ld)\n", ble_time, ble_time);
 		}
 		
   }

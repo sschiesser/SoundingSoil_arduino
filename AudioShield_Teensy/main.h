@@ -81,5 +81,14 @@ enum bCalls {
 	BCALL_BLUE = BUTTON_BLUETOOTH_PIN
 };
 extern enum bCalls						button_call;
+// Time sources
+enum tSources {
+	TSOURCE_NONE,
+	TSOURCE_GPS,
+	TSOURCE_BLE
+};
+extern enum tSources					time_source;
+
+void adjustTime(enum tSources source);
 
 #endif /* _MAIN_H_ */

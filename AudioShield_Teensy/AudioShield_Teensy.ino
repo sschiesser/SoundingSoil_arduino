@@ -37,7 +37,7 @@ struct wState 								working_state;
 enum bCalls										button_call;
 
 void setup() {
-	setSyncProvider(getTeensy3Time);
+	// setSyncProvider(getTeensy3Time);
 	
   // Initialize serial ports:
   Serial.begin(115200);				// Serial monitor port
@@ -143,10 +143,20 @@ WORK:
 		case RECSTATE_REQ_ON:
 			startLED(&leds[LED_RECORD], LED_MODE_WAITING);
 			gpsPowerOn();
-			delay(60000);
+			delay(1000);
 			ret = gpsGetData();
-			if(!ret) startLED(&leds[LED_RECORD], LED_MODE_WARNING);
-			// gpsPowerOff();
+			gpsPowerOff();
+			// GPS data did not returned a valid fix
+			if(!ret) {
+				Serial.printf("No GPS fix received. timeStatus = %d, time = %ld\n", timeStatus(), now());
+				// Time is not sychronized yet -> send a short warning
+				if(timeStatus() == timeNotSet) startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+				else startLED(&leds[LED_RECORD], LED_MODE_ON);
+			}
+			// GPS data valid -> adjust the internal time
+			else {
+				adjustTime(TSOURCE_GPS);
+			}
 			rec_path = createSDpath(ret);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(rec_path);
@@ -273,16 +283,6 @@ WORK:
     Serial4.print(manInput.substring(0, len)+'\r');
   }
 
-	// time_t t = processSyncMessage();
-	// if(t != 0) {
-		// Teensy3Clock.set(t);
-		// setTime(t);
-	// }
-	// char buf[64];
-	// sprintf(buf, "%02d.%02d.%d, %02d:%02d'%02d''", day(), month(), year(), hour(), minute(), second());
-	// Serial.println(buf);
-	// delay(500);
-	
 	// Stay awake or go to sleep?
 	if( (working_state.rec_state == RECSTATE_OFF) &&
 			(working_state.mon_state == MONSTATE_OFF) &&
@@ -295,23 +295,46 @@ WORK:
 	}
 }
 
-time_t getTeensy3Time() {
-	return Teensy3Clock.get();
-}
-
-
-unsigned long processSyncMessage() {
-	unsigned long pctime = 0L;
-	const unsigned long DEFAULT_TIME = 1357041600;
-	if(Serial.find("T")) {
-		pctime = Serial.parseInt();
-		return pctime;
-		if(pctime < DEFAULT_TIME) {
-			pctime = 0L;
-		}
+void adjustTime(enum tSources source) {
+	int year;
+	byte month, day, hour, minute, second;
+	unsigned long fix_age;
+	
+	switch(source) {
+		case TSOURCE_GPS:
+			gps.crack_datetime(&year, &month, &day, &hour, &minute, &second, NULL, &fix_age);
+			setTime(hour, minute, second, day, month, year);
+			adjustTime(TIME_OFFSET * SECS_PER_HOUR);
+			Teensy3Clock.set(now());
+			break;
+			
+		case TSOURCE_BLE:
+			setTime(ble_time);
+			Teensy3Clock.set(ble_time);
+			break;
+			
+		default:
+			break;
 	}
-	return pctime;
+	Serial.printf("Time adjusted from source#%d. Current time: %ld\n", source, now());
 }
+// time_t getTeensy3Time() {
+	// return Teensy3Clock.get();
+// }
+
+
+// unsigned long processSyncMessage() {
+	// unsigned long pctime = 0L;
+	// const unsigned long DEFAULT_TIME = 1357041600;
+	// if(Serial.find("T")) {
+		// pctime = Serial.parseInt();
+		// return pctime;
+		// if(pctime < DEFAULT_TIME) {
+			// pctime = 0L;
+		// }
+	// }
+	// return pctime;
+// }
 
 /* initAudio(void)
  * ---------------
