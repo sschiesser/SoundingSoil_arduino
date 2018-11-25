@@ -10,10 +10,11 @@
 // Load drivers
 SnoozeDigital 								digitalWakeup;
 // Available digital pins for wakeup on Teensy 3.6: 2,4,6,7,9,10,11,13,16,21,22,26,30,33
+SnoozeAlarm										alarmWakeup;
 
 
 // install driver into SnoozeBlock
-SnoozeBlock 									config_teensy3x(digitalWakeup);
+SnoozeBlock 									snooze_config(digitalWakeup, alarmWakeup);
 
 // Audio connections definition
 // GUItool: begin automatically generated code
@@ -35,32 +36,29 @@ const int                     audioInput = AUDIO_INPUT_LINEIN;
 
 struct wState 								working_state;
 enum bCalls										button_call;
+struct rWindow								rec_window;
 
 void setup() {
-	// setSyncProvider(getTeensy3Time);
-	
   // Initialize serial ports:
   Serial.begin(115200);				// Serial monitor port
   Serial4.begin(9600);				// BC127 communication port
   gpsPort.begin(9600);				// GPS port
 
 	// Say hello
-	// while(!Serial);
 	delay(100);
   Serial.println("AudioShield v1.0");
   Serial.println("----------------");
 	delay(20);
-	// if(timeStatus() != timeSet) {
-		// Serial.println("Unable to sync with the RTC");
-	// } else {
-		// Serial.println("RTC has set the system time");
-	// }
   
+	pinMode(LED_BUILTIN, OUTPUT);
+	
 	// Initialize peripheral & variables
 	initLEDButtons();
 	digitalWakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
 	digitalWakeup.pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP, FALLING);
   digitalWakeup.pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP, FALLING);
+	alarmWakeup.setRtcTimer(0,0,2);
+	
 	pinMode(GPS_SWITCH_PIN, OUTPUT);
 	digitalWrite(GPS_SWITCH_PIN, LOW);
 	pinMode(AUDIO_VOLUME_PIN, INPUT);
@@ -68,11 +66,12 @@ void setup() {
 	initAudio();
 	initSDcard();
 	initWaveHeader();
-	initStates();
+	setDefaultValues();
 	bc127Init();
 }
 
 void loop() {
+	int who;
 SLEEP:
 	// you need to update before sleeping.
 	but_rec.update();
@@ -82,17 +81,25 @@ SLEEP:
 	SIM_SCGC6 &= ~SIM_SCGC6_I2S;
 	delay(10);
 	// returns module that woke processor after waking from low power mode.
-	int who = Snooze.hibernate(config_teensy3x);
-	Bounce cur_bt = Bounce(who, BUTTON_BOUNCE_TIME_MS);
-	elapsedMillis timeout = 0;
-	while (timeout < (BUTTON_BOUNCE_TIME_MS+1)) {
-		cur_bt.update();
+	who = Snooze.hibernate(snooze_config);
+	if(who == WAKESOURCE_RTC) {
+		digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+		snooze_config -= alarmWakeup;
 	}
-	button_call = (enum bCalls)who;
+	else {
+		Bounce cur_bt = Bounce(who, BUTTON_BOUNCE_TIME_MS);
+		elapsedMillis timeout = 0;
+		while (timeout < (BUTTON_BOUNCE_TIME_MS+1)) {
+			cur_bt.update();
+		}
+		button_call = (enum bCalls)who;
+	}
+	
 	// if not sleeping anymore, re-enable i2s clock
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
 	delay(10);
-		
+
+	
 WORK:
 	bool ret;
 	float gain;
@@ -151,7 +158,11 @@ WORK:
 				Serial.printf("No GPS fix received. timeStatus = %d, time = %ld\n", timeStatus(), now());
 				// Time is not sychronized yet -> send a short warning
 				if(timeStatus() == timeNotSet) startLED(&leds[LED_RECORD], LED_MODE_WARNING);
-				else startLED(&leds[LED_RECORD], LED_MODE_ON);
+				// Time synchronize from an older value
+				else {
+					startLED(&leds[LED_RECORD], LED_MODE_ON);
+					ret = true; // Change the bool value to create a true (and not incremented) SD path
+				}
 			}
 			// GPS data valid -> adjust the internal time
 			else {
@@ -288,6 +299,8 @@ WORK:
 			(working_state.mon_state == MONSTATE_OFF) &&
 			(working_state.ble_state == BLESTATE_IDLE) &&
 			(working_state.bt_state == BTSTATE_IDLE) ) {
+		snooze_config += alarmWakeup;
+		alarmWakeup.setRtcTimer(0,0,2);
 		goto SLEEP;
 	}
 	else {
@@ -295,6 +308,13 @@ WORK:
 	}
 }
 
+/* adjustTime(enum tSources)
+ * -------------------------
+ * Adjust local time after an external source
+ * (GPS or app over BLE) has provided a new value.
+ * IN:	- external source (enum tSources)
+ * OUT:	- none
+ */
 void adjustTime(enum tSources source) {
 	int year;
 	byte month, day, hour, minute, second;
@@ -316,25 +336,8 @@ void adjustTime(enum tSources source) {
 		default:
 			break;
 	}
-	Serial.printf("Time adjusted from source#%d. Current time: %ld\n", source, now());
+	// Serial.printf("Time adjusted from source#%d. Current time: %ld\n", source, now());
 }
-// time_t getTeensy3Time() {
-	// return Teensy3Clock.get();
-// }
-
-
-// unsigned long processSyncMessage() {
-	// unsigned long pctime = 0L;
-	// const unsigned long DEFAULT_TIME = 1357041600;
-	// if(Serial.find("T")) {
-		// pctime = Serial.parseInt();
-		// return pctime;
-		// if(pctime < DEFAULT_TIME) {
-			// pctime = 0L;
-		// }
-	// }
-	// return pctime;
-// }
 
 /* initAudio(void)
  * ---------------
@@ -351,14 +354,21 @@ void initAudio(void) {
   mixer.gain(MIXER_CH_SDC, 0);
 }
 
-/* initStates(void)
- * ----------------
+/* setDefaultValues(void)
+ * ----------------------
  */
-void initStates(void) {
+void setDefaultValues(void) {
   working_state.rec_state = RECSTATE_OFF;
   working_state.mon_state = MONSTATE_OFF;
   working_state.bt_state = BTSTATE_IDLE;
   working_state.ble_state = BLESTATE_IDLE;
+	rec_window.length.s = RWIN_LEN_DEF_S;
+	rec_window.length.m = RWIN_LEN_DEF_M;
+	rec_window.length.h = RWIN_LEN_DEF_H;
+	rec_window.period.s = RWIN_PER_DEF_S;
+	rec_window.period.m = RWIN_PER_DEF_M;
+	rec_window.period.h = RWIN_PER_DEF_H;
+	rec_window.occurences = RWIN_OCC_DEF;
 }
 
 /* startRecording(String)

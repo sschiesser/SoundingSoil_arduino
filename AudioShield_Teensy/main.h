@@ -23,6 +23,11 @@
 #define MIXER_CH_REC          0
 #define MIXER_CH_SDC          1
 
+#define WAKESOURCE_BUT_REC		BUTTON_RECORD_PIN
+#define WAKESOURCE_BUT_MON		BUTTON_MONITOR_PIN
+#define WAKESOURCE_BUT_BLUE		BUTTON_BLUETOOTH_PIN
+#define WAKESOURCE_RTC				35
+
 // Recording states...
 enum recState {
 	RECSTATE_OFF,								// 0
@@ -88,6 +93,25 @@ enum tSources {
 	TSOURCE_BLE
 };
 extern enum tSources					time_source;
+struct hmsTime {
+	byte h;
+	byte m;
+	byte s;
+};
+// Recording window
+struct rWindow {
+	struct hmsTime length;
+	struct hmsTime period;
+	unsigned int occurences;
+};
+extern struct rWindow					rec_window;
+#define RWIN_LEN_DEF_S				0
+#define RWIN_LEN_DEF_M				1
+#define RWIN_LEN_DEF_H				0
+#define RWIN_PER_DEF_S				0
+#define RWIN_PER_DEF_M				0
+#define RWIN_PER_DEF_H				1
+#define RWIN_OCC_DEF					0 // Zero value -> infinite repetitions
 
 void adjustTime(enum tSources source);
 
