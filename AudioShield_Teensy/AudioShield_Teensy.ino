@@ -12,9 +12,11 @@ SnoozeDigital 								digitalWakeup;
 // Available digital pins for wakeup on Teensy 3.6: 2,4,6,7,9,10,11,13,16,21,22,26,30,33
 SnoozeAlarm										alarmWakeup;
 
+AlarmId												id;
+
 
 // install driver into SnoozeBlock
-SnoozeBlock 									snooze_config(digitalWakeup, alarmWakeup);
+SnoozeBlock 									snooze_config(digitalWakeup);
 
 // Audio connections definition
 // GUItool: begin automatically generated code
@@ -34,7 +36,7 @@ AudioControlSGTL5000					sgtl5000;						//xy=172,323
 // // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 
-struct wState 								working_state;
+volatile struct wState 				working_state;
 enum bCalls										button_call;
 struct rWindow								rec_window;
 
@@ -57,7 +59,6 @@ void setup() {
 	digitalWakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
 	digitalWakeup.pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP, FALLING);
   digitalWakeup.pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP, FALLING);
-	alarmWakeup.setRtcTimer(0,0,2);
 	
 	pinMode(GPS_SWITCH_PIN, OUTPUT);
 	digitalWrite(GPS_SWITCH_PIN, LOW);
@@ -99,11 +100,16 @@ SLEEP:
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
 	delay(10);
 
+  // Alarm.timerRepeat(15, Repeats);           // timer for every 15 seconds
+	// id = Alarm.timerRepeat(2, Repeats2);      // timer for every 2 seconds
+  // Alarm.timerOnce(10, OnceOnly);            // called once after 10 seconds
 	
 WORK:
 	bool ret;
 	float gain;
 	
+	Alarm.delay(0);
+		
 	but_rec.update();
 	but_mon.update();
 	but_blue.update();
@@ -169,6 +175,8 @@ WORK:
 				adjustTime(TSOURCE_GPS);
 			}
 			rec_path = createSDpath(ret);
+			Alarm.timerOnce(5, alarmRecDone);
+			// IMPLEMENT TIMEALARMS LIBRARY HERE !!!!!!
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(rec_path);
 			break;
@@ -306,6 +314,32 @@ WORK:
 	else {
 		goto WORK;
 	}
+}
+
+void Repeats() {
+  Serial.println("15 second timer");
+}
+
+void Repeats2() {
+  Serial.println("2 second timer");
+}
+
+void OnceOnly() {
+  Serial.println("This timer only triggers once, stop the 2 second timer");
+  // use Alarm.free() to disable a timer and recycle its memory.
+  Alarm.free(id);
+  // optional, but safest to "forget" the ID after memory recycled
+  id = dtINVALID_ALARM_ID;
+  // you can also use Alarm.disable() to turn the timer off, but keep
+  // it in memory, to turn back on later with Alarm.enable().
+}
+
+void alarmRecDone(void) {
+	Serial.println("Recording done!");
+	digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+  Alarm.free(id);
+  id = dtINVALID_ALARM_ID;
+	working_state.rec_state = RECSTATE_REQ_OFF;
 }
 
 /* adjustTime(enum tSources)

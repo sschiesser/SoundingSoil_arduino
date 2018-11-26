@@ -12,6 +12,7 @@
 #include <Snooze.h>
 #include <SPI.h>
 #include <TimeLib.h>
+#include <TimeAlarms.h>
 #include <Wire.h>
 
 #include "gpsRoutines.h"
@@ -77,7 +78,7 @@ struct wState {
   enum btState bt_state;
 	enum bleState ble_state;
 };
-extern struct wState					working_state;
+extern volatile struct wState	working_state;
 // Button calls
 enum bCalls {
 	BCALL_NONE = 0,
