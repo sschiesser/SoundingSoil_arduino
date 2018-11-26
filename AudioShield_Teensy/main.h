@@ -19,7 +19,8 @@
 #include "SDutils.h"
 #include "BC127.h"
 #include "IOutils.h"
-#include "ssUtilities.h"
+#include "audioUtils.h"
+#include "timeUtils.h"
 
 // Audio mixer channels
 #define MIXER_CH_REC          0
@@ -99,13 +100,6 @@ struct recInfo {
 };
 extern struct recInfo					last_record;
 extern struct recInfo					next_record;
-// Time sources
-enum tSources {
-	TSOURCE_NONE,
-	TSOURCE_GPS,
-	TSOURCE_BLE
-};
-extern enum tSources					time_source;
 // Recording window
 struct rWindow {
 	tmElements_t length;
@@ -120,7 +114,5 @@ extern struct rWindow					rec_window;
 #define RWIN_PER_DEF_M				0
 #define RWIN_PER_DEF_H				0
 #define RWIN_OCC_DEF					0 // Zero value -> infinite repetitions
-
-void adjustTime(enum tSources source);
 
 #endif /* _MAIN_H_ */
