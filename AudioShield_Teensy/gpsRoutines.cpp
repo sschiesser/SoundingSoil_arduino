@@ -50,11 +50,12 @@ bool gpsGetData(void) {
 		gpsEncodeData(2000);
 #endif	
 		gps.f_get_position(&flat, &flon, &age);
-		if((age == TinyGPS::GPS_INVALID_AGE) || (age > 5000)) {
+		if((age == TinyGPS::GPS_INVALID_AGE) || (age > 10000)) {
 			Serial.println("No valid data. Do it again!");
 			retries++;
 		}
 		else {
+			adjustTime(TSOURCE_GPS);
 			fix_found = true;
 		}
 	} while((!fix_found) && (retries < 3));

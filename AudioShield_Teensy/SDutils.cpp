@@ -51,27 +51,25 @@ void initSDcard(void) {
  * -----------------
  * Create the folder/file path of the new recording
  * out of retrieved GPS or sent remote values.
- * IN:	- GPS fix found (bool)
+ * IN:	- time set (bool)
  * OUT:	- complete recording path (String)
  */
-String createSDpath(bool fix_found) {
+String createSDpath(bool time_set) {
 	String dir_name = "";
 	String file_name = "";
 	String path = "";
-
-	// FIX FOUND:
+	tmElements_t tm;
+	char buf[24];
+	
+	// TIME SET:
 	// Use date/time value to create the record path
 	// with the format "YYMMDD/hhmmss.wav"
-	if(fix_found) {
-		int year;
-		byte month, day, hour, minute, second, hundredths;
-		unsigned long fix_age;
-		char buf[24];
-
-		gps.crack_datetime(&year, &month, &day, &hour, &minute, &second, &hundredths, &fix_age);
-		sprintf(buf, "%02d%02d%02d", (year-2000), month, day);
+	if(time_set) {
+		breakTime(now(), tm);
+		Serial.printf("Broken time: %02d.%02d.%02d, %02dh%02dm%02ds\n", tm.Day, tm.Month, (tm.Year-30), tm.Hour, tm.Minute, tm.Second);
+		sprintf(buf, "%02d%02d%02d", (tm.Year-30), tm.Month, tm.Day);
 		dir_name.concat(buf);
-		sprintf(buf, "%02d%02d%02d.wav", hour, minute, second);
+		sprintf(buf, "%02d%02d%02d.wav", tm.Hour, tm.Minute, tm.Second);
 		file_name.concat(buf);
 		sprintf(buf, "/%s/%s", dir_name.c_str(), file_name.c_str());
 		path.concat(buf);	
@@ -84,7 +82,7 @@ String createSDpath(bool fix_found) {
 			SD.mkdir(dir_name);
 		}
 	}
-	// NO FIX FOUND:
+	// TIME NOT SET:
 	// Automatically increase the directory and file names with the following rules:
 	// -	if new recording (e.g. REC button press) has been called,
 	//		create a new empty directory at the lowest disponible value.
@@ -95,7 +93,6 @@ String createSDpath(bool fix_found) {
 		file_name.concat("000000");
 		unsigned int dir_val = 0;
 		unsigned int file_val = 0;
-		char buf[24];
 		// Increase dir_name until no matching directory exists
 		while(SD.exists(dir_name)) {
 			dir_val = dir_name.toInt();

@@ -53,6 +53,9 @@ void initLEDButtons(void) {
 		pinMode(leds[i].pin, OUTPUT);
 		digitalWrite(leds[i].pin, leds[i].status);
 	}
+  
+	pinMode(LED_BUILTIN, OUTPUT);
+	
 	// unsigned long a;
 	// a = (unsigned long)&toggleRecLED;
 	// Serial.print("toggleRecLED address: 0x"); Serial.println(a, HEX);

@@ -39,7 +39,7 @@ const int                     audioInput = AUDIO_INPUT_LINEIN;
 volatile struct wState 				working_state;
 enum bCalls										button_call;
 struct rWindow								rec_window;
-
+struct lastRec								last_record;
 void setup() {
   // Initialize serial ports:
   Serial.begin(115200);				// Serial monitor port
@@ -51,9 +51,6 @@ void setup() {
   Serial.println("AudioShield v1.0");
   Serial.println("----------------");
 	delay(20);
-  
-	pinMode(LED_BUILTIN, OUTPUT);
-	
 	// Initialize peripheral & variables
 	initLEDButtons();
 	digitalWakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
@@ -81,44 +78,39 @@ SLEEP:
 	// switch off i2s clock before sleeping
 	SIM_SCGC6 &= ~SIM_SCGC6_I2S;
 	delay(10);
-	// returns module that woke processor after waking from low power mode.
+	// returns module that woke up processor from hibernation
 	who = Snooze.hibernate(snooze_config);
 	if(who == WAKESOURCE_RTC) {
+		// if alarm wake-up (from 'snooze') -> remove alarm and start recording
 		digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 		snooze_config -= alarmWakeup;
 	}
 	else {
+		// if button wake-up -> debounce first and notify which button was pressed
 		Bounce cur_bt = Bounce(who, BUTTON_BOUNCE_TIME_MS);
 		elapsedMillis timeout = 0;
-		while (timeout < (BUTTON_BOUNCE_TIME_MS+1)) {
-			cur_bt.update();
-		}
+		while (timeout < (BUTTON_BOUNCE_TIME_MS+1)) cur_bt.update();
 		button_call = (enum bCalls)who;
 	}
-	
 	// if not sleeping anymore, re-enable i2s clock
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
 	delay(10);
 
-  // Alarm.timerRepeat(15, Repeats);           // timer for every 15 seconds
-	// id = Alarm.timerRepeat(2, Repeats2);      // timer for every 2 seconds
-  // Alarm.timerOnce(10, OnceOnly);            // called once after 10 seconds
-	
 WORK:
 	bool ret;
 	float gain;
-	
+	// needed for TimeAlarms timers
 	Alarm.delay(0);
-		
+	// needed for button bounces	
 	but_rec.update();
 	but_mon.update();
 	but_blue.update();
-	
+	// if button falling edge detected (awake state) -> notify which button was pressed
 	if(but_rec.fallingEdge()) button_call = (enum bCalls)BUTTON_RECORD_PIN;
 	if(but_mon.fallingEdge()) button_call = (enum bCalls)BUTTON_MONITOR_PIN;
 	if(but_blue.fallingEdge()) button_call = (enum bCalls)BUTTON_BLUETOOTH_PIN;
     
-  // Button press actions
+  // centralized button call actions coming from SLEEP or WORK mode
   if(button_call == BUTTON_RECORD_PIN) {
     Serial.print("Record button pressed: rec_state = "); Serial.println(working_state.rec_state);
     if(working_state.rec_state == RECSTATE_OFF) {
@@ -163,22 +155,24 @@ WORK:
 			if(!ret) {
 				Serial.printf("No GPS fix received. timeStatus = %d, time = %ld\n", timeStatus(), now());
 				// Time is not sychronized yet -> send a short warning
-				if(timeStatus() == timeNotSet) startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+				if(timeStatus() == timeNotSet) {
+					rec_path = createSDpath(false);
+					startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+				}
 				// Time synchronize from an older value
 				else {
+					rec_path = createSDpath(true);
 					startLED(&leds[LED_RECORD], LED_MODE_ON);
-					ret = true; // Change the bool value to create a true (and not incremented) SD path
 				}
 			}
 			// GPS data valid -> adjust the internal time
 			else {
-				adjustTime(TSOURCE_GPS);
+				// adjustTime(TSOURCE_GPS);
+				createSDpath(true);
 			}
-			rec_path = createSDpath(ret);
-			Alarm.timerOnce(5, alarmRecDone);
-			// IMPLEMENT TIMEALARMS LIBRARY HERE !!!!!!
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(rec_path);
+			setRecInfos(rec_path);
 			break;
 		
 		case RECSTATE_ON:
@@ -316,29 +310,34 @@ WORK:
 	}
 }
 
-void Repeats() {
-  Serial.println("15 second timer");
+void setRecInfos(String path) {
+	unsigned long dur = rec_window.length.Second + 
+										(rec_window.length.Minute * SECS_PER_MIN) + 
+										(rec_window.length.Hour * SECS_PER_HOUR);
+	last_record.dur.Second = rec_window.length.Second;
+	last_record.dur.Minute = rec_window.length.Minute;
+	last_record.dur.Hour = rec_window.length.Hour;
+	last_record.path.remove(0);
+	last_record.path.concat(path.c_str());
+	if(timeStatus() == timeNotSet) {
+		last_record.t_set = false;
+		last_record.ts = (time_t)0;
+	}
+	else {
+		last_record.t_set = true;
+		last_record.ts = now();
+	}
+	Serial.printf("Record information:\n-duration: %02dh%02dm%02ds\n-path: '%s'\n-time set: %d\n-rec time: %ld\n", last_record.dur.Hour, last_record.dur.Minute, last_record.dur.Second, last_record.path.c_str(), last_record.t_set, last_record.ts);
+	Alarm.timerOnce(dur, alarmRecDone);	
 }
 
-void Repeats2() {
-  Serial.println("2 second timer");
-}
-
-void OnceOnly() {
-  Serial.println("This timer only triggers once, stop the 2 second timer");
-  // use Alarm.free() to disable a timer and recycle its memory.
-  Alarm.free(id);
-  // optional, but safest to "forget" the ID after memory recycled
-  id = dtINVALID_ALARM_ID;
-  // you can also use Alarm.disable() to turn the timer off, but keep
-  // it in memory, to turn back on later with Alarm.enable().
-}
-
+/* alarmRecDone(void)
+ * ------------------
+ * Callback of a TimeAlarms timer triggered when a record window is finished.
+ * IN:	- none
+ * OUT:	- none
+ */
 void alarmRecDone(void) {
-	Serial.println("Recording done!");
-	digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-  Alarm.free(id);
-  id = dtINVALID_ALARM_ID;
 	working_state.rec_state = RECSTATE_REQ_OFF;
 }
 
@@ -370,7 +369,7 @@ void adjustTime(enum tSources source) {
 		default:
 			break;
 	}
-	// Serial.printf("Time adjusted from source#%d. Current time: %ld\n", source, now());
+	Serial.printf("Time adjusted from source#%d. Current time: %ld\n", source, now());
 }
 
 /* initAudio(void)
@@ -396,12 +395,12 @@ void setDefaultValues(void) {
   working_state.mon_state = MONSTATE_OFF;
   working_state.bt_state = BTSTATE_IDLE;
   working_state.ble_state = BLESTATE_IDLE;
-	rec_window.length.s = RWIN_LEN_DEF_S;
-	rec_window.length.m = RWIN_LEN_DEF_M;
-	rec_window.length.h = RWIN_LEN_DEF_H;
-	rec_window.period.s = RWIN_PER_DEF_S;
-	rec_window.period.m = RWIN_PER_DEF_M;
-	rec_window.period.h = RWIN_PER_DEF_H;
+	rec_window.length.Second = RWIN_LEN_DEF_S;
+	rec_window.length.Minute = RWIN_LEN_DEF_M;
+	rec_window.length.Hour = RWIN_LEN_DEF_H;
+	rec_window.period.Second = RWIN_PER_DEF_S;
+	rec_window.period.Minute = RWIN_PER_DEF_M;
+	rec_window.period.Hour = RWIN_PER_DEF_H;
 	rec_window.occurences = RWIN_OCC_DEF;
 }
 

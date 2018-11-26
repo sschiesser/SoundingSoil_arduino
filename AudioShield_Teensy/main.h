@@ -87,6 +87,14 @@ enum bCalls {
 	BCALL_BLUE = BUTTON_BLUETOOTH_PIN
 };
 extern enum bCalls						button_call;
+// Informations related to the last record
+struct lastRec {
+	time_t ts;
+	tmElements_t dur;
+	bool t_set;
+	String path;
+};
+extern struct lastRec					last_record;
 // Time sources
 enum tSources {
 	TSOURCE_NONE,
@@ -94,24 +102,19 @@ enum tSources {
 	TSOURCE_BLE
 };
 extern enum tSources					time_source;
-struct hmsTime {
-	byte h;
-	byte m;
-	byte s;
-};
 // Recording window
 struct rWindow {
-	struct hmsTime length;
-	struct hmsTime period;
+	tmElements_t length;
+	tmElements_t period;
 	unsigned int occurences;
 };
 extern struct rWindow					rec_window;
-#define RWIN_LEN_DEF_S				0
-#define RWIN_LEN_DEF_M				1
+#define RWIN_LEN_DEF_S				10
+#define RWIN_LEN_DEF_M				0
 #define RWIN_LEN_DEF_H				0
-#define RWIN_PER_DEF_S				0
+#define RWIN_PER_DEF_S				20
 #define RWIN_PER_DEF_M				0
-#define RWIN_PER_DEF_H				1
+#define RWIN_PER_DEF_H				0
 #define RWIN_OCC_DEF					0 // Zero value -> infinite repetitions
 
 void adjustTime(enum tSources source);

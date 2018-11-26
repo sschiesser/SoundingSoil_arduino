@@ -270,11 +270,13 @@ bool sendCmdOut(int msg) {
     break;
 		// Start monitoring -> AVRCP play
     case BCCMD_BT_STARTMON:
-    cmdLine = "MUSIC PLAY\r";
+		working_state.mon_state = MONSTATE_REQ_ON;
+		if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine = "MUSIC PLAY\r";
     break;
 		// Stop monitoring -> AVRCP pause
     case BCCMD_BT_STOPMON:
-    cmdLine = "MUSIC PAUSE\r";
+		working_state.mon_state = MONSTATE_REQ_OFF;
+    if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine = "MUSIC PAUSE\r";
     break;
 		// Start recording
     case BCCMD_BT_STARTREC:
