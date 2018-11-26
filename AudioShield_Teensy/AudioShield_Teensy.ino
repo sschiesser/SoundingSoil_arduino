@@ -30,10 +30,10 @@ void setup() {
   gpsPort.begin(9600);				// GPS port
 
 	// Say hello
-	delay(100);
+	// delay(100);
   Serial.println("AudioShield v1.0");
   Serial.println("----------------");
-	delay(20);
+	Alarm.delay(20);
 	// Initialize peripheral & variables
 	initLEDButtons();
 	button_wakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
@@ -60,7 +60,7 @@ SLEEP:
 	but_blue.update();
 	// switch off i2s clock before sleeping
 	SIM_SCGC6 &= ~SIM_SCGC6_I2S;
-	delay(10);
+	Alarm.delay(10);
 	// returns module that woke up processor from hibernation
 	who = Snooze.hibernate(snooze_config);
 	if(who == WAKESOURCE_RTC) {
@@ -76,7 +76,7 @@ SLEEP:
 	}
 	// if not sleeping anymore, re-enable i2s clock
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
-	delay(10);
+	Alarm.delay(10);
 
 WORK:
 	float gain;
@@ -136,7 +136,7 @@ WORK:
 		
 		case RECSTATE_REQ_WAIT: {
 			stopRecording(next_record.path);
-			stopLED(&leds[LED_RECORD]);
+			pauseRecording();
 			working_state.rec_state = RECSTATE_WAIT;
 			break;
 		}
@@ -184,7 +184,7 @@ WORK:
 		case BLESTATE_REQ_ADV:
 			startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
 			bc127PowerOn();
-			delay(1000);
+			Alarm.delay(1000);
 			bc127AdvStart();
 			working_state.ble_state = BLESTATE_ADV;
 			break;
@@ -218,7 +218,7 @@ WORK:
 		
 		case BLESTATE_REQ_OFF:
 			bc127AdvStop();
-			delay(200);
+			Alarm.delay(200);
 			bc127PowerOff();
 			stopLED(&leds[LED_BLUETOOTH]);
 			working_state.ble_state = BLESTATE_IDLE;

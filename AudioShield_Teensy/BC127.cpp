@@ -30,12 +30,12 @@ void bc127Init(void) {
 
 void bc127PowerOn(void) {
 	sendCmdOut(BCCMD_GEN_PWRON);
-	delay(200);
+	Alarm.delay(200);
 }
 
 void bc127PowerOff(void) {
 	sendCmdOut(BCCMD_GEN_PWROFF);
-	delay(200);
+	Alarm.delay(200);
 }
 
 /* bc127AdvStart(void)

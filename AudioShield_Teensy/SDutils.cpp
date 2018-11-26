@@ -40,7 +40,7 @@ void initSDcard(void) {
   if(!(SD.begin(SDCARD_CS_PIN))) {
     while(1) {
       Serial.println("Unable to access the SD card");
-      delay(500);
+      Alarm.delay(500);
     }
   }
 }
@@ -63,7 +63,7 @@ String createSDpath(bool time_set) {
 	// Use date/time value to create the record path
 	// with the format "YYMMDD/hhmmss.wav"
 	if(time_set) {
-		breakTime(now(), tm);
+		breakTime(next_record.ts, tm);
 		Serial.printf("Broken time: %02d.%02d.%02d, %02dh%02dm%02ds\n", tm.Day, tm.Month, (tm.Year-30), tm.Hour, tm.Minute, tm.Second);
 		sprintf(buf, "%02d%02d%02d", (tm.Year-30), tm.Month, tm.Day);
 		dir_name.concat(buf);

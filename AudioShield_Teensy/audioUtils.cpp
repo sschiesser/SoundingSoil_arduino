@@ -26,37 +26,44 @@ AudioControlSGTL5000					sgtl5000;						//xy=172,323
 // // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 
-
+/* prepareRecording(void)
+ * ----------------------
+ * Fetch a timestamp and set all the necessary informations
+ * needed for the coming (next) record.
+ * IN:	- none
+ * OUT:	- none
+ */
 void prepareRecording(void) {
-	bool ret;
 	String rec_path = "";
 	
-	startLED(&leds[LED_RECORD], LED_MODE_WAITING);
+	startLED(&leds[LED_RECORD], LED_MODE_ON);
 	gpsPowerOn();
-	delay(1000);
-	ret = gpsGetData();
+	Alarm.delay(1000);
+	startLED(&leds[LED_RECORD], LED_MODE_WAITING);
+	gpsGetData();
 	gpsPowerOff();
-	if(!ret) {
-		// Serial.printf("No GPS fix received. timeStatus = %d, time = %ld\n", timeStatus(), now());
-		// Time is not sychronized yet -> send a short warning
-		if(timeStatus() == timeNotSet) {
-			rec_path = createSDpath(false);
-			startLED(&leds[LED_RECORD], LED_MODE_WARNING);
-		}
-		// Time synchronize from an older value
-		else {
-			rec_path = createSDpath(true);
-			startLED(&leds[LED_RECORD], LED_MODE_ON);
-		}
+	if(timeStatus() == timeNotSet) {
+		next_record.ts = 0;
+		rec_path = createSDpath(false);
+		startLED(&leds[LED_RECORD], LED_MODE_WARNING);
 	}
-	// GPS data valid -> adjust the internal time
 	else {
-		// adjustTime(TSOURCE_GPS);
-		createSDpath(true);
+		next_record.ts = now();
+		rec_path = createSDpath(true);
+		startLED(&leds[LED_RECORD], LED_MODE_ON);
 	}
 	setRecInfos(&next_record, rec_path, last_record.cnt);
 }
 
+/* setRecInfos(struct recInfos*, String, unsigned int)
+ * ---------------------------------------------------
+ * Set the information related to the pointed recording
+ * and start the alarm at recording duration.
+ * IN:	- pointer to a record struct (struct recInfos*)
+ *			- recording path name (String)
+ *			- record counter (unsigned int)
+ * OUT:	- none
+ */
 void setRecInfos(struct recInfo* rec, String path, unsigned int rec_cnt) {
 	unsigned long dur = rec_window.length.Second + 
 										(rec_window.length.Minute * SECS_PER_MIN) + 
@@ -67,14 +74,7 @@ void setRecInfos(struct recInfo* rec, String path, unsigned int rec_cnt) {
 	rec->path.remove(0);
 	rec->path.concat(path.c_str());
 	rec->cnt = rec_cnt;
-	if(timeStatus() == timeNotSet) {
-		rec->t_set = false;
-		rec->ts = (time_t)0;
-	}
-	else {
-		rec->t_set = true;
-		rec->ts = now();
-	}
+	rec->t_set = (bool)rec->ts;
 	Serial.printf("Record information:\n-duration: %02dh%02dm%02ds\n-path: '%s'\n-time set: %d\n-rec time: %ld\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->path.c_str(), rec->t_set, rec->ts);
 	Alarm.timerOnce(dur, alarmRecDone);	
 }
@@ -110,20 +110,9 @@ void continueRecording(void) {
     queueSdc.freeBuffer();
     memcpy(buffer+256, queueSdc.readBuffer(), 256);
     queueSdc.freeBuffer();
-    // write all 512 bytes to the SD card
 //    elapsedMicros usec = 0;
     frec.write(buffer, 512);
     tot_rec_bytes += 512;
-    // Uncomment these lines to see how long SD writes
-    // are taking.  A pair of audio blocks arrives every
-    // 5802 microseconds, so hopefully most of the writes
-    // take well under 5802 us.  Some will take more, as
-    // the SD library also must write to the FAT tables
-    // and the SD card controller manages media erase and
-    // wear leveling.  The queueSdc object can buffer
-    // approximately 301700 us of audio, to allow time
-    // for occasional high SD card latency, as long as
-    // the average write time is under 5802 us.
 //    Serial.print("SD write, us=");
 //    Serial.println(usec);
   }
@@ -146,6 +135,29 @@ void stopRecording(String path) {
     writeWaveHeader(path, tot_rec_bytes);
   }
   // working_state.rec_state = false;
+}
+
+/* pauseRecording(void)
+ *
+ */
+void pauseRecording(void) {
+	last_record = next_record;
+	if(last_record.t_set) {
+		next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
+											(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
+		Serial.printf("Time set. Last record: %ld, next record: %ld\n", last_record.ts, next_record.ts);
+	}
+	else {
+		Serial.printf("Time NOT set... need to define next ts\n");
+	}
+	stopLED(&leds[LED_RECORD]);
+}
+
+/* finishRecording(void)
+ * ---------------------
+ *
+ */
+void finishRecording(void) {
 }
 
 /* startMonitoring(void)

@@ -22,9 +22,6 @@
 #include "audioUtils.h"
 #include "timeUtils.h"
 
-// Audio mixer channels
-#define MIXER_CH_REC          0
-#define MIXER_CH_SDC          1
 
 #define WAKESOURCE_BUT_REC		BUTTON_RECORD_PIN
 #define WAKESOURCE_BUT_MON		BUTTON_MONITOR_PIN
@@ -107,10 +104,10 @@ struct rWindow {
 	unsigned int occurences;
 };
 extern struct rWindow					rec_window;
-#define RWIN_LEN_DEF_S				10
+#define RWIN_LEN_DEF_S				5
 #define RWIN_LEN_DEF_M				0
 #define RWIN_LEN_DEF_H				0
-#define RWIN_PER_DEF_S				20
+#define RWIN_PER_DEF_S				10
 #define RWIN_PER_DEF_M				0
 #define RWIN_PER_DEF_H				0
 #define RWIN_OCC_DEF					0 // Zero value -> infinite repetitions
