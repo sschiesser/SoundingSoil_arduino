@@ -19,6 +19,7 @@
 #include "SDutils.h"
 #include "BC127.h"
 #include "IOutils.h"
+#include "ssUtilities.h"
 
 // Audio mixer channels
 #define MIXER_CH_REC          0
@@ -89,14 +90,15 @@ enum bCalls {
 };
 extern enum bCalls						button_call;
 // Informations related to the last record
-struct lastRec {
+struct recInfo {
 	time_t ts;
 	tmElements_t dur;
 	bool t_set;
 	String path;
 	unsigned int cnt;
 };
-extern struct lastRec					last_record;
+extern struct recInfo					last_record;
+extern struct recInfo					next_record;
 // Time sources
 enum tSources {
 	TSOURCE_NONE,

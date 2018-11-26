@@ -27,8 +27,6 @@ struct waveHd {
 File frec;
 // Total amount of recorded bytes
 unsigned long tot_rec_bytes = 0;
-// Path name of the recorded file, defined by GPS or remote data
-String rec_path = "";
 
 /* initSDcard(void)
  * ----------------

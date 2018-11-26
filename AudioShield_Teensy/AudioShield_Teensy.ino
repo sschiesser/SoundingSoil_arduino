@@ -37,7 +37,9 @@ const int                     audioInput = AUDIO_INPUT_LINEIN;
 volatile struct wState 				working_state;
 enum bCalls										button_call;
 struct rWindow								rec_window;
-struct lastRec								last_record;
+struct recInfo								last_record;
+struct recInfo								next_record;
+
 void setup() {
   // Initialize serial ports:
   Serial.begin(115200);				// Serial monitor port
@@ -81,7 +83,6 @@ SLEEP:
 	if(who == WAKESOURCE_RTC) {
 		// if alarm wake-up (from 'snooze') -> remove alarm and start recording
 		snooze_config -= alarm_rec;
-		// if(working_state.rec_state == RECSTATE_WAIT) working_state.rec_state = RECSTATE_REQ_ON;
 	}
 	else {
 		// if button wake-up -> debounce first and notify which button was pressed
@@ -95,7 +96,6 @@ SLEEP:
 	delay(10);
 
 WORK:
-	bool ret;
 	float gain;
 	// needed for TimeAlarms timers
 	Alarm.delay(0);
@@ -145,38 +145,14 @@ WORK:
 	switch(working_state.rec_state) {
 		case RECSTATE_REQ_ON:
 		case RECSTATE_WAIT: {
-			startLED(&leds[LED_RECORD], LED_MODE_WAITING);
-			gpsPowerOn();
-			delay(1000);
-			ret = gpsGetData();
-			gpsPowerOff();
-			// GPS data did not returned a valid fix
-			if(!ret) {
-				// Serial.printf("No GPS fix received. timeStatus = %d, time = %ld\n", timeStatus(), now());
-				// Time is not sychronized yet -> send a short warning
-				if(timeStatus() == timeNotSet) {
-					rec_path = createSDpath(false);
-					startLED(&leds[LED_RECORD], LED_MODE_WARNING);
-				}
-				// Time synchronize from an older value
-				else {
-					rec_path = createSDpath(true);
-					startLED(&leds[LED_RECORD], LED_MODE_ON);
-				}
-			}
-			// GPS data valid -> adjust the internal time
-			else {
-				// adjustTime(TSOURCE_GPS);
-				createSDpath(true);
-			}
-			setRecInfos(rec_path, last_record.cnt);
+			prepareRecording();
 			working_state.rec_state = RECSTATE_ON;
-			startRecording(rec_path);
+			startRecording(next_record.path);
 			break;
 		}
 		
 		case RECSTATE_REQ_WAIT: {
-			stopRecording(rec_path);
+			stopRecording(next_record.path);
 			stopLED(&leds[LED_RECORD]);
 			working_state.rec_state = RECSTATE_WAIT;
 			break;
@@ -188,7 +164,7 @@ WORK:
 		}
 		
 		case RECSTATE_REQ_OFF: {
-			stopRecording(rec_path);
+			stopRecording(next_record.path);
 			stopLED(&leds[LED_RECORD]);
 			working_state.rec_state = RECSTATE_OFF;
 			break;
@@ -309,8 +285,10 @@ WORK:
 	if( (working_state.mon_state == MONSTATE_OFF) &&
 			(working_state.ble_state == BLESTATE_IDLE) &&
 			(working_state.bt_state == BTSTATE_IDLE) ) {
-		if( (working_state.rec_state == RECSTATE_OFF) ||
-			(working_state.rec_state == RECSTATE_WAIT) ) {
+		if(working_state.rec_state == RECSTATE_OFF) {
+			goto SLEEP;
+		}
+		else if(working_state.rec_state == RECSTATE_WAIT) {
 			snooze_config += alarm_rec;
 			alarm_rec.setRtcTimer(0,0,5);
 			goto SLEEP;
@@ -324,42 +302,7 @@ WORK:
 	}
 }
 
-void setRecInfos(String path, unsigned int rec_cnt) {
-	unsigned long dur = rec_window.length.Second + 
-										(rec_window.length.Minute * SECS_PER_MIN) + 
-										(rec_window.length.Hour * SECS_PER_HOUR);
-	last_record.dur.Second = rec_window.length.Second;
-	last_record.dur.Minute = rec_window.length.Minute;
-	last_record.dur.Hour = rec_window.length.Hour;
-	last_record.path.remove(0);
-	last_record.path.concat(path.c_str());
-	last_record.cnt = rec_cnt;
-	if(timeStatus() == timeNotSet) {
-		last_record.t_set = false;
-		last_record.ts = (time_t)0;
-	}
-	else {
-		last_record.t_set = true;
-		last_record.ts = now();
-	}
-	Serial.printf("Record information:\n-duration: %02dh%02dm%02ds\n-path: '%s'\n-time set: %d\n-rec time: %ld\n", last_record.dur.Hour, last_record.dur.Minute, last_record.dur.Second, last_record.path.c_str(), last_record.t_set, last_record.ts);
-	Alarm.timerOnce(dur, alarmRecDone);	
-}
 
-/* alarmRecDone(void)
- * ------------------
- * Callback of a TimeAlarms timer triggered when a record window is finished.
- * IN:	- none
- * OUT:	- none
- */
-void alarmRecDone(void) {
-	if((rec_window.occurences == 0) || (last_record.cnt < rec_window.occurences)) {
-		working_state.rec_state = RECSTATE_REQ_WAIT;
-	}
-	else {
-		working_state.rec_state = RECSTATE_REQ_OFF;
-	}
-}
 
 /* adjustTime(enum tSources)
  * -------------------------
