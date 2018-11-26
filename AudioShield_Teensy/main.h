@@ -33,9 +33,10 @@
 enum recState {
 	RECSTATE_OFF,								// 0
 	RECSTATE_REQ_ON,						// 1
-	RECSTATE_WAIT,							// 2
-	RECSTATE_REQ_OFF,						// 3
-	RECSTATE_ON									// 4
+	RECSTATE_ON,								// 2
+	RECSTATE_REQ_WAIT,					// 3
+	RECSTATE_WAIT,							// 4
+	RECSTATE_REQ_OFF,						// 5
 };
 extern enum recState					rec_state;
 // Monitoring states...
@@ -93,6 +94,7 @@ struct lastRec {
 	tmElements_t dur;
 	bool t_set;
 	String path;
+	unsigned int cnt;
 };
 extern struct lastRec					last_record;
 // Time sources

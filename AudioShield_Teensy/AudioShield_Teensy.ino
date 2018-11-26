@@ -8,15 +8,13 @@
 #include "main.h"
 
 // Load drivers
-SnoozeDigital 								digitalWakeup;
+SnoozeDigital 								button_wakeup;
 // Available digital pins for wakeup on Teensy 3.6: 2,4,6,7,9,10,11,13,16,21,22,26,30,33
-SnoozeAlarm										alarmWakeup;
-
-AlarmId												id;
-
+SnoozeAlarm										alarm_rec;
+SnoozeAlarm										alarm_led;
 
 // install driver into SnoozeBlock
-SnoozeBlock 									snooze_config(digitalWakeup);
+SnoozeBlock 									snooze_config(button_wakeup);
 
 // Audio connections definition
 // GUItool: begin automatically generated code
@@ -53,9 +51,9 @@ void setup() {
 	delay(20);
 	// Initialize peripheral & variables
 	initLEDButtons();
-	digitalWakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
-	digitalWakeup.pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP, FALLING);
-  digitalWakeup.pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP, FALLING);
+	button_wakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
+	button_wakeup.pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP, FALLING);
+  button_wakeup.pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP, FALLING);
 	
 	pinMode(GPS_SWITCH_PIN, OUTPUT);
 	digitalWrite(GPS_SWITCH_PIN, LOW);
@@ -82,8 +80,8 @@ SLEEP:
 	who = Snooze.hibernate(snooze_config);
 	if(who == WAKESOURCE_RTC) {
 		// if alarm wake-up (from 'snooze') -> remove alarm and start recording
-		digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-		snooze_config -= alarmWakeup;
+		snooze_config -= alarm_rec;
+		// if(working_state.rec_state == RECSTATE_WAIT) working_state.rec_state = RECSTATE_REQ_ON;
 	}
 	else {
 		// if button wake-up -> debounce first and notify which button was pressed
@@ -146,6 +144,7 @@ WORK:
   // REC state actions
 	switch(working_state.rec_state) {
 		case RECSTATE_REQ_ON:
+		case RECSTATE_WAIT: {
 			startLED(&leds[LED_RECORD], LED_MODE_WAITING);
 			gpsPowerOn();
 			delay(1000);
@@ -153,7 +152,7 @@ WORK:
 			gpsPowerOff();
 			// GPS data did not returned a valid fix
 			if(!ret) {
-				Serial.printf("No GPS fix received. timeStatus = %d, time = %ld\n", timeStatus(), now());
+				// Serial.printf("No GPS fix received. timeStatus = %d, time = %ld\n", timeStatus(), now());
 				// Time is not sychronized yet -> send a short warning
 				if(timeStatus() == timeNotSet) {
 					rec_path = createSDpath(false);
@@ -170,20 +169,30 @@ WORK:
 				// adjustTime(TSOURCE_GPS);
 				createSDpath(true);
 			}
+			setRecInfos(rec_path, last_record.cnt);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(rec_path);
-			setRecInfos(rec_path);
 			break;
+		}
 		
-		case RECSTATE_ON:
+		case RECSTATE_REQ_WAIT: {
+			stopRecording(rec_path);
+			stopLED(&leds[LED_RECORD]);
+			working_state.rec_state = RECSTATE_WAIT;
+			break;
+		}
+		
+		case RECSTATE_ON: {
 			continueRecording();
 			break;
+		}
 		
-		case RECSTATE_REQ_OFF:
+		case RECSTATE_REQ_OFF: {
 			stopRecording(rec_path);
 			stopLED(&leds[LED_RECORD]);
 			working_state.rec_state = RECSTATE_OFF;
 			break;
+		}
 		
 		default:
 			break;
@@ -297,20 +306,25 @@ WORK:
   }
 
 	// Stay awake or go to sleep?
-	if( (working_state.rec_state == RECSTATE_OFF) &&
-			(working_state.mon_state == MONSTATE_OFF) &&
+	if( (working_state.mon_state == MONSTATE_OFF) &&
 			(working_state.ble_state == BLESTATE_IDLE) &&
 			(working_state.bt_state == BTSTATE_IDLE) ) {
-		snooze_config += alarmWakeup;
-		alarmWakeup.setRtcTimer(0,0,2);
-		goto SLEEP;
+		if( (working_state.rec_state == RECSTATE_OFF) ||
+			(working_state.rec_state == RECSTATE_WAIT) ) {
+			snooze_config += alarm_rec;
+			alarm_rec.setRtcTimer(0,0,5);
+			goto SLEEP;
+		}
+		else {
+			goto WORK;
+		}
 	}
 	else {
 		goto WORK;
 	}
 }
 
-void setRecInfos(String path) {
+void setRecInfos(String path, unsigned int rec_cnt) {
 	unsigned long dur = rec_window.length.Second + 
 										(rec_window.length.Minute * SECS_PER_MIN) + 
 										(rec_window.length.Hour * SECS_PER_HOUR);
@@ -319,6 +333,7 @@ void setRecInfos(String path) {
 	last_record.dur.Hour = rec_window.length.Hour;
 	last_record.path.remove(0);
 	last_record.path.concat(path.c_str());
+	last_record.cnt = rec_cnt;
 	if(timeStatus() == timeNotSet) {
 		last_record.t_set = false;
 		last_record.ts = (time_t)0;
@@ -338,7 +353,12 @@ void setRecInfos(String path) {
  * OUT:	- none
  */
 void alarmRecDone(void) {
-	working_state.rec_state = RECSTATE_REQ_OFF;
+	if((rec_window.occurences == 0) || (last_record.cnt < rec_window.occurences)) {
+		working_state.rec_state = RECSTATE_REQ_WAIT;
+	}
+	else {
+		working_state.rec_state = RECSTATE_REQ_OFF;
+	}
 }
 
 /* adjustTime(enum tSources)
@@ -402,6 +422,7 @@ void setDefaultValues(void) {
 	rec_window.period.Minute = RWIN_PER_DEF_M;
 	rec_window.period.Hour = RWIN_PER_DEF_H;
 	rec_window.occurences = RWIN_OCC_DEF;
+	last_record.cnt = 0;
 }
 
 /* startRecording(String)
@@ -414,8 +435,6 @@ void startRecording(String path) {
   if(frec) {
     queueSdc.begin();
     tot_rec_bytes = 0;
-    // mixer.gain(MIXER_CH_REC, 1);
-    // working_state.rec_state = true;
   }
   else {
     Serial.println("file opening error");
