@@ -9,6 +9,13 @@
 
 enum tSources									time_source;
 
+void setDefaultTime(void) {
+	setTime(DEFAULT_TIME);
+	Teensy3Clock.set(DEFAULT_TIME);
+	time_source = TSOURCE_NONE;
+}
+
+
  /* adjustTime(enum tSources)
  * -------------------------
  * Adjust local time after an external source

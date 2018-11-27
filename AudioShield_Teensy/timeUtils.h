@@ -7,6 +7,8 @@
 
 #include "main.h"
 
+#define DEFAULT_TIME					946684800 // 01.01.2000, 00h00m00
+
 // Time sources
 enum tSources {
 	TSOURCE_NONE,
@@ -20,6 +22,7 @@ extern enum tSources					time_source;
  * FUNCTIONS DECLARATIONS
  * ====================== */
 
+void setDefaultTime(void);
 void adjustTime(enum tSources source);
 void alarmRecDone(void);
 

@@ -48,6 +48,7 @@ void setup() {
 	initWaveHeader();
 	setDefaultValues();
 	bc127Init();
+	setDefaultTime();
 }
 
 void loop() {
@@ -253,7 +254,6 @@ WORK:
 	// Serial messaging
   if (Serial4.available()) {
     String inMsg = Serial4.readStringUntil('\r');
-		Serial.printf("inMsg: %s\n", inMsg.c_str());
     int outMsg = parseSerialIn(inMsg);
     if(!sendCmdOut(outMsg)) {
       Serial.println("Sending command error!!");
@@ -273,20 +273,20 @@ WORK:
 			goto SLEEP;
 		}
 		else if(working_state.rec_state == RECSTATE_WAIT) {
-			unsigned int delta;
+			// time_t delta;
+			tmElements_t tm1, tm2;
 			snooze_config += alarm_rec;
-			if(next_record.t_set) {
-				delta = next_record.ts - now();
-			}
-			else {
-				time_t t1, t2;
-				t1 = makeTime(rec_window.period);
-				t2 = makeTime(rec_window.length);
-				delta = t1 - t2;
-			}
-			Serial.printf("Waking up in %lds\n", delta);
-			Alarm.delay(10);
-			alarm_rec.setRtcTimer(0,0,delta);
+			// delta = next_record.ts - now();
+			// Serial.printf("Waking up in %lds\n", delta);
+			breakTime(now(), tm1);
+			breakTime(next_record.ts, tm2);
+			Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+										tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
+			Serial.printf("Wake-up time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+										tm2.Day, tm2.Month, (tm2.Year-30), tm2.Hour, tm2.Minute, tm2.Second);
+			Alarm.delay(100);
+			alarm_rec.setAlarm(next_record.ts);
+			// alarm_rec.setRtcTimer(0,0,delta);
 			goto SLEEP;
 		}
 		else {

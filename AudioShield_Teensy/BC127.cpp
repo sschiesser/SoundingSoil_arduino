@@ -73,7 +73,7 @@ int parseSerialIn(String input) {
   // - RECV BLE  --> commands received from phone over BLE
   // - other     --> 3+ words inputs like "INQUIRY xxxx 240404 -54dB"
   // ================================================================
-  Serial.print(input);
+  // Serial.print(input);
   String part1, part2;
   int slice1 = input.indexOf(" ");
   int slice2 = input.indexOf(" ", slice1+1);

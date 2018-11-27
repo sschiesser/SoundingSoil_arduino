@@ -141,14 +141,9 @@ void stopRecording(String path) {
  */
 void pauseRecording(void) {
 	last_record = next_record;
-	if(last_record.t_set) {
-		next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
-											(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
-		Serial.printf("Time set. Last record: %ld, next record: %ld\n", last_record.ts, next_record.ts);
-	}
-	else {
-		Serial.printf("Time NOT set... need to define next ts\n");
-	}
+	next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
+									(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
+	Serial.printf("Time set. Last record: %ld, next record: %ld\n", last_record.ts, next_record.ts);
 	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);
 }
