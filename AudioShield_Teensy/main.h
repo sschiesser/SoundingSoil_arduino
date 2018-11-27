@@ -110,6 +110,6 @@ extern struct rWindow					rec_window;
 #define RWIN_PER_DEF_S				10
 #define RWIN_PER_DEF_M				0
 #define RWIN_PER_DEF_H				0
-#define RWIN_OCC_DEF					0 // Zero value -> infinite repetitions
+#define RWIN_OCC_DEF					3 // Zero value -> infinite repetitions
 
 #endif /* _MAIN_H_ */

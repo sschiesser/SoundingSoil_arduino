@@ -30,7 +30,6 @@ void setup() {
   gpsPort.begin(9600);				// GPS port
 
 	// Say hello
-	// delay(100);
   Serial.println("AudioShield v1.0");
   Serial.println("----------------");
 	Alarm.delay(20);
@@ -127,6 +126,7 @@ WORK:
   // REC state actions
 	switch(working_state.rec_state) {
 		case RECSTATE_REQ_ON:
+			next_record.cnt = 0;
 		case RECSTATE_WAIT: {
 			prepareRecording();
 			working_state.rec_state = RECSTATE_ON;
@@ -218,7 +218,7 @@ WORK:
 		
 		case BLESTATE_REQ_OFF:
 			bc127AdvStop();
-			Alarm.delay(200);
+			Alarm.delay(100);
 			bc127PowerOff();
 			stopLED(&leds[LED_BLUETOOTH]);
 			working_state.ble_state = BLESTATE_IDLE;
@@ -253,6 +253,7 @@ WORK:
 	// Serial messaging
   if (Serial4.available()) {
     String inMsg = Serial4.readStringUntil('\r');
+		Serial.printf("inMsg: %s\n", inMsg.c_str());
     int outMsg = parseSerialIn(inMsg);
     if(!sendCmdOut(outMsg)) {
       Serial.println("Sending command error!!");
@@ -272,8 +273,20 @@ WORK:
 			goto SLEEP;
 		}
 		else if(working_state.rec_state == RECSTATE_WAIT) {
+			unsigned int delta;
 			snooze_config += alarm_rec;
-			alarm_rec.setRtcTimer(0,0,5);
+			if(next_record.t_set) {
+				delta = next_record.ts - now();
+			}
+			else {
+				time_t t1, t2;
+				t1 = makeTime(rec_window.period);
+				t2 = makeTime(rec_window.length);
+				delta = t1 - t2;
+			}
+			Serial.printf("Waking up in %lds\n", delta);
+			Alarm.delay(10);
+			alarm_rec.setRtcTimer(0,0,delta);
 			goto SLEEP;
 		}
 		else {
@@ -302,6 +315,7 @@ void setDefaultValues(void) {
 	rec_window.period.Hour = RWIN_PER_DEF_H;
 	rec_window.occurences = RWIN_OCC_DEF;
 	last_record.cnt = 0;
+	next_record = last_record;
 }
 
 

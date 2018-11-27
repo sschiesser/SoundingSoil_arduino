@@ -38,7 +38,7 @@ void prepareRecording(void) {
 	
 	startLED(&leds[LED_RECORD], LED_MODE_ON);
 	gpsPowerOn();
-	Alarm.delay(1000);
+	Alarm.delay(0);
 	startLED(&leds[LED_RECORD], LED_MODE_WAITING);
 	gpsGetData();
 	gpsPowerOff();
@@ -52,7 +52,7 @@ void prepareRecording(void) {
 		rec_path = createSDpath(true);
 		startLED(&leds[LED_RECORD], LED_MODE_ON);
 	}
-	setRecInfos(&next_record, rec_path, last_record.cnt);
+	setRecInfos(&next_record, rec_path);
 }
 
 /* setRecInfos(struct recInfos*, String, unsigned int)
@@ -64,7 +64,7 @@ void prepareRecording(void) {
  *			- record counter (unsigned int)
  * OUT:	- none
  */
-void setRecInfos(struct recInfo* rec, String path, unsigned int rec_cnt) {
+void setRecInfos(struct recInfo* rec, String path) {
 	unsigned long dur = rec_window.length.Second + 
 										(rec_window.length.Minute * SECS_PER_MIN) + 
 										(rec_window.length.Hour * SECS_PER_HOUR);
@@ -73,9 +73,8 @@ void setRecInfos(struct recInfo* rec, String path, unsigned int rec_cnt) {
 	rec->dur.Hour = rec_window.length.Hour;
 	rec->path.remove(0);
 	rec->path.concat(path.c_str());
-	rec->cnt = rec_cnt;
 	rec->t_set = (bool)rec->ts;
-	Serial.printf("Record information:\n-duration: %02dh%02dm%02ds\n-path: '%s'\n-time set: %d\n-rec time: %ld\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->path.c_str(), rec->t_set, rec->ts);
+	Serial.printf("Record information:\n-duration: %02dh%02dm%02ds\n-path: '%s'\n-time set: %d\n-rec time: %ld\n-rec cnt: %d\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->path.c_str(), rec->t_set, rec->ts, rec->cnt);
 	Alarm.timerOnce(dur, alarmRecDone);	
 }
 
@@ -150,6 +149,7 @@ void pauseRecording(void) {
 	else {
 		Serial.printf("Time NOT set... need to define next ts\n");
 	}
+	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);
 }
 

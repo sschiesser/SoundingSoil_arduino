@@ -30,12 +30,10 @@ void bc127Init(void) {
 
 void bc127PowerOn(void) {
 	sendCmdOut(BCCMD_GEN_PWRON);
-	Alarm.delay(200);
 }
 
 void bc127PowerOff(void) {
 	sendCmdOut(BCCMD_GEN_PWROFF);
-	Alarm.delay(200);
 }
 
 /* bc127AdvStart(void)
@@ -206,7 +204,7 @@ int parseSerialIn(String input) {
 		
   }
   else {
-    // Serial.print(input);
+    Serial.print(input);
   }
   
   return BCCMD_NOTHING;
