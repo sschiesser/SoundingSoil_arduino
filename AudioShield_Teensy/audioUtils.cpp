@@ -172,7 +172,8 @@ void finishRecording(void) {
 	resetRecInfo(&next_record);
 	time_source = TSOURCE_NONE;
 	startLED(&leds[LED_RECORD], LED_MODE_WARNING_SHORT);
-	// stopLED(&leds[LED_RECORD]);
+	// Wait until the notification is finished before sleeping or doing whatever.
+	Alarm.delay(500);
 }
 
 /* startMonitoring(void)
