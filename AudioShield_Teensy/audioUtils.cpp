@@ -35,7 +35,7 @@ const int                     audioInput = AUDIO_INPUT_LINEIN;
  */
 void prepareRecording(bool sync) {
 	String rec_path = "";
-	bool gps_fix;
+	bool gps_fix = true;
 	
 	startLED(&leds[LED_RECORD], LED_MODE_ON);
 	if(sync) {
@@ -44,12 +44,17 @@ void prepareRecording(bool sync) {
 		startLED(&leds[LED_RECORD], LED_MODE_WAITING);
 		gps_fix = gpsGetData();
 		gpsPowerOff();
-		if(!gps_fix) startLED(&leds[LED_RECORD], LED_MODE_WARNING);
-		else startLED(&leds[LED_RECORD], LED_MODE_ON);
+		if(!gps_fix) {
+			startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+		}
+		else {
+			time_source = TSOURCE_GPS;
+			startLED(&leds[LED_RECORD], LED_MODE_ON);
+		}
 		next_record.ts = now();
 		Serial.printf("Next record: %ld\n", next_record.ts);
 	}
-	rec_path = createSDpath(true);
+	rec_path = createSDpath();
 	setRecInfos(&next_record, rec_path);
 	unsigned long dur = next_record.dur.Second + 
 										(next_record.dur.Minute * SECS_PER_MIN) + 
@@ -80,7 +85,7 @@ void setRecInfos(struct recInfo* rec, String path) {
  *
  */
 void startRecording(String path) {
-  // Serial.println("Start recording");
+  Serial.println("Start recording");
   
   frec = SD.open(path, FILE_WRITE);
   if(frec) {
@@ -89,7 +94,8 @@ void startRecording(String path) {
   }
   else {
     Serial.println("file opening error");
-    while(1);
+		working_state.rec_state = RECSTATE_REQ_OFF;
+    // while(1);
   }
 }
 
@@ -164,6 +170,7 @@ void resetRecInfo(struct recInfo* rec) {
 void finishRecording(void) {
 	resetRecInfo(&last_record);
 	resetRecInfo(&next_record);
+	time_source = TSOURCE_NONE;
 	stopLED(&leds[LED_RECORD]);
 }
 

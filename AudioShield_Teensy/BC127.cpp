@@ -197,6 +197,7 @@ int parseSerialIn(String input) {
 			int len = part2.substring(5).length()-1;
 			ble_time = part2.substring(5, (5+len)).toInt();
 			if(ble_time > DEFAULT_TIME_DEC) {
+				time_source = TSOURCE_BLE;
 				adjustTime(TSOURCE_BLE);
 			}
 			Serial.printf("current time: 0x%x(d'%ld)\n", ble_time, ble_time);

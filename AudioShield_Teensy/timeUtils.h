@@ -7,7 +7,7 @@
 
 #include "main.h"
 
-#define DEFAULT_TIME					946684800 // 01.01.2000, 00h00m00
+#define DEFAULT_TIME_DEC			946684800 // 01.01.2000, 00h00m00
 
 // Time sources
 enum tSources {

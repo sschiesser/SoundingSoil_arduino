@@ -10,6 +10,7 @@
 #include <SPI.h>
 #include "main.h"
 #include "gpsRoutines.h"
+#include "timeUtils.h"
 
 // Wave header values
 #define WAVE_FMT_CHUNK_SIZE		16
@@ -42,7 +43,7 @@ extern String 								rec_path;
  * ====================== */
 
 void initSDcard(void);
-String createSDpath(bool fix_found);
+String createSDpath(void);
 void initWaveHeader(void);
 void writeWaveHeader(String path, unsigned long dlen);
 
