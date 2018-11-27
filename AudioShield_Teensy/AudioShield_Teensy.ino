@@ -34,7 +34,6 @@ void setup() {
 	// Say hello
   // Serial.println("AudioShield v1.0");
   // Serial.println("----------------");
-	Alarm.delay(20);
 	// Initialize peripheral & variables
 	initLEDButtons();
 	button_wakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
@@ -68,7 +67,7 @@ SLEEP:
 	if(who == WAKESOURCE_RTC) {
 		// if alarm wake-up (from 'snooze') -> remove alarm, adjust time and re-start recording
 		snooze_config -= alarm_rec;
-		// adjustTime(TSOURCE_REC);
+		adjustTime(TSOURCE_REC);
 		working_state.rec_state = RECSTATE_RESTART;
 	}
 	else {
@@ -292,14 +291,14 @@ WORK:
 		breakTime(now(), tm1);
 		breakTime(next_record.ts, tm2);
 		breakTime(delta, tm3);
+		Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+									tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
+		Serial.printf("Next record: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+									tm2.Day, tm2.Month, (tm2.Year-30), tm2.Hour, tm2.Minute, tm2.Second);
+		Serial.printf("Delta: %02dh%02dm%02ds\n", 
+									tm3.Hour, tm3.Minute, tm3.Second);
 		if(ready_to_sleep) {
 			Serial.println("Setting up Snooze alarm");
-			Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-										tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
-			Serial.printf("Next record: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-										tm2.Day, tm2.Month, (tm2.Year-30), tm2.Hour, tm2.Minute, tm2.Second);
-			Serial.printf("Delta: %02dh%02dm%02ds\n", 
-										tm3.Hour, tm3.Minute, tm3.Second);
 			delay(100);
 			snooze_config += alarm_rec;
 			alarm_rec.setRtcTimer(tm3.Hour, tm3.Minute, tm3.Second);

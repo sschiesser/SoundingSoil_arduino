@@ -19,7 +19,7 @@ extern int										vol_ctrl;
 #define BUTTON_RECORD_PIN			2 //24
 #define BUTTON_MONITOR_PIN		4 //25
 #define BUTTON_BLUETOOTH_PIN	21 //29
-#define BUTTON_BOUNCE_TIME_MS	12
+#define BUTTON_BOUNCE_TIME_MS	20
 extern Bounce									but_rec;
 extern Bounce									but_mon;
 extern Bounce									but_blue;

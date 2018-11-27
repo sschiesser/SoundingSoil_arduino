@@ -46,8 +46,9 @@ void prepareRecording(bool sync) {
 		gpsPowerOff();
 		if(!gps_fix) startLED(&leds[LED_RECORD], LED_MODE_WARNING);
 		else startLED(&leds[LED_RECORD], LED_MODE_ON);
+		next_record.ts = now();
+		Serial.printf("Next record: %ld\n", next_record.ts);
 	}
-	next_record.ts = now();
 	rec_path = createSDpath(true);
 	setRecInfos(&next_record, rec_path);
 	unsigned long dur = next_record.dur.Second + 
@@ -140,7 +141,7 @@ void pauseRecording(void) {
 	last_record = next_record;
 	next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
 									(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
-	// Serial.printf("Last record: %ld, next record: %ld\n", last_record.ts, next_record.ts);
+	Serial.printf("Next record: %ld\n", next_record.ts);
 	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);
 }
