@@ -45,7 +45,7 @@ void prepareRecording(bool sync) {
 		gps_fix = gpsGetData();
 		gpsPowerOff();
 		if(!gps_fix) {
-			startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+			startLED(&leds[LED_RECORD], LED_MODE_WARNING_LONG);
 		}
 		else {
 			time_source = TSOURCE_GPS;
@@ -59,7 +59,7 @@ void prepareRecording(bool sync) {
 	unsigned long dur = next_record.dur.Second + 
 										(next_record.dur.Minute * SECS_PER_MIN) + 
 										(next_record.dur.Hour * SECS_PER_HOUR);
-	Alarm.timerOnce(dur, timerRecDone);	
+	alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);	
 }
 
 /* setRecInfos(struct recInfos*, String, unsigned int)
@@ -171,7 +171,8 @@ void finishRecording(void) {
 	resetRecInfo(&last_record);
 	resetRecInfo(&next_record);
 	time_source = TSOURCE_NONE;
-	stopLED(&leds[LED_RECORD]);
+	startLED(&leds[LED_RECORD], LED_MODE_WARNING_SHORT);
+	// stopLED(&leds[LED_RECORD]);
 }
 
 /* startMonitoring(void)

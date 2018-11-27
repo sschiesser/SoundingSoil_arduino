@@ -50,13 +50,14 @@ enum led_list {
 };
 
 enum led_mode {
-	LED_MODE_OFF = 0,
-	LED_MODE_ON,
-	LED_MODE_WAITING,
-	LED_MODE_WARNING,
-	LED_MODE_ERROR,
-	LED_MODE_IDLE_FAST,
-	LED_MODE_IDLE_SLOW
+	LED_MODE_OFF = 0,						// 0
+	LED_MODE_ON,								// 1
+	LED_MODE_WAITING,						// 2
+	LED_MODE_WARNING_SHORT,			// 3
+	LED_MODE_WARNING_LONG,			// 4
+	LED_MODE_ERROR,							// 5
+	LED_MODE_IDLE_FAST,					// 6
+	LED_MODE_IDLE_SLOW					// 7
 };
 
 // LED struct containing all the related elements

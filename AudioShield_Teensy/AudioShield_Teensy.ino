@@ -24,6 +24,7 @@ struct recInfo								last_record;
 struct recInfo								next_record;
 
 bool													ready_to_sleep;
+int														alarm_rec_id;
 
 void setup() {
   // Initialize serial ports:
@@ -101,6 +102,8 @@ WORK:
 			working_state.rec_state = RECSTATE_REQ_ON;
     }
     else {
+			snooze_config -= alarm_rec;
+			Alarm.free(alarm_rec_id);
 			working_state.rec_state = RECSTATE_REQ_OFF;
     }
 		button_call = (enum bCalls)BCALL_NONE;

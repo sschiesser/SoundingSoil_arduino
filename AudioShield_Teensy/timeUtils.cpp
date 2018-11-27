@@ -60,6 +60,8 @@ void adjustTime(enum tSources source) {
  * OUT:	- none
  */
 void timerRecDone(void) {
+	Alarm.free(alarm_rec_id);
+	
 	if((rec_window.occurences == 0) || (next_record.cnt < (rec_window.occurences-1))) {
 		Serial.printf("Recording done... counting: %d\n", next_record.cnt);
 		working_state.rec_state = RECSTATE_REQ_WAIT;

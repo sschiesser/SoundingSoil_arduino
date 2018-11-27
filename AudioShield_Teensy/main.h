@@ -114,4 +114,6 @@ extern struct rWindow					rec_window;
 #define RWIN_PER_DEF_H				0
 #define RWIN_OCC_DEF					3 // Zero value -> infinite repetitions
 
+extern int										alarm_rec_id;
+
 #endif /* _MAIN_H_ */

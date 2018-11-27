@@ -89,7 +89,16 @@ void toggleCb(struct leds_s *ld) {
 		ld->status = !ld->status;
 		break;
 		
-		case LED_MODE_WARNING:
+		case LED_MODE_WARNING_SHORT:
+		if(ld->cnt++ > 2) {
+			stopLED(ld);
+		}
+		else {
+			ld->status = !ld->status;
+		}
+		break;
+		
+		case LED_MODE_WARNING_LONG:
 		// Serial.print("Warning mode: "); Serial.print(ld->cnt); Serial.println(" toggles");
 		if(ld->cnt++ > 12) {
 			// stopLED(ld);
@@ -165,31 +174,35 @@ void startLED(struct leds_s *ld, enum led_mode mode) {
 	stopLED(ld);
 	ld->mode = mode;
 	switch(mode) {
-		case LED_MODE_OFF: // 0
+		case LED_MODE_OFF:
 		stopLED(ld);
 		break;
 		
-		case LED_MODE_ON: // 1
+		case LED_MODE_ON:
 		ld->status = LED_ON;
 		break;
 		
-		case LED_MODE_WAITING: // 2
+		case LED_MODE_WAITING:
 		ld->timer.begin(ld->toggle, LED_BLINK_MED_MS);
 		// Serial.print("Timer started, returning at 0x"); Serial.println((unsigned long)ld->toggle, HEX);
 		break;
 		
-		case LED_MODE_WARNING: // 3
+		case LED_MODE_WARNING_SHORT:
 		ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
 		break;
 		
-		case LED_MODE_ERROR: // 4
-		break;
-		
-		case LED_MODE_IDLE_FAST: // 5
+		case LED_MODE_WARNING_LONG:
 		ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
 		break;
 		
-		case LED_MODE_IDLE_SLOW: // 6
+		case LED_MODE_ERROR:
+		break;
+		
+		case LED_MODE_IDLE_FAST:
+		ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
+		break;
+		
+		case LED_MODE_IDLE_SLOW:
 		ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
 		break;
 		
