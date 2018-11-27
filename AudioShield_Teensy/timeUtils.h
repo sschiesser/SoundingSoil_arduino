@@ -24,7 +24,7 @@ extern enum tSources					time_source;
 
 void setDefaultTime(void);
 void adjustTime(enum tSources source);
-void alarmRecDone(void);
-
+void timerRecDone(void);
+void alarmNextRec(void);
 
 #endif /* _TIMEUTILS_H_ */

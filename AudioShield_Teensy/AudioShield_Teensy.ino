@@ -23,6 +23,8 @@ struct rWindow								rec_window;
 struct recInfo								last_record;
 struct recInfo								next_record;
 
+bool													ready_to_sleep;
+
 void setup() {
   // Initialize serial ports:
   Serial.begin(115200);				// Serial monitor port
@@ -128,8 +130,13 @@ WORK:
 	switch(working_state.rec_state) {
 		case RECSTATE_REQ_ON:
 			next_record.cnt = 0;
-		case RECSTATE_WAIT: {
-			prepareRecording();
+			prepareRecording(true);
+			working_state.rec_state = RECSTATE_ON;
+			startRecording(next_record.path);
+			break;
+			
+		case RECSTATE_RESTART: {
+			prepareRecording(false);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(next_record.path);
 			break;
@@ -265,33 +272,39 @@ WORK:
     Serial4.print(manInput.substring(0, len)+'\r');
   }
 
-	// Stay awake or go to sleep?
+	// Stay awake or go to sleep?...
+	// ...first check all other working states
 	if( (working_state.mon_state == MONSTATE_OFF) &&
 			(working_state.ble_state == BLESTATE_IDLE) &&
 			(working_state.bt_state == BTSTATE_IDLE) ) {
-		if(working_state.rec_state == RECSTATE_OFF) {
-			goto SLEEP;
-		}
-		else if(working_state.rec_state == RECSTATE_WAIT) {
-			// time_t delta;
-			tmElements_t tm1, tm2;
+		ready_to_sleep = true;
+	}
+	else {
+		ready_to_sleep = false;
+	}
+	// ...then decide which alarm to set (SLEEP -> snooze, WORK -> timeAlarms)
+	if(working_state.rec_state == RECSTATE_WAIT) {
+		tmElements_t tm1, tm2;
+		breakTime(now(), tm1);
+		breakTime(next_record.ts, tm2);
+		Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+									tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
+		Serial.printf("Next record: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+									tm2.Day, tm2.Month, (tm2.Year-30), tm2.Hour, tm2.Minute, tm2.Second);
+		if(ready_to_sleep) {
 			snooze_config += alarm_rec;
-			// delta = next_record.ts - now();
-			// Serial.printf("Waking up in %lds\n", delta);
-			breakTime(now(), tm1);
-			breakTime(next_record.ts, tm2);
-			Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-										tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
-			Serial.printf("Wake-up time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-										tm2.Day, tm2.Month, (tm2.Year-30), tm2.Hour, tm2.Minute, tm2.Second);
-			Alarm.delay(100);
 			alarm_rec.setAlarm(next_record.ts);
-			// alarm_rec.setRtcTimer(0,0,delta);
 			goto SLEEP;
 		}
 		else {
+			Alarm.alarmOnce(tm2.Hour, tm2.Minute, tm2.Second, alarmNextRec);
+			working_state.rec_state = RECSTATE_IDLE;
 			goto WORK;
 		}
+	}
+	else if(working_state.rec_state == RECSTATE_OFF) {
+		if(ready_to_sleep) goto SLEEP;
+		else goto WORK;
 	}
 	else {
 		goto WORK;

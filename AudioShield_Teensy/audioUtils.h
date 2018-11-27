@@ -16,7 +16,7 @@ extern AudioMixer4						mixer;
 /* ======================
  * FUNCTIONS DECLARATIONS
  * ====================== */
-void prepareRecording(void);
+void prepareRecording(bool sync);
 void setRecInfos(struct recInfo* rec, String path);
 void startRecording(String path);
 void continueRecording(void);

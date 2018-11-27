@@ -33,26 +33,27 @@ const int                     audioInput = AUDIO_INPUT_LINEIN;
  * IN:	- none
  * OUT:	- none
  */
-void prepareRecording(void) {
+void prepareRecording(bool sync) {
 	String rec_path = "";
+	bool gps_fix;
 	
 	startLED(&leds[LED_RECORD], LED_MODE_ON);
-	gpsPowerOn();
-	Alarm.delay(0);
-	startLED(&leds[LED_RECORD], LED_MODE_WAITING);
-	gpsGetData();
-	gpsPowerOff();
-	if(timeStatus() == timeNotSet) {
-		next_record.ts = 0;
-		rec_path = createSDpath(false);
-		startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+	if(sync) {
+		gpsPowerOn();
+		Alarm.delay(0);
+		startLED(&leds[LED_RECORD], LED_MODE_WAITING);
+		gps_fix = gpsGetData();
+		gpsPowerOff();
+		if(!gps_fix) startLED(&leds[LED_RECORD], LED_MODE_WARNING);
+		else startLED(&leds[LED_RECORD], LED_MODE_ON);
 	}
-	else {
-		next_record.ts = now();
-		rec_path = createSDpath(true);
-		startLED(&leds[LED_RECORD], LED_MODE_ON);
-	}
+	next_record.ts = now();
+	rec_path = createSDpath(true);
 	setRecInfos(&next_record, rec_path);
+	unsigned long dur = next_record.dur.Second + 
+										(next_record.dur.Minute * SECS_PER_MIN) + 
+										(next_record.dur.Hour * SECS_PER_HOUR);
+	Alarm.timerOnce(dur, timerRecDone);	
 }
 
 /* setRecInfos(struct recInfos*, String, unsigned int)
@@ -65,17 +66,13 @@ void prepareRecording(void) {
  * OUT:	- none
  */
 void setRecInfos(struct recInfo* rec, String path) {
-	unsigned long dur = rec_window.length.Second + 
-										(rec_window.length.Minute * SECS_PER_MIN) + 
-										(rec_window.length.Hour * SECS_PER_HOUR);
 	rec->dur.Second = rec_window.length.Second;
 	rec->dur.Minute = rec_window.length.Minute;
 	rec->dur.Hour = rec_window.length.Hour;
 	rec->path.remove(0);
 	rec->path.concat(path.c_str());
 	rec->t_set = (bool)rec->ts;
-	Serial.printf("Record information:\n-duration: %02dh%02dm%02ds\n-path: '%s'\n-time set: %d\n-rec time: %ld\n-rec cnt: %d\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->path.c_str(), rec->t_set, rec->ts, rec->cnt);
-	Alarm.timerOnce(dur, alarmRecDone);	
+	Serial.printf("Record information:\n-duration: %02dh%02dm%02ds\n-path: '%s'\n-time set: %d\n-timestamp: %ld\n-rec cnt: %d\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->path.c_str(), rec->t_set, rec->ts, rec->cnt);
 }
 
 /* startRecording(String)
@@ -143,7 +140,7 @@ void pauseRecording(void) {
 	last_record = next_record;
 	next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
 									(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
-	Serial.printf("Time set. Last record: %ld, next record: %ld\n", last_record.ts, next_record.ts);
+	Serial.printf("Last record: %ld, next record: %ld\n", last_record.ts, next_record.ts);
 	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);
 }
@@ -169,7 +166,6 @@ void stopMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 0);
 	// working_state.mon_state = false;
 }
-
 
 /* initAudio(void)
  * ---------------

@@ -48,13 +48,13 @@ void adjustTime(enum tSources source) {
 }
 
 
-/* alarmRecDone(void)
+/* timerRecDone(void)
  * ------------------
  * Callback of a TimeAlarms timer triggered when a record window is finished.
  * IN:	- none
  * OUT:	- none
  */
-void alarmRecDone(void) {
+void timerRecDone(void) {
 	if((rec_window.occurences == 0) || (next_record.cnt < (rec_window.occurences-1))) {
 		Serial.printf("Recording done... counting: %d\n", next_record.cnt);
 		working_state.rec_state = RECSTATE_REQ_WAIT;
@@ -63,4 +63,16 @@ void alarmRecDone(void) {
 		Serial.println("Recording set finished!");
 		working_state.rec_state = RECSTATE_REQ_OFF;
 	}
+}
+
+/* alarmNextRec(void)
+ * ------------------
+ * Callbak of a TimeAlarms alarm triggered when the waiting time 
+ * between two recordings is elapsed.
+ * IN:	- none
+ * OUT:	- none
+ */
+void alarmNextRec(void) {
+	Serial.println("Next REC called");
+	working_state.rec_state = RECSTATE_RESTART;
 }

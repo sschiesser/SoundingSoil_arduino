@@ -101,7 +101,7 @@ String createSDpath(bool time_set) {
 		}
 		// If NOT currently withing a window recording, create a fresh directory
 		// if(working_state.mon_state != MONSTATE_ON) { // <-- for test purposes...
-		if(working_state.rec_state != RECSTATE_WAIT) {
+		if(working_state.rec_state != RECSTATE_RESTART) {
 			SD.mkdir(dir_name);
 		}
 		// If waiting for the next window recording, stay in the same directory and increase file_name

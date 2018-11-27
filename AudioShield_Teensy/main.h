@@ -35,7 +35,9 @@ enum recState {
 	RECSTATE_ON,								// 2
 	RECSTATE_REQ_WAIT,					// 3
 	RECSTATE_WAIT,							// 4
-	RECSTATE_REQ_OFF,						// 5
+	RECSTATE_IDLE,							// 5
+	RECSTATE_RESTART,						// 6
+	RECSTATE_REQ_OFF						// 7
 };
 extern enum recState					rec_state;
 // Monitoring states...

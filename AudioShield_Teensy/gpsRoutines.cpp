@@ -41,6 +41,7 @@ bool gpsGetData(void) {
 	byte retries = 0;
 	bool fix_found = false;
 
+	Serial.print("Getting GPS data ");
 	do {
 #if(GPS_STATIC==1)
 		for (int i=0; i<4; ++i) {
@@ -51,7 +52,7 @@ bool gpsGetData(void) {
 #endif	
 		gps.f_get_position(&flat, &flon, &age);
 		if((age == TinyGPS::GPS_INVALID_AGE) || (age > 10000)) {
-			Serial.println("No valid data. Do it again!");
+			Serial.print(". ");
 			retries++;
 		}
 		else {
@@ -59,6 +60,7 @@ bool gpsGetData(void) {
 			fix_found = true;
 		}
 	} while((!fix_found) && (retries < 3));
+	Serial.println("");
 	return fix_found;
 }
 
