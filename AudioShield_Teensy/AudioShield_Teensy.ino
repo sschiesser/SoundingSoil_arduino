@@ -54,8 +54,8 @@ void setup() {
 }
 
 void loop() {
-	int who;
 SLEEP:
+	int who;
 	// you need to update before sleeping.
 	but_rec.update();
 	but_mon.update();
@@ -68,7 +68,7 @@ SLEEP:
 	if(who == WAKESOURCE_RTC) {
 		// if alarm wake-up (from 'snooze') -> remove alarm, adjust time and re-start recording
 		snooze_config -= alarm_rec;
-		adjustTime(TSOURCE_REC);
+		// adjustTime(TSOURCE_REC);
 		working_state.rec_state = RECSTATE_RESTART;
 	}
 	else {
@@ -159,7 +159,7 @@ WORK:
 		
 		case RECSTATE_REQ_OFF: {
 			stopRecording(next_record.path);
-			stopLED(&leds[LED_RECORD]);
+			finishRecording();
 			working_state.rec_state = RECSTATE_OFF;
 			break;
 		}
@@ -287,17 +287,22 @@ WORK:
 	}
 	// ...then decide which alarm to set (SLEEP -> snooze, WORK -> timeAlarms)
 	if(working_state.rec_state == RECSTATE_WAIT) {
-		tmElements_t tm1, tm2;
+		tmElements_t tm1, tm2, tm3;
+		time_t delta = next_record.ts - now();
 		breakTime(now(), tm1);
 		breakTime(next_record.ts, tm2);
-		// Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-									// tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
-		// Serial.printf("Next record: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-									// tm2.Day, tm2.Month, (tm2.Year-30), tm2.Hour, tm2.Minute, tm2.Second);
-		delay(500);
+		breakTime(delta, tm3);
 		if(ready_to_sleep) {
+			Serial.println("Setting up Snooze alarm");
+			Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+										tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
+			Serial.printf("Next record: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+										tm2.Day, tm2.Month, (tm2.Year-30), tm2.Hour, tm2.Minute, tm2.Second);
+			Serial.printf("Delta: %02dh%02dm%02ds\n", 
+										tm3.Hour, tm3.Minute, tm3.Second);
+			delay(100);
 			snooze_config += alarm_rec;
-			alarm_rec.setAlarm(next_record.ts);
+			alarm_rec.setRtcTimer(tm3.Hour, tm3.Minute, tm3.Second);
 			goto SLEEP;
 		}
 		else {

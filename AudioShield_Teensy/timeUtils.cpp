@@ -61,11 +61,11 @@ void adjustTime(enum tSources source) {
  */
 void timerRecDone(void) {
 	if((rec_window.occurences == 0) || (next_record.cnt < (rec_window.occurences-1))) {
-		// Serial.printf("Recording done... counting: %d\n", next_record.cnt);
+		Serial.printf("Recording done... counting: %d\n", next_record.cnt);
 		working_state.rec_state = RECSTATE_REQ_WAIT;
 	}
 	else {
-		// Serial.println("Recording set finished!");
+		Serial.println("Recording set finished!");
 		working_state.rec_state = RECSTATE_REQ_OFF;
 	}
 }

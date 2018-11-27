@@ -22,6 +22,7 @@ void startRecording(String path);
 void continueRecording(void);
 void stopRecording(String path);
 void pauseRecording(void);
+void resetRecInfo(struct recInfo* rec);
 void finishRecording(void);
 void startMonitoring(void);
 void stopMonitoring(void);

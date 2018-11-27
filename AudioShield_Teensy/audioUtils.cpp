@@ -145,11 +145,25 @@ void pauseRecording(void) {
 	stopLED(&leds[LED_RECORD]);
 }
 
+
+void resetRecInfo(struct recInfo* rec) {
+	rec->ts = 0;
+	rec->dur.Hour = 0;
+	rec->dur.Minute = 0;
+	rec->dur.Second = 0;
+	rec->t_set = false;
+	rec->path.remove(0);
+	rec->cnt = 0;
+}
+
 /* finishRecording(void)
  * ---------------------
  *
  */
 void finishRecording(void) {
+	resetRecInfo(&last_record);
+	resetRecInfo(&next_record);
+	stopLED(&leds[LED_RECORD]);
 }
 
 /* startMonitoring(void)
