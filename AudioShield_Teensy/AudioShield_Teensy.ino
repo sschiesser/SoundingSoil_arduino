@@ -32,8 +32,8 @@ void setup() {
   gpsPort.begin(9600);				// GPS port
 
 	// Say hello
-  Serial.println("AudioShield v1.0");
-  Serial.println("----------------");
+  // Serial.println("AudioShield v1.0");
+  // Serial.println("----------------");
 	Alarm.delay(20);
 	// Initialize peripheral & variables
 	initLEDButtons();
@@ -66,8 +66,10 @@ SLEEP:
 	// returns module that woke up processor from hibernation
 	who = Snooze.hibernate(snooze_config);
 	if(who == WAKESOURCE_RTC) {
-		// if alarm wake-up (from 'snooze') -> remove alarm and start recording
+		// if alarm wake-up (from 'snooze') -> remove alarm, adjust time and re-start recording
 		snooze_config -= alarm_rec;
+		adjustTime(TSOURCE_REC);
+		working_state.rec_state = RECSTATE_RESTART;
 	}
 	else {
 		// if button wake-up -> debounce first and notify which button was pressed
@@ -95,7 +97,7 @@ WORK:
     
   // centralized button call actions coming from SLEEP or WORK mode
   if(button_call == BUTTON_RECORD_PIN) {
-    Serial.print("Record button pressed: rec_state = "); Serial.println(working_state.rec_state);
+    // Serial.print("Record button pressed: rec_state = "); Serial.println(working_state.rec_state);
     if(working_state.rec_state == RECSTATE_OFF) {
 			working_state.rec_state = RECSTATE_REQ_ON;
     }
@@ -105,7 +107,7 @@ WORK:
 		button_call = (enum bCalls)BCALL_NONE;
   }
   if(button_call == BUTTON_MONITOR_PIN) {
-    Serial.print("Monitor button pressed: mon_state = "); Serial.println(working_state.mon_state);
+    // Serial.print("Monitor button pressed: mon_state = "); Serial.println(working_state.mon_state);
 		if(working_state.mon_state == MONSTATE_OFF) {
 			working_state.mon_state = MONSTATE_REQ_ON;
 		}
@@ -115,8 +117,8 @@ WORK:
 		button_call = (enum bCalls)BCALL_NONE;
 	}
   if(button_call == BUTTON_BLUETOOTH_PIN) {
-    Serial.print("Bluetooth button pressed: BLE = "); Serial.print(working_state.ble_state);
-		Serial.print(", BT = "); Serial.println(working_state.bt_state);
+    // Serial.print("Bluetooth button pressed: BLE = "); Serial.print(working_state.ble_state);
+		// Serial.print(", BT = "); Serial.println(working_state.bt_state);
 		if(working_state.ble_state == BLESTATE_IDLE) {
 			working_state.ble_state = BLESTATE_REQ_ADV;
 		}
@@ -128,12 +130,13 @@ WORK:
 
   // REC state actions
 	switch(working_state.rec_state) {
-		case RECSTATE_REQ_ON:
+		case RECSTATE_REQ_ON: {
 			next_record.cnt = 0;
 			prepareRecording(true);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(next_record.path);
 			break;
+		}
 			
 		case RECSTATE_RESTART: {
 			prepareRecording(false);
@@ -287,10 +290,11 @@ WORK:
 		tmElements_t tm1, tm2;
 		breakTime(now(), tm1);
 		breakTime(next_record.ts, tm2);
-		Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-									tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
-		Serial.printf("Next record: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-									tm2.Day, tm2.Month, (tm2.Year-30), tm2.Hour, tm2.Minute, tm2.Second);
+		// Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+									// tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
+		// Serial.printf("Next record: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+									// tm2.Day, tm2.Month, (tm2.Year-30), tm2.Hour, tm2.Minute, tm2.Second);
+		delay(500);
 		if(ready_to_sleep) {
 			snooze_config += alarm_rec;
 			alarm_rec.setAlarm(next_record.ts);

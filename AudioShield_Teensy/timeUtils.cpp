@@ -40,11 +40,16 @@ void adjustTime(enum tSources source) {
 			setTime(ble_time);
 			Teensy3Clock.set(ble_time);
 			break;
+		
+		case TSOURCE_REC:
+			setTime(next_record.ts);
+			Teensy3Clock.set(next_record.ts);
+			break;
 			
 		default:
 			break;
 	}
-	Serial.printf("Time adjusted from source#%d. Current time: %ld\n", source, now());
+	// Serial.printf("Time adjusted from source#%d. Current time: %ld\n", source, now());
 }
 
 
@@ -56,11 +61,11 @@ void adjustTime(enum tSources source) {
  */
 void timerRecDone(void) {
 	if((rec_window.occurences == 0) || (next_record.cnt < (rec_window.occurences-1))) {
-		Serial.printf("Recording done... counting: %d\n", next_record.cnt);
+		// Serial.printf("Recording done... counting: %d\n", next_record.cnt);
 		working_state.rec_state = RECSTATE_REQ_WAIT;
 	}
 	else {
-		Serial.println("Recording set finished!");
+		// Serial.println("Recording set finished!");
 		working_state.rec_state = RECSTATE_REQ_OFF;
 	}
 }
@@ -73,6 +78,6 @@ void timerRecDone(void) {
  * OUT:	- none
  */
 void alarmNextRec(void) {
-	Serial.println("Next REC called");
+	// Serial.println("Next REC called");
 	working_state.rec_state = RECSTATE_RESTART;
 }

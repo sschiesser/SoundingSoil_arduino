@@ -64,7 +64,7 @@ String createSDpath(bool time_set) {
 	// with the format "YYMMDD/hhmmss.wav"
 	if(time_set) {
 		breakTime(next_record.ts, tm);
-		Serial.printf("Broken time: %02d.%02d.%02d, %02dh%02dm%02ds\n", tm.Day, tm.Month, (tm.Year-30), tm.Hour, tm.Minute, tm.Second);
+		// Serial.printf("Broken time: %02d.%02d.%02d, %02dh%02dm%02ds\n", tm.Day, tm.Month, (tm.Year-30), tm.Hour, tm.Minute, tm.Second);
 		sprintf(buf, "%02d%02d%02d", (tm.Year-30), tm.Month, tm.Day);
 		dir_name.concat(buf);
 		sprintf(buf, "%02d%02d%02d.wav", tm.Hour, tm.Minute, tm.Second);

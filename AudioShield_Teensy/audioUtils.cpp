@@ -72,14 +72,14 @@ void setRecInfos(struct recInfo* rec, String path) {
 	rec->path.remove(0);
 	rec->path.concat(path.c_str());
 	rec->t_set = (bool)rec->ts;
-	Serial.printf("Record information:\n-duration: %02dh%02dm%02ds\n-path: '%s'\n-time set: %d\n-timestamp: %ld\n-rec cnt: %d\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->path.c_str(), rec->t_set, rec->ts, rec->cnt);
+	// Serial.printf("Record information:\n-duration: %02dh%02dm%02ds\n-path: '%s'\n-time set: %d\n-timestamp: %ld\n-rec cnt: %d\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->path.c_str(), rec->t_set, rec->ts, rec->cnt);
 }
 
 /* startRecording(String)
  *
  */
 void startRecording(String path) {
-  Serial.println("Start recording");
+  // Serial.println("Start recording");
   
   frec = SD.open(path, FILE_WRITE);
   if(frec) {
@@ -118,7 +118,7 @@ void continueRecording(void) {
  *
  */
 void stopRecording(String path) {
-  Serial.println("Stop recording");
+  // Serial.println("Stop recording");
   queueSdc.end();
   if(working_state.rec_state) {
     while(queueSdc.available() > 0) {
@@ -140,7 +140,7 @@ void pauseRecording(void) {
 	last_record = next_record;
 	next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
 									(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
-	Serial.printf("Last record: %ld, next record: %ld\n", last_record.ts, next_record.ts);
+	// Serial.printf("Last record: %ld, next record: %ld\n", last_record.ts, next_record.ts);
 	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);
 }

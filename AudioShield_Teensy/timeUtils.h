@@ -12,6 +12,7 @@
 // Time sources
 enum tSources {
 	TSOURCE_NONE,
+	TSOURCE_REC,
 	TSOURCE_GPS,
 	TSOURCE_BLE
 };
