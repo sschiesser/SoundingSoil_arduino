@@ -13,7 +13,7 @@ Bounce 													but_blue = Bounce(BUTTON_BLUETOOTH_PIN, BUTTON_BOUNCE_TIME_M
 enum bCalls											button_call;
 
 IntervalTimer										led_timers[LED_MAX_NUMBER];
-byte 														led_pins[LED_MAX_NUMBER] = { LED_RECORD_PIN, LED_MONITOR_PIN, LED_BLUETOOTH_PIN };
+byte 														led_pins[LED_MAX_NUMBER] = { LED_RECORD_PIN, LED_MONITOR_PIN, LED_BLUETOOTH_PIN, LED_PEAK_PIN };
 struct leds_s 									leds[LED_MAX_NUMBER];
 	
 /* initLEDButtons(void)
@@ -38,23 +38,23 @@ void initLEDButtons(void) {
 		leds[i].cnt = 0;
 		switch(i) {
 			case LED_RECORD:
-			leds[i].toggle = toggleRecLED;
-			break;
+				leds[i].toggle = toggleRecLED;
+				break;
 			case LED_MONITOR:
-			leds[i].toggle = toggleMonLED;
-			break;
+				leds[i].toggle = toggleMonLED;
+				break;
 			case LED_BLUETOOTH:
-			leds[i].toggle = toggleBtLED;
-			break;
+				leds[i].toggle = toggleBtLED;
+				break;
+			case LED_PEAK:
+				leds[i].toggle = togglePeakLED;
+				break;
 			default:
-			break;
+				break;
 		}
 		pinMode(leds[i].pin, OUTPUT);
 		digitalWrite(leds[i].pin, leds[i].status);
 	}
-	
-	pinMode(34, OUTPUT);
-	digitalWrite(34, LED_OFF);
 	// unsigned long a;
 	// a = (unsigned long)&toggleRecLED;
 	// Serial.print("toggleRecLED address: 0x"); Serial.println(a, HEX);
@@ -159,6 +159,9 @@ void toggleMonLED(void) {
 }
 void toggleBtLED(void) {
 	toggleCb(&leds[LED_BLUETOOTH]);
+}
+void togglePeakLED(void) {
+	toggleCb(&leds[LED_PEAK]);
 }
 
 /* startLED(struct leds_s *, enum lMode)

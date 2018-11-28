@@ -20,8 +20,9 @@
 #define LED_RECORD_PIN				26
 #define LED_MONITOR_PIN				27
 #define LED_BLUETOOTH_PIN			28
+#define LED_PEAK_PIN					34
 // LEDs#
-#define LED_MAX_NUMBER				3
+#define LED_MAX_NUMBER				4
 // LED ON/OFF states
 #define LED_OFF               HIGH
 #define LED_ON                LOW
@@ -47,6 +48,7 @@ enum lList {
 	LED_RECORD = 0,
 	LED_MONITOR,
 	LED_BLUETOOTH,
+	LED_PEAK
 };
 // LEDs modes enumeration
 enum lMode {
@@ -85,6 +87,7 @@ void toggleCb(struct leds_s *ld);
 void toggleRecLED(void);
 void toggleMonLED(void);
 void toggleBtLED(void);
+void togglePeakLED(void);
 void initLEDButtons(void);
 void startLED(struct leds_s *ld, enum lMode mode);
 void stopLED(struct leds_s *ld);

@@ -76,7 +76,6 @@ SLEEP:
 	Alarm.delay(10);
 
 WORK:
-	float gain;
 	// needed for TimeAlarms timers
 	Alarm.delay(0);
 	// needed for button bounces	
@@ -146,12 +145,14 @@ WORK:
 		
 		case RECSTATE_ON: {
 			continueRecording();
+			detectPeaks();
 			break;
 		}
 		
 		case RECSTATE_REQ_OFF: {
 			stopRecording(next_record.path);
 			finishRecording();
+			stopLED(&leds[LED_PEAK]);
 			working_state.rec_state = RECSTATE_OFF;
 			break;
 		}
@@ -169,32 +170,15 @@ WORK:
 		}
 		
 		case MONSTATE_ON: {
-			vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
-			gain = (float)vol_ctrl / 1023.0;
-			mixer.gain(MIXER_CH_REC, gain);
-			if(fps > 24) {
-				if(peak.available()) {
-					fps = 0;
-					if(peak.read() >= 1.0) {
-						digitalWrite(34, LED_ON);
-					}
-					else {
-						digitalWrite(34, LED_OFF);
-					}
-					// peak_value = peak.read() * 30.0;
-					// MONITORPORT.print("|");
-					// for(int cnt = 0; cnt < peak_value; cnt++) {
-						// MONITORPORT.print(">");
-					// }
-					// MONITORPORT.println();
-				}
-			}
+			setHpGain();
+			detectPeaks();
 			break;
 		}
 		
 		case MONSTATE_REQ_OFF: {
 			stopMonitoring();
 			stopLED(&leds[LED_MONITOR]);
+			stopLED(&leds[LED_PEAK]);
 			working_state.mon_state = MONSTATE_OFF;
 			break;
 		}

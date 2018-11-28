@@ -25,8 +25,7 @@ AudioControlSGTL5000					sgtl5000;						//xy=172,323
 // // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 int														vol_ctrl;
-elapsedMillis									fps;
-int														peak_value;
+elapsedMillis									peak_interval;
 
 /* prepareRecording(bool)
  * ----------------------
@@ -215,6 +214,40 @@ void startMonitoring(void) {
  */
 void stopMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 0);
+}
+
+/* setHpGain(void)
+ * ---------------
+ * Read the rotary pot value and set the headphones gain.
+ * IN:	- none
+ * OUT:	- none
+ */
+void setHpGain(void) {
+	float gain;
+	vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
+	gain = (float)vol_ctrl / 1023.0;
+	mixer.gain(MIXER_CH_REC, gain);
+}
+
+/* detectPeaks(void)
+ * -----------------
+ * Detect possible peaks at line input and
+ * notify them with the peak LED.
+ * IN:	- none
+ * OUT:	- none
+ */
+void detectPeaks(void) {
+	if(peak_interval > 24) {
+		if(peak.available()) {
+			peak_interval = 0;
+			if(peak.read() >= 1.0) {
+				startLED(&leds[LED_PEAK], LED_MODE_ON);
+			}
+			else {
+				stopLED(&leds[LED_PEAK]);
+			}
+		}
+	}
 }
 
 /* initAudio(void)

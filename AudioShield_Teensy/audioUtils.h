@@ -31,12 +31,8 @@
 */
 #define SGTL5000_INLEVEL_DEF	0
 
-extern AudioAnalyzePeak				peak;
-extern AudioMixer4						mixer;
 extern String 								rec_path;
 extern int										vol_ctrl;
-extern elapsedMillis					fps;
-extern int										peak_value;
 
 
 /* ======================
@@ -52,6 +48,8 @@ void resetRecInfo(struct recInfo* rec);
 void finishRecording(void);
 void startMonitoring(void);
 void stopMonitoring(void);
+void setHpGain(void);
+void detectPeaks(void);
 void initAudio(void);
 
 #endif /* _AUDIOUTILS_H_ */
