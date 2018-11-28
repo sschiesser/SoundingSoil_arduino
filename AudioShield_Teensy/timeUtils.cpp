@@ -80,6 +80,7 @@ void timerRecDone(void) {
  * OUT:	- none
  */
 void alarmNextRec(void) {
+	Alarm.free(alarm_wait_id);
 	// Serial.println("Next REC called");
 	working_state.rec_state = RECSTATE_RESTART;
 }

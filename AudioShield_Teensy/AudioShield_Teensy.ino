@@ -25,6 +25,7 @@ struct recInfo								next_record;
 
 bool													ready_to_sleep;
 int														alarm_rec_id;
+int														alarm_wait_id;
 
 void setup() {
   // Initialize serial ports:
@@ -109,7 +110,6 @@ WORK:
 		button_call = (enum bCalls)BCALL_NONE;
   }
   if(button_call == BUTTON_MONITOR_PIN) {
-    // Serial.print("Monitor button pressed: mon_state = "); Serial.println(working_state.mon_state);
 		if(working_state.mon_state == MONSTATE_OFF) {
 			working_state.mon_state = MONSTATE_REQ_ON;
 		}
@@ -119,9 +119,7 @@ WORK:
 		button_call = (enum bCalls)BCALL_NONE;
 	}
   if(button_call == BUTTON_BLUETOOTH_PIN) {
-    // Serial.print("Bluetooth button pressed: BLE = "); Serial.print(working_state.ble_state);
-		// Serial.print(", BT = "); Serial.println(working_state.bt_state);
-		if(working_state.ble_state == BLESTATE_IDLE) {
+		if(working_state.ble_state == BLESTATE_OFF) {
 			working_state.ble_state = BLESTATE_REQ_ADV;
 		}
 		else {
@@ -150,7 +148,7 @@ WORK:
 		case RECSTATE_REQ_WAIT: {
 			stopRecording(next_record.path);
 			pauseRecording();
-			working_state.rec_state = RECSTATE_WAIT;
+			// working_state.rec_state = RECSTATE_WAIT;
 			break;
 		}
 		
@@ -234,7 +232,7 @@ WORK:
 			Alarm.delay(100);
 			bc127PowerOff();
 			stopLED(&leds[LED_BLUETOOTH]);
-			working_state.ble_state = BLESTATE_IDLE;
+			working_state.ble_state = BLESTATE_OFF;
 			break;
 		
 		default:
@@ -254,9 +252,9 @@ WORK:
 			else {
 				bc127PowerOff();
 				stopLED(&leds[LED_BLUETOOTH]);
-				working_state.ble_state = BLESTATE_IDLE;
+				working_state.ble_state = BLESTATE_OFF;
 			}
-			working_state.bt_state = BTSTATE_IDLE;
+			working_state.bt_state = BTSTATE_OFF;
 			break;
 		
 		default:
@@ -280,48 +278,68 @@ WORK:
 	// Stay awake or go to sleep?...
 	// ...first check all other working states
 	if( (working_state.mon_state == MONSTATE_OFF) &&
-			(working_state.ble_state == BLESTATE_IDLE) &&
-			(working_state.bt_state == BTSTATE_IDLE) ) {
+			(working_state.ble_state == BLESTATE_OFF) &&
+			(working_state.bt_state == BTSTATE_OFF) ) {
+		if(working_state.rec_state == RECSTATE_WAIT) working_state.rec_state = RECSTATE_REQ_WAIT;
 		ready_to_sleep = true;
 	}
 	else {
 		ready_to_sleep = false;
 	}
+	
 	// ...then decide which alarm to set (SLEEP -> snooze, WORK -> timeAlarms)
-	if(working_state.rec_state == RECSTATE_WAIT) {
-		tmElements_t tm1, tm2, tm3;
-		time_t delta = next_record.ts - now();
-		breakTime(now(), tm1);
-		breakTime(next_record.ts, tm2);
-		breakTime(delta, tm3);
-		Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-									tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
-		Serial.printf("Next record: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-									tm2.Day, tm2.Month, (tm2.Year-30), tm2.Hour, tm2.Minute, tm2.Second);
-		Serial.printf("Delta: %02dh%02dm%02ds\n", 
-									tm3.Hour, tm3.Minute, tm3.Second);
-		if(ready_to_sleep) {
-			Serial.println("Setting up Snooze alarm");
-			delay(100);
-			snooze_config += alarm_rec;
-			alarm_rec.setRtcTimer(tm3.Hour, tm3.Minute, tm3.Second);
-			goto SLEEP;
+	time_t delta;
+	tmElements_t tm1, tm2, tm3;
+	switch(working_state.rec_state) {
+		case RECSTATE_REQ_WAIT: {
+			delta = next_record.ts - now();
+			breakTime(now(), tm1);
+			breakTime(next_record.ts, tm2);
+			breakTime(delta, tm3);
+			Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+										tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
+			Serial.printf("Delta: %02dh%02dm%02ds\n", 
+										tm3.Hour, tm3.Minute, tm3.Second);
+			if(ready_to_sleep) {
+				Serial.println("Setting up Snooze alarm");
+				delay(100);
+				snooze_config += alarm_rec;
+				alarm_rec.setRtcTimer(tm3.Hour, tm3.Minute, tm3.Second);
+				working_state.rec_state = RECSTATE_IDLE;
+				goto SLEEP;
+			}
+			else {
+				alarm_wait_id = Alarm.alarmOnce(tm2.Hour, tm2.Minute, tm2.Second, alarmNextRec);
+				working_state.rec_state = RECSTATE_WAIT;
+				goto WORK;
+			}
+			break;
 		}
-		else {
-			Alarm.alarmOnce(tm2.Hour, tm2.Minute, tm2.Second, alarmNextRec);
-			working_state.rec_state = RECSTATE_IDLE;
+			
+		// case RECSTATE_REQ_IDLE: {
+			// delta = next_record.ts - now();
+			// breakTime(now(), tm1);
+			// breakTime(next_record.ts, tm2);
+			// breakTime(delta, tm3);
+			// Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+										// tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
+			// Serial.printf("Delta: %02dh%02dm%02ds\n", 
+										// tm3.Hour, tm3.Minute, tm3.Second);
+			
+			// break;
+		// }
+			
+		case RECSTATE_OFF:
+			if(ready_to_sleep) goto SLEEP;
+			else goto WORK;
+			break;
+		
+		default:
 			goto WORK;
-		}
-	}
-	else if(working_state.rec_state == RECSTATE_OFF) {
-		if(ready_to_sleep) goto SLEEP;
-		else goto WORK;
-	}
-	else {
-		goto WORK;
+			break;
 	}
 }
-
+	
 
 /* setDefaultValues(void)
  * ----------------------
@@ -329,8 +347,8 @@ WORK:
 void setDefaultValues(void) {
   working_state.rec_state = RECSTATE_OFF;
   working_state.mon_state = MONSTATE_OFF;
-  working_state.bt_state = BTSTATE_IDLE;
-  working_state.ble_state = BLESTATE_IDLE;
+  working_state.bt_state = BTSTATE_OFF;
+  working_state.ble_state = BLESTATE_OFF;
 	rec_window.length.Second = RWIN_LEN_DEF_S;
 	rec_window.length.Minute = RWIN_LEN_DEF_M;
 	rec_window.length.Hour = RWIN_LEN_DEF_H;

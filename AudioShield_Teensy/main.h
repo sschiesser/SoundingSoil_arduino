@@ -35,9 +35,10 @@ enum recState {
 	RECSTATE_ON,								// 2
 	RECSTATE_REQ_WAIT,					// 3
 	RECSTATE_WAIT,							// 4
-	RECSTATE_IDLE,							// 5
-	RECSTATE_RESTART,						// 6
-	RECSTATE_REQ_OFF						// 7
+	RECSTATE_REQ_IDLE,					// 5
+	RECSTATE_IDLE,							// 6
+	RECSTATE_RESTART,						// 7
+	RECSTATE_REQ_OFF						// 8
 };
 extern enum recState					rec_state;
 // Monitoring states...
@@ -109,11 +110,12 @@ extern struct rWindow					rec_window;
 #define RWIN_LEN_DEF_S				5
 #define RWIN_LEN_DEF_M				0
 #define RWIN_LEN_DEF_H				0
-#define RWIN_PER_DEF_S				10
+#define RWIN_PER_DEF_S				20
 #define RWIN_PER_DEF_M				0
 #define RWIN_PER_DEF_H				0
 #define RWIN_OCC_DEF					3 // Zero value -> infinite repetitions
 
 extern int										alarm_rec_id;
+extern int										alarm_wait_id;
 
 #endif /* _MAIN_H_ */

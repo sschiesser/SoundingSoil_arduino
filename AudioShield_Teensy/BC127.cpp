@@ -114,12 +114,12 @@ int parseSerialIn(String input) {
 	// "CLOSE_OK" -> Bluetooth protocol closed succesfully
 	else if(part1.equalsIgnoreCase("CLOSE_OK")) {
 		if(part2.equalsIgnoreCase("BLE\n")) {
-			if(working_state.ble_state != BLESTATE_IDLE) {
+			if(working_state.ble_state != BLESTATE_OFF) {
 				working_state.ble_state = BLESTATE_REQ_DIS;
 			}
 		}
 		if(part2.equalsIgnoreCase("A2DP\n")) {
-			if(working_state.bt_state != BTSTATE_IDLE) {
+			if(working_state.bt_state != BTSTATE_OFF) {
 				working_state.bt_state = BTSTATE_REQ_DIS;
 			}
 		}
