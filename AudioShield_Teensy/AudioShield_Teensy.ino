@@ -8,35 +8,27 @@
 #include "main.h"
 
 // Load drivers
-SnoozeDigital 								button_wakeup;
-// Available digital pins for wakeup on Teensy 3.6: 2,4,6,7,9,10,11,13,16,21,22,26,30,33
+SnoozeDigital 								button_wakeup; 	// Wakeup pins on Teensy 3.6:
+																							// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
 SnoozeAlarm										alarm_rec;
 SnoozeAlarm										alarm_led;
-
 // install driver into SnoozeBlock
 SnoozeBlock 									snooze_config(button_wakeup);
 
 
 volatile struct wState 				working_state;
-enum bCalls										button_call;
 struct rWindow								rec_window;
 struct recInfo								last_record;
 struct recInfo								next_record;
 
 bool													ready_to_sleep;
-int														alarm_rec_id;
-int														alarm_wait_id;
 
 void setup() {
   // Initialize serial ports:
-  Serial.begin(115200);				// Serial monitor port
-  Serial4.begin(9600);				// BC127 communication port
-  gpsPort.begin(9600);				// GPS port
+  MONITORPORT.begin(115200);	// Serial monitor port
+  BC127PORT.begin(9600);			// BC127 communication port
+  GPSPORT.begin(9600);				// GPS port
 
-	// Say hello
-  // Serial.println("AudioShield v1.0");
-  // Serial.println("----------------");
-	// Initialize peripheral & variables
 	initLEDButtons();
 	button_wakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
 	button_wakeup.pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP, FALLING);
@@ -169,38 +161,59 @@ WORK:
 	}
   // MON state actions
 	switch(working_state.mon_state) {
-		case MONSTATE_REQ_ON:
+		case MONSTATE_REQ_ON: {
 			startLED(&leds[LED_MONITOR], LED_MODE_ON);
 			startMonitoring();
 			working_state.mon_state = MONSTATE_ON;
 			break;
+		}
 		
-		case MONSTATE_ON:
+		case MONSTATE_ON: {
 			vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
 			gain = (float)vol_ctrl / 1023.0;
 			mixer.gain(MIXER_CH_REC, gain);
+			if(fps > 24) {
+				if(peak.available()) {
+					fps = 0;
+					if(peak.read() >= 1.0) {
+						digitalWrite(34, LED_ON);
+					}
+					else {
+						digitalWrite(34, LED_OFF);
+					}
+					// peak_value = peak.read() * 30.0;
+					// MONITORPORT.print("|");
+					// for(int cnt = 0; cnt < peak_value; cnt++) {
+						// MONITORPORT.print(">");
+					// }
+					// MONITORPORT.println();
+				}
+			}
 			break;
+		}
 		
-		case MONSTATE_REQ_OFF:
+		case MONSTATE_REQ_OFF: {
 			stopMonitoring();
 			stopLED(&leds[LED_MONITOR]);
 			working_state.mon_state = MONSTATE_OFF;
 			break;
+		}
 		
 		default:
 			break;
 	}
   // BLE state actions
 	switch(working_state.ble_state) {
-		case BLESTATE_REQ_ADV:
+		case BLESTATE_REQ_ADV: {
 			startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
 			bc127PowerOn();
 			Alarm.delay(1000);
 			bc127AdvStart();
 			working_state.ble_state = BLESTATE_ADV;
 			break;
+		}
 		
-		case BLESTATE_REQ_CONN:
+		case BLESTATE_REQ_CONN: {
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
 			}
@@ -209,14 +222,16 @@ WORK:
 			}
 			working_state.ble_state = BLESTATE_CONNECTED;
 			break;
+		}
 		
-		case BLESTATE_CONNECTED:
+		case BLESTATE_CONNECTED: {
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
 			}
 			break;
+		}
 		
-		case BLESTATE_REQ_DIS:
+		case BLESTATE_REQ_DIS: {
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
 			}
@@ -226,26 +241,29 @@ WORK:
 			sendCmdOut(BCCMD_BLE_ADV_ON);
 			working_state.ble_state = BLESTATE_ADV;
 			break;
+		}
 		
-		case BLESTATE_REQ_OFF:
+		case BLESTATE_REQ_OFF: {
 			bc127AdvStop();
 			Alarm.delay(100);
 			bc127PowerOff();
 			stopLED(&leds[LED_BLUETOOTH]);
 			working_state.ble_state = BLESTATE_OFF;
 			break;
+		}
 		
 		default:
 		break;
 	}
   // BT state actions
 	switch(working_state.bt_state) {
-		case BTSTATE_REQ_CONN:
+		case BTSTATE_REQ_CONN: {
 			startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
 			working_state.bt_state = BTSTATE_CONNECTED;
 			break;
+		}
 		
-		case BTSTATE_REQ_DIS:
+		case BTSTATE_REQ_DIS: {
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_SLOW);
 			}
@@ -256,6 +274,7 @@ WORK:
 			}
 			working_state.bt_state = BTSTATE_OFF;
 			break;
+		}
 		
 		default:
 			break;

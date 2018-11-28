@@ -1,21 +1,19 @@
 /*
  * gpsRoutines.h
  */
-
 #ifndef _GPSROUTINES_H_
 #define _GPSROUTINES_H_
 
-#include <Arduino.h>
-#include <TinyGPS.h>
 #include "main.h"
 
-#define gpsPort								Serial1
+// GPS serial port
+#define GPSPORT								Serial1
 
 extern TinyGPS								gps;
+
 /* ======================
  * FUNCTIONS DECLARATIONS
  * ====================== */
-
 void gpsPowerOn(void);
 void gpsPowerOff(void);
 bool gpsGetData(void);

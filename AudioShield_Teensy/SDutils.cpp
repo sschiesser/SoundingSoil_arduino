@@ -7,7 +7,7 @@
  
 #include "SDutils.h"
 
-/*Wave header for PCM sound file */
+// Wave header for PCM sound file
 struct waveHd {
   char  riff[4];                /* "RIFF"                                  					*/
   unsigned long  flength;       /* file length in bytes                    					*/
@@ -22,9 +22,12 @@ struct waveHd {
   short bits_per_samp;          /* Number of bits per sample               					*/
   char  data[4];                /* "data"                                  					*/
   unsigned long  dlength;       /* data length in bytes (filelength - 44)  					*/
-}wave_header;
+};
+struct waveHd									wave_header;
+
 // SD card file handle
 File frec;
+
 // Total amount of recorded bytes
 unsigned long tot_rec_bytes = 0;
 

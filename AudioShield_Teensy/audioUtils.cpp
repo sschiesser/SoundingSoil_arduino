@@ -5,7 +5,6 @@
  * audio processes (recording, monitoring, etc.)
  * 
  */
-
 #include "audioUtils.h"
 
 // Audio connections definition
@@ -25,12 +24,16 @@ AudioConnection								patchCord6(mixer, 0, i2sPlayMon, 1);
 AudioControlSGTL5000					sgtl5000;						//xy=172,323
 // // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
+int														vol_ctrl;
+elapsedMillis									fps;
+int														peak_value;
 
-/* prepareRecording(void)
+/* prepareRecording(bool)
  * ----------------------
- * Fetch a timestamp and set all the necessary informations
- * needed for the coming (next) record.
- * IN:	- none
+ * Fetch a GPS fix (if demanded), set the record timestamp to now(),
+ * create the file path according to it, save all record information
+ * and start the record timer.
+ * IN:	- sync with GPS (bool)
  * OUT:	- none
  */
 void prepareRecording(bool sync) {
@@ -62,13 +65,11 @@ void prepareRecording(bool sync) {
 	alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);	
 }
 
-/* setRecInfos(struct recInfos*, String, unsigned int)
- * ---------------------------------------------------
- * Set the information related to the pointed recording
- * and start the alarm at recording duration.
+/* setRecInfos(struct recInfos*, String)
+ * -------------------------------------
+ * Set the information related to the pointed recording.
  * IN:	- pointer to a record struct (struct recInfos*)
  *			- recording path name (String)
- *			- record counter (unsigned int)
  * OUT:	- none
  */
 void setRecInfos(struct recInfo* rec, String path) {
@@ -78,15 +79,16 @@ void setRecInfos(struct recInfo* rec, String path) {
 	rec->path.remove(0);
 	rec->path.concat(path.c_str());
 	rec->t_set = (bool)rec->ts;
-	// Serial.printf("Record information:\n-duration: %02dh%02dm%02ds\n-path: '%s'\n-time set: %d\n-timestamp: %ld\n-rec cnt: %d\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->path.c_str(), rec->t_set, rec->ts, rec->cnt);
 }
 
 /* startRecording(String)
+ * ----------------------
+ * Open the file path and start the recording queue.
+ * IN:	- file path (String)
+ * OUT:	- none
  *
  */
 void startRecording(String path) {
-  Serial.println("Start recording");
-  
   frec = SD.open(path, FILE_WRITE);
   if(frec) {
     queueSdc.begin();
@@ -100,7 +102,10 @@ void startRecording(String path) {
 }
 
 /* continueRecording(void)
- *
+ * -----------------------
+ * Write to the SD card and free the recording queue every 512 samples
+ * IN:	- none
+ * OUT:	- none
  */
 void continueRecording(void) {
   if(queueSdc.available() >= 2) {
@@ -122,7 +127,11 @@ void continueRecording(void) {
 }
 
 /* stopRecording(String)
- *
+ * ---------------------
+ * Stop the recording queue, write the remaining data
+ * and the WAV header values to the SD card.
+ * IN:	- none
+ * OUT:	- none
  */
 void stopRecording(String path) {
   // Serial.println("Stop recording");
@@ -137,22 +146,30 @@ void stopRecording(String path) {
 
     writeWaveHeader(path, tot_rec_bytes);
   }
-  // working_state.rec_state = false;
 }
 
 /* pauseRecording(void)
- *
+ * --------------------
+ * Prepare the next record informations.
+ * IN:	- none
+ * OUT:	- none
  */
 void pauseRecording(void) {
 	last_record = next_record;
 	next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
 									(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
-	Serial.printf("Next record: %ld\n", next_record.ts);
+	// Serial.printf("Next record: %ld\n", next_record.ts);
 	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);
 }
 
 
+/* resetRecInfo(struct recInfo*)
+ * -----------------------------
+ * Set all values of the pointed record to 0
+ * IN:	- pointer to the record (struct recInfo*)
+ * OUT:	- none
+ */
 void resetRecInfo(struct recInfo* rec) {
 	rec->ts = 0;
 	rec->dur.Hour = 0;
@@ -165,7 +182,10 @@ void resetRecInfo(struct recInfo* rec) {
 
 /* finishRecording(void)
  * ---------------------
- *
+ * Reset the record informations, time source
+ * and switch-off the REC LED.
+ * IN:	- none
+ * OUT:	- none
  */
 void finishRecording(void) {
 	resetRecInfo(&last_record);
@@ -177,22 +197,32 @@ void finishRecording(void) {
 }
 
 /* startMonitoring(void)
- *
+ * ---------------------
+ * To start monitoring, just open the mixer channel at the read gain value
+ * IN:	- none
+ * OUT:	- none
  */
 void startMonitoring(void) {
-	mixer.gain(MIXER_CH_REC, 1);
+	float gain;
+	vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
+	gain = (float)vol_ctrl / 1023.0;
+	mixer.gain(MIXER_CH_REC, gain);
 }
 
 /* stopMonitoring(void)
- *
+ * --------------------
+ * To stop monitoring, close the mixer channel
  */
 void stopMonitoring(void) {
 	mixer.gain(MIXER_CH_REC, 0);
-	// working_state.mon_state = false;
 }
 
 /* initAudio(void)
  * ---------------
+ * Set memory to buffer audio signal, enable & set-up
+ * the audio chip and the mixer.
+ * IN:	- none
+ * OUT:	- none
  */
 void initAudio(void) {
   // Memory buffer for the record queue
@@ -201,7 +231,8 @@ void initAudio(void) {
   // Enable the audio shield, select input, enable output
   sgtl5000.enable();
   sgtl5000.inputSelect(audioInput);
-  sgtl5000.volume(0.5);
+  sgtl5000.volume(SGTL5000_VOLUME_DEF);
+	sgtl5000.lineInLevel(SGTL5000_INLEVEL_DEF);
   mixer.gain(MIXER_CH_REC, 0);
   mixer.gain(MIXER_CH_SDC, 0);
 }

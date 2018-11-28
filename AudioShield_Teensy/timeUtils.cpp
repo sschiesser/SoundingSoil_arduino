@@ -4,11 +4,23 @@
  * Miscellaneous time-related functions
  * 
  */
-
 #include "timeUtils.h"
 
+// Time source
 enum tSources									time_source;
+// Last received time from external source
+unsigned int									received_time = 0;
+// Ids of the WORK-state timers
+int														alarm_rec_id;
+int														alarm_wait_id;
 
+/* setDefaultTime(void)
+ * --------------------
+ * Set the Teensy clock to DEFAULT_TIME and
+ * the time source to none
+ * IN:	- none
+ * OUT:	- none
+ */
 void setDefaultTime(void) {
 	setTime(DEFAULT_TIME_DEC);
 	Teensy3Clock.set(DEFAULT_TIME_DEC);
@@ -16,10 +28,10 @@ void setDefaultTime(void) {
 }
 
 
- /* adjustTime(enum tSources)
+/* adjustTime(enum tSources)
  * -------------------------
- * Adjust local time after an external source
- * (GPS or app over BLE) has provided a new value.
+ * Adjust local time according to an external source
+ * (GPS or app over BLE) which has provided a new value.
  * IN:	- external source (enum tSources)
  * OUT:	- none
  */
@@ -37,8 +49,8 @@ void adjustTime(enum tSources source) {
 			break;
 			
 		case TSOURCE_BLE:
-			setTime(ble_time);
-			Teensy3Clock.set(ble_time);
+			setTime(received_time);
+			Teensy3Clock.set(received_time);
 			break;
 		
 		case TSOURCE_REC:
@@ -55,7 +67,7 @@ void adjustTime(enum tSources source) {
 
 /* timerRecDone(void)
  * ------------------
- * Callback of a TimeAlarms timer triggered when a record window is finished.
+ * Callback of a TimeAlarms timer triggered when a recording is finished.
  * IN:	- none
  * OUT:	- none
  */

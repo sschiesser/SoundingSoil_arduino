@@ -1,13 +1,16 @@
 /*
  * timeUtils.h
  */
- 
 #ifndef _TIMEUTILS_H_
 #define _TIMEUTILS_H_
 
 #include "main.h"
 
 #define DEFAULT_TIME_DEC			946684800 // 01.01.2000, 00h00m00
+
+extern unsigned int						received_time;
+extern int										alarm_rec_id;
+extern int										alarm_wait_id;
 
 // Time sources
 enum tSources {
@@ -22,7 +25,6 @@ extern enum tSources					time_source;
 /* ======================
  * FUNCTIONS DECLARATIONS
  * ====================== */
-
 void setDefaultTime(void);
 void adjustTime(enum tSources source);
 void timerRecDone(void);

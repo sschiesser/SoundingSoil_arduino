@@ -6,13 +6,12 @@
  * and store the information in a specifict struct
  * 
  */
-
 #include "gpsRoutines.h"
 
+// GPS instance
 TinyGPS												gps;
 
 #define GPS_STATIC						0
-
 #if(GPS_STATIC==1)
 	const char str1[] PROGMEM = "$GPRMC,201547.000,A,3014.5527,N,09749.5808,W,0.24,163.05,040109,,*1A";
 	const char str2[] PROGMEM = "$GPGGA,201548.000,3014.5529,N,09749.5808,W,1,07,1.5,225.6,M,-22.5,M,18.8,0000*78";
@@ -21,19 +20,27 @@ TinyGPS												gps;
 	const char *teststrs[4] = {str1, str2, str3, str4};
 #endif
 
+/* gpsPowerOn(void)
+ * ----------------
+ * Switch on GPS module
+ */
 void gpsPowerOn(void) {
 	digitalWrite(GPS_SWITCH_PIN, HIGH);
 }
 
+/* gpsPowerOff(void)
+ * -----------------
+ * Switch off GPS module
+ */
 void gpsPowerOff(void) {
 	digitalWrite(GPS_SWITCH_PIN, LOW);
 }
 
-/* gpsGetData
- * ----------
+/* gpsGetData(void)
+ * ----------------
  * Capture NMEA strings on gps port and test validity
  * IN:	- none
- * OUT:	- valid data confirmation (bool)
+ * OUT:	- valid fix received (bool)
  */
 bool gpsGetData(void) {
 	float flat, flon;
@@ -48,7 +55,7 @@ bool gpsGetData(void) {
 			gpsSendString(gps, teststrs[i]);
 		}
 #else
-		gpsEncodeData(2000);
+		gpsEncodeData(1000);
 #endif	
 		gps.f_get_position(&flat, &flon, &age);
 		if((age == TinyGPS::GPS_INVALID_AGE) || (age > 10000)) {
@@ -60,7 +67,7 @@ bool gpsGetData(void) {
 			fix_found = true;
 		}
 	} while((!fix_found) && (retries < 3));
-	Serial.println("");
+	// Serial.println("");
 	return fix_found;
 }
 
@@ -73,8 +80,8 @@ bool gpsGetData(void) {
 void gpsEncodeData(unsigned long timeout) {
 	unsigned long start = millis();
 	do {
-		while(gpsPort.available())
-			gps.encode(gpsPort.read());
+		while(GPSPORT.available())
+			gps.encode(GPSPORT.read());
 	} while (millis() - start < timeout);
 }
 

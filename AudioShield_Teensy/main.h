@@ -1,10 +1,10 @@
 /*
  * main.h
  */
-
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
+// Arduino or Teensyduino libraries
 #include <Audio.h>
 #include <Bounce.h>
 #include <SD.h>
@@ -13,8 +13,10 @@
 #include <SPI.h>
 #include <TimeLib.h>
 #include <TimeAlarms.h>
+#include <TinyGPS.h>
 #include <Wire.h>
 
+// Own headers
 #include "gpsRoutines.h"
 #include "SDutils.h"
 #include "BC127.h"
@@ -22,11 +24,24 @@
 #include "audioUtils.h"
 #include "timeUtils.h"
 
+// Monitoring serial port
+#define MONITORPORT						Serial
 
+// Wake-up sources from hibernating mode
 #define WAKESOURCE_BUT_REC		BUTTON_RECORD_PIN
 #define WAKESOURCE_BUT_MON		BUTTON_MONITOR_PIN
 #define WAKESOURCE_BUT_BLUE		BUTTON_BLUETOOTH_PIN
 #define WAKESOURCE_RTC				35
+
+// Default recording window values
+#define RWIN_LEN_DEF_S				5 // }
+#define RWIN_LEN_DEF_M				0 // } Zero values -> continuous recording
+#define RWIN_LEN_DEF_H				0 // }
+#define RWIN_PER_DEF_S				20
+#define RWIN_PER_DEF_M				0
+#define RWIN_PER_DEF_H				0
+#define RWIN_OCC_DEF					3 // Zero value -> infinite repetitions
+
 
 // Recording states...
 enum recState {
@@ -82,15 +97,7 @@ struct wState {
 	enum bleState ble_state;
 };
 extern volatile struct wState	working_state;
-// Button calls
-enum bCalls {
-	BCALL_NONE = 0,
-	BCALL_REC = BUTTON_RECORD_PIN,
-	BCALL_MON = BUTTON_MONITOR_PIN,
-	BCALL_BLUE = BUTTON_BLUETOOTH_PIN
-};
-extern enum bCalls						button_call;
-// Informations related to the last record
+// Record informations
 struct recInfo {
 	time_t ts;
 	tmElements_t dur;
@@ -107,15 +114,5 @@ struct rWindow {
 	unsigned int occurences;
 };
 extern struct rWindow					rec_window;
-#define RWIN_LEN_DEF_S				5
-#define RWIN_LEN_DEF_M				0
-#define RWIN_LEN_DEF_H				0
-#define RWIN_PER_DEF_S				20
-#define RWIN_PER_DEF_M				0
-#define RWIN_PER_DEF_H				0
-#define RWIN_OCC_DEF					3 // Zero value -> infinite repetitions
-
-extern int										alarm_rec_id;
-extern int										alarm_wait_id;
 
 #endif /* _MAIN_H_ */

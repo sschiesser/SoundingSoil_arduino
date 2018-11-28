@@ -4,14 +4,13 @@
  * Miscellaneous IO utilities...
  * 
  */
-
 #include "IOutils.h"
 
 Bounce													but_rec = Bounce(BUTTON_RECORD_PIN, BUTTON_BOUNCE_TIME_MS);
 Bounce 													but_mon = Bounce(BUTTON_MONITOR_PIN, BUTTON_BOUNCE_TIME_MS);
 Bounce 													but_blue = Bounce(BUTTON_BLUETOOTH_PIN, BUTTON_BOUNCE_TIME_MS);
 
-int															vol_ctrl;
+enum bCalls											button_call;
 
 IntervalTimer										led_timers[LED_MAX_NUMBER];
 byte 														led_pins[LED_MAX_NUMBER] = { LED_RECORD_PIN, LED_MONITOR_PIN, LED_BLUETOOTH_PIN };
@@ -53,6 +52,9 @@ void initLEDButtons(void) {
 		pinMode(leds[i].pin, OUTPUT);
 		digitalWrite(leds[i].pin, leds[i].status);
 	}
+	
+	pinMode(34, OUTPUT);
+	digitalWrite(34, LED_OFF);
 	// unsigned long a;
 	// a = (unsigned long)&toggleRecLED;
 	// Serial.print("toggleRecLED address: 0x"); Serial.println(a, HEX);
@@ -159,15 +161,15 @@ void toggleBtLED(void) {
 	toggleCb(&leds[LED_BLUETOOTH]);
 }
 
-/* startLED(struct leds_s *, enum led_mode)
+/* startLED(struct leds_s *, enum lMode)
  * ----------------------------------------
  * Start a LED switch action (bloinking or solid):
  * set the wanted LED-mode and start the corresponding timer.
  * IN:	- pointer to LED (struct leds_s *)
- *			- LED-mode (enum led_mode)
+ *			- LED-mode (enum lMode)
  * OUT:	- none
  */
-void startLED(struct leds_s *ld, enum led_mode mode) {
+void startLED(struct leds_s *ld, enum lMode mode) {
 	// Serial.print("startLED: LED#"); Serial.print(ld->pin);
 	// Serial.print(", mode = "); Serial.println(mode);
 	// First stop any remaining LED state

@@ -7,6 +7,7 @@
 
 #include "BC127.h"
 
+// BT device informations for connection
 struct btDev {
   String address;
   String capabilities;
@@ -14,9 +15,10 @@ struct btDev {
 };
 struct btDev dev_list[DEVLIST_MAXLEN];
 
+// Amount of found BT devices on inquiry
 unsigned int									found_dev;
+// Address of the connected BT device
 String 												peer_address;
-unsigned int									ble_time = 0;
 
 /* bc127Init(void)
  * ---------------
@@ -195,12 +197,12 @@ int parseSerialIn(String input) {
 		// "time xxxxxxxx" -> received current time (Unix time in DEC)
 		else if(part2.substring(0, 4).equalsIgnoreCase("time")) {
 			int len = part2.substring(5).length()-1;
-			ble_time = part2.substring(5, (5+len)).toInt();
-			if(ble_time > DEFAULT_TIME_DEC) {
+			received_time = part2.substring(5, (5+len)).toInt();
+			if(received_time > DEFAULT_TIME_DEC) {
 				time_source = TSOURCE_BLE;
 				adjustTime(TSOURCE_BLE);
 			}
-			Serial.printf("current time: 0x%x(d'%ld)\n", ble_time, ble_time);
+			Serial.printf("current time: 0x%x(d'%ld)\n", received_time, received_time);
 		}
 		
   }

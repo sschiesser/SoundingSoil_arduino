@@ -1,21 +1,21 @@
 /*
  * BC127.h
  */
-
-
 #ifndef _BC127_H_
 #define _BC127_H_
 
-#include <Arduino.h>
 #include "main.h"
 
-// Bluetooth audio devices definition
+// Max amount of BT devices to list on inquiry
 #define DEVLIST_MAXLEN				6
+// Time offset to adjust from GPS UTC
 #define TIME_OFFSET						1 // Central European Time
+// BC127 serial port
+#define BC127PORT							Serial4
+
 extern struct btDev 					dev_list[DEVLIST_MAXLEN];
 extern unsigned int 					found_dev;
 extern String									peer_address;
-extern unsigned int						ble_time;
 
 // Serial command messages
 enum outputMsg {
@@ -43,7 +43,6 @@ enum outputMsg {
 /* ======================
  * FUNCTIONS DECLARATIONS
  * ====================== */
-
 void bc127Init(void);
 void bc127PowerOn(void);
 void bc127PowerOff(void);
