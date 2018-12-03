@@ -165,7 +165,7 @@ int parseSerialIn(String input) {
     }
 		// REC command/request
 		else if(part2.substring(0, 3).equalsIgnoreCase("rec")) {
-			String cmd = part2.substring(4);
+			cmd = part2.substring(4);
 			if(cmd.equalsIgnoreCase("start\n")) {
 				return BCCMD_REC_START;
 			}
@@ -178,7 +178,7 @@ int parseSerialIn(String input) {
 		}
 		// MON command/request
 		else if(part2.substring(0, 3).equalsIgnoreCase("mon")) {
-			String cmd = part2.substring(4);
+			cmd = part2.substring(4);
 			if(cmd.equalsIgnoreCase("start\n")) {
 				return BCCMD_MON_START;
 			}
@@ -191,7 +191,7 @@ int parseSerialIn(String input) {
 		}
 		// VOL command/request
 		else if(part2.substring(0, 3).equalsIgnoreCase("vol")) {
-			String cmd = part2.substring(4);
+			cmd = part2.substring(4);
 			if(cmd.equalsIgnoreCase("+\n")) {
 				return BCCMD_VOL_UP;
 			}
@@ -249,6 +249,13 @@ int parseSerialIn(String input) {
 				return BCNOT_BT_STATE;
 			}
 		}
+		// FILEPATH request
+		else if(part2.substring(0, 8).equalsIgnoreCase("filepath")) {
+			cmd = part2.substring(9);
+			if(cmd.equalsIgnoreCase("?\n")) {
+				return BCNOT_FILEPATH;
+			}
+		}
   }
   else {
     Serial.print(input);
@@ -266,37 +273,43 @@ int parseSerialIn(String input) {
 bool sendCmdOut(int msg) {
   String devString = "";
   String cmdLine = "";
+	unsigned int l, p, o;
   
   switch(msg) {
     case BCCMD_NOTHING:
 			break;
 
 		// Reset
-    case BCCMD_RESET:
+    case BCCMD_RESET: {
 			// Serial.println("Resetting BC127...");
 			cmdLine = "RESET\r";
 			break;
+		}
 		// Power-off
-		case BCCMD_PWR_OFF:
+		case BCCMD_PWR_OFF: {
 			// Serial.println("Switching BC127 off");
 			cmdLine = "POWER OFF\r";
 			break;
+		}
 		// Power-on
-		case BCCMD_PWR_ON:
+		case BCCMD_PWR_ON: {
 			// Serial.println("Waking BC127 up");
 			cmdLine = "POWER ON\r";
 			break;
+		}
     // Start advertising on BLE
-    case BCCMD_ADV_ON:
+    case BCCMD_ADV_ON: {
 			// Serial.println("Starting BLE advertising");
 			cmdLine = "ADVERTISING ON\r";
 			break;
+		}
 		// Stop advertising
-		case BCCMD_ADV_OFF:
+		case BCCMD_ADV_OFF: {
 			cmdLine = "ADVERTISING OFF\r";
 			break;
+		}
     // Start inquiry on BT for 10 s, first clear the device list
-    case BCCMD_INQUIRY:
+    case BCCMD_INQUIRY: {
 			// Serial.println("Start inquiry");
 			for(int i = 0; i < DEVLIST_MAXLEN; i++) {
 				dev_list[i].address = "";
@@ -308,45 +321,70 @@ bool sendCmdOut(int msg) {
 			devString = "";
 			cmdLine = "INQUIRY 10\r";
 			break;
+		}
 		// Open A2DP connection with 'peer_address'
-    case BCCMD_DEV_CONNECT:
+    case BCCMD_DEV_CONNECT: {
 			Serial.print("Opening BT connection @"); Serial.println(peer_address);
 			cmdLine = "OPEN " + peer_address + " A2DP\r";
 			break;
+		}
 		// Start monitoring -> AVRCP play
-    case BCCMD_MON_START:
+    case BCCMD_MON_START: {
 			working_state.mon_state = MONSTATE_REQ_ON;
 			if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine = "MUSIC PLAY\r";
 			break;
+		}
 		// Stop monitoring -> AVRCP pause
-    case BCCMD_MON_STOP:
+    case BCCMD_MON_STOP: {
 			working_state.mon_state = MONSTATE_REQ_OFF;
 			if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine = "MUSIC PAUSE\r";
 			break;
+		}
 		// Start recording
-    case BCCMD_REC_START:
+    case BCCMD_REC_START: {
 			working_state.rec_state = RECSTATE_REQ_ON;
 			break;
+		}
 		// Stop recording
-    case BCCMD_REC_STOP:
+    case BCCMD_REC_STOP: {
 			working_state.rec_state = RECSTATE_REQ_OFF;
 			break;
+		}
 		// Volume up -> AVRCP volume up
-    case BCCMD_VOL_UP:
+    case BCCMD_VOL_UP: {
 			cmdLine = "VOLUME UP\r";
 			break;
+		}
 		// Volume down -> AVRCP volume down
-    case BCCMD_VOL_DOWN:
+    case BCCMD_VOL_DOWN: {
 			cmdLine = "VOLUME DOWN\r";
 			break;
-		case BCNOT_REC_STATE:
+		}
+		// REC state notification
+		case BCNOT_REC_STATE: {
+			cmdLine = "SEND BLE ";
+			if(working_state.rec_state == RECSTATE_ON) cmdLine += "REC ON\r";
+			else if((working_state.rec_state == RECSTATE_WAIT) || (working_state.rec_state == RECSTATE_IDLE)) cmdLine += "REC WAIT\r";
+			else cmdLine += "REC OFF\r";
 			break;
-		case BCNOT_MON_STATE:
+		}
+		// MON state notification
+		case BCNOT_MON_STATE: {
+			cmdLine = "SEND BLE ";
+			if(working_state.mon_state == MONSTATE_ON) cmdLine += "MON ON\r";
+			else cmdLine += "MON OFF\r";
 			break;
-		case BCNOT_BT_STATE:
+		}
+		// BT state notification
+		case BCNOT_BT_STATE: {
+			cmdLine = "SEND BLE ";
+			if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine += ("BT " + peer_address + "\r");
+			else if(working_state.bt_state == BTSTATE_INQUIRY) cmdLine += "BT INQ\r";
+			else cmdLine += "BT IDLE\r";
 			break;
+		}
     // Results of the inquiry -> store devices with address & signal strength
-    case BCNOT_INQ_STATE:
+    case BCNOT_INQ_STATE: {
 			for(unsigned int i = 0; i < found_dev; i++) {
 				devString = dev_list[i].address;
 				devString.concat(" ");
@@ -356,10 +394,21 @@ bool sendCmdOut(int msg) {
 			}
 			cmdLine = "";
 			break;
-		case BCNOT_RWIN_VALS:
+		}
+		// RWIN values notification
+		case BCNOT_RWIN_VALS: {
+			l = makeTime(rec_window.length);
+			p = makeTime(rec_window.period);
+			o = rec_window.occurences;
+			cmdLine = "SEND BLE RWIN " + String(l) + " " + String(p) + " " + String(o) + "\r";
 			break;
-		case BCNOT_FILEPATH:
+		}
+		// FILEPATH notification !!CURRENTLY MAX NOTIFICATION SIZE = 20 chars -> change to at least 26
+		case BCNOT_FILEPATH: {
+			cmdLine = "SEND BLE P " + rec_path + "\r";
+			Serial.printf("Sending: %s\n", cmdLine.c_str());
 			break;
+		}
 		// No recognised command -> send negative confirmation
     default:
 			return false;

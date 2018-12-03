@@ -24,6 +24,7 @@ AudioConnection								patchCord6(mixer, 0, i2sPlayMon, 1);
 AudioControlSGTL5000					sgtl5000;						//xy=172,323
 // // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
+String 												rec_path;
 int														vol_ctrl;
 elapsedMillis									peak_interval;
 
@@ -36,7 +37,6 @@ elapsedMillis									peak_interval;
  * OUT:	- none
  */
 void prepareRecording(bool sync) {
-	String rec_path = "";
 	bool gps_fix = true;
 	
 	startLED(&leds[LED_RECORD], LED_MODE_ON);

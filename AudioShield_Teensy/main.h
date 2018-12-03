@@ -34,13 +34,22 @@
 #define WAKESOURCE_RTC				35
 
 // Default recording window values
-#define RWIN_LEN_DEF_S				5 // }
-#define RWIN_LEN_DEF_M				0 // } Zero values -> continuous recording
-#define RWIN_LEN_DEF_H				0 // }
-#define RWIN_PER_DEF_S				20
-#define RWIN_PER_DEF_M				0
-#define RWIN_PER_DEF_H				0
+#define RWIN_LEN_DEF_SEC			10 // }
+#define RWIN_LEN_DEF_MIN			0 // } Zero values -> continuous recording
+#define RWIN_LEN_DEF_HOUR			0 // }
+#define RWIN_PER_DEF_SEC			20
+#define RWIN_PER_DEF_MIN			0
+#define RWIN_PER_DEF_HOUR			0
 #define RWIN_OCC_DEF					3 // Zero value -> infinite repetitions
+// DO NOT CHANGE!! D/M/Y values have to be set to
+// minimum (1.1.1970) in order to obtain correct rwin times
+#define RWIN_LEN_DEF_DAY			1
+#define RWIN_LEN_DEF_MON			1
+#define RWIN_LEN_DEF_YEAR			0
+#define RWIN_PER_DEF_DAY			1
+#define RWIN_PER_DEF_MON			1
+#define RWIN_PER_DEF_YEAR			0
+// DO NOT CHANGE!!
 
 
 // Recording states...
@@ -72,9 +81,8 @@ enum btState {
   BTSTATE_INQUIRY,						// 2
   BTSTATE_REQ_CONN,						// 3
 	BTSTATE_CONNECTED,					// 4
-	BTSTATE_REQ_DIS,						// 5
-  BTSTATE_MUS_PLAY,						// 6
-	BTSTATE_MUS_STOP						// 7
+  BTSTATE_PLAY,								// 5
+	BTSTATE_REQ_DIS							// 6
 };
 extern enum btState 					bt_state;
 // low energy (BLE)
