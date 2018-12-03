@@ -222,7 +222,7 @@ WORK:
 			else {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
 			}
-			sendCmdOut(BCCMD_BLE_ADV_ON);
+			sendCmdOut(BCCMD_ADV_ON);
 			working_state.ble_state = BLESTATE_ADV;
 			break;
 		}

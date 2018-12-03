@@ -31,11 +31,11 @@ void bc127Init(void) {
 }
 
 void bc127PowerOn(void) {
-	sendCmdOut(BCCMD_GEN_PWRON);
+	sendCmdOut(BCCMD_PWR_ON);
 }
 
 void bc127PowerOff(void) {
-	sendCmdOut(BCCMD_GEN_PWROFF);
+	sendCmdOut(BCCMD_PWR_OFF);
 }
 
 /* bc127AdvStart(void)
@@ -45,7 +45,7 @@ void bc127PowerOff(void) {
  * OUT:	- none
  */
 void bc127AdvStart(void) {
-	sendCmdOut(BCCMD_BLE_ADV_ON);
+	sendCmdOut(BCCMD_ADV_ON);
 }
 
 /* bc127AdvStop(void)
@@ -56,7 +56,7 @@ void bc127AdvStart(void) {
  */
 void bc127AdvStop(void) {
 	if(working_state.ble_state == BLESTATE_ADV) {
-		sendCmdOut(BCCMD_BLE_ADV_OFF);
+		sendCmdOut(BCCMD_ADV_OFF);
 	}
 }
 
@@ -76,7 +76,7 @@ int parseSerialIn(String input) {
   // - other     --> 3+ words inputs like "INQUIRY xxxx 240404 -54dB"
   // ================================================================
   // Serial.print(input);
-  String part1, part2;
+  String part1, part2, cmd;
   int slice1 = input.indexOf(" ");
   int slice2 = input.indexOf(" ", slice1+1);
   // 2nd space not found -> 2-word notification
@@ -136,11 +136,11 @@ int parseSerialIn(String input) {
 	}
 	// "AVRCP_FORWARD" -> USED AS REC START!!!
 	else if(part1.equalsIgnoreCase("AVRCP_FORWARD\n")) {
-		return BCCMD_BT_STARTREC;
+		return BCCMD_REC_START;
 	}
 	// "AVRCP_BACKWARD" -> USED AS REC STOP!!!
 	else if(part1.equalsIgnoreCase("AVRCP_BACKWARD\n")) {
-		return BCCMD_BT_STOPREC;
+		return BCCMD_REC_STOP;
 	}
 	// "INQUIRY xxxxxxxxxxxx yyyyyy -zzdB"
   else if(part1.equalsIgnoreCase("INQUIRY")) {
@@ -153,48 +153,86 @@ int parseSerialIn(String input) {
 		slice1 = part2.indexOf("dB");
     unsigned int stren = part2.substring(1, slice1).toInt();
     populateDevlist(addr, caps, stren);
-    return ANNOT_INQ_STATE;
+    return BCNOT_INQ_STATE;
   }
-  // Commands from Android ("RECV BLE")
-  // ==================================
+  // Commands/requests from Android ("RECV BLE")
+  // ===========================================
   else if(part1.equalsIgnoreCase("RECV BLE")) {
-		// "inq" -> start BT inquiry
-    if(part2.equalsIgnoreCase("inq\n")) {
+		// INQ command
+		if(part2.equalsIgnoreCase("inq\n")) {
       // Serial.println("Received BT inquiry command");
-      return BCCMD_BT_INQUIRY;
+      return BCCMD_INQUIRY;
     }
-		// "start_mon" -> start monitoring
-    else if(part2.equalsIgnoreCase("start_mon\n")) {
-      return BCCMD_BT_STARTMON;
-    }
-		// "stop_mon" -> stop monitoring
-    else if(part2.equalsIgnoreCase("stop_mon\n")) {
-      return BCCMD_BT_STOPMON;
-    }
-		// "start_rec" -> start recording
-    else if(part2.equalsIgnoreCase("start_rec\n")) {
-      return BCCMD_BT_STARTREC;
-    }
-		// "stop_rec" -> stop recording
-    else if(part2.equalsIgnoreCase("stop_rec\n")) {
-      return BCCMD_BT_STOPREC;
-    }
-		// "vol+" -> volume up
-    else if(part2.equalsIgnoreCase("vol+\n")) {
-      return BCCMD_BT_VOLUP;
-    }
-		// "vol-" -> volume down
-    else if(part2.equalsIgnoreCase("vol-\n")) {
-      return BCCMD_BT_VOLDOWN;
-    }
-		// "conn xxxx" -> open A2DP connection to xxxx
+		// REC command/request
+		else if(part2.substring(0, 3).equalsIgnoreCase("rec")) {
+			String cmd = part2.substring(4);
+			if(cmd.equalsIgnoreCase("start\n")) {
+				return BCCMD_REC_START;
+			}
+			else if(cmd.equalsIgnoreCase("stop\n")) {
+				return BCCMD_REC_STOP;
+			}
+			else if(cmd.equalsIgnoreCase("?\n")) {
+				return BCNOT_REC_STATE;
+			}
+		}
+		// MON command/request
+		else if(part2.substring(0, 3).equalsIgnoreCase("mon")) {
+			String cmd = part2.substring(4);
+			if(cmd.equalsIgnoreCase("start\n")) {
+				return BCCMD_MON_START;
+			}
+			else if(cmd.equalsIgnoreCase("stop\n")) {
+				return BCCMD_MON_STOP;
+			}
+			else if(cmd.equalsIgnoreCase("?\n")) {
+				return BCNOT_MON_STATE;
+			}
+		}
+		// VOL command/request
+		else if(part2.substring(0, 3).equalsIgnoreCase("vol")) {
+			String cmd = part2.substring(4);
+			if(cmd.equalsIgnoreCase("+\n")) {
+				return BCCMD_VOL_UP;
+			}
+			else if(cmd.equalsIgnoreCase("-\n")) {
+				return BCCMD_VOL_DOWN;
+			}
+			else if(cmd.equalsIgnoreCase("?\n")) {
+				return BCNOT_VOL_LEVEL;
+			}
+		}
+		// RWIN command/request
+		else if(part2.substring(0, 4).equalsIgnoreCase("rwin")) {
+			slice1 = part2.indexOf(" ", 5);
+			if(slice1 != -1) {
+				slice2 = part2.indexOf(" ", (slice1+1));
+				unsigned int l, p;
+				l = part2.substring(5, slice1).toInt();
+				p = part2.substring((slice1+1), slice2).toInt();
+				breakTime(l, rec_window.length);
+				breakTime(p, rec_window.period);
+				rec_window.occurences = part2.substring(slice2+1).toInt();
+				Serial.printf("Rwin set to: l = %02dh%02dm%02ds, p = %02dh%02dm%02ds, o = %d\n",
+						rec_window.length.Hour, rec_window.length.Minute, rec_window.length.Second,
+						rec_window.period.Hour, rec_window.period.Minute, rec_window.period.Second,
+						rec_window.occurences);
+			}
+			else {
+				cmd = part2.substring(5);
+				if(cmd.equalsIgnoreCase("?\n")) {
+					return BCNOT_RWIN_VALS;
+				}
+			}
+		}
+		// CONN command -> open A2DP connection to xxxx (12 HEX)
     else if(part2.substring(0, 4).equalsIgnoreCase("conn")) {
       int len = part2.substring(5).length()-1;
       peer_address = part2.substring(5, (5+len));
       Serial.print("peer_address: "); Serial.println(peer_address);
-      return BCCMD_BT_OPEN;
+      return BCCMD_DEV_CONNECT;
     }
-		// "time xxxxxxxx" -> received current time (Unix time in DEC)
+		// TIMESTAMP command -> set current time (UNINT32 DEC)
 		else if(part2.substring(0, 4).equalsIgnoreCase("time")) {
 			int len = part2.substring(5).length()-1;
 			received_time = part2.substring(5, (5+len)).toInt();
@@ -204,7 +242,13 @@ int parseSerialIn(String input) {
 			}
 			Serial.printf("current time: 0x%x(d'%ld)\n", received_time, received_time);
 		}
-		
+		// BT state request
+		else if(part2.substring(0, 2).equalsIgnoreCase("bt")) {
+			cmd = part2.substring(3);
+			if(cmd.equalsIgnoreCase("?\n")) {
+				return BCNOT_BT_STATE;
+			}
+		}
   }
   else {
     Serial.print(input);
@@ -225,91 +269,101 @@ bool sendCmdOut(int msg) {
   
   switch(msg) {
     case BCCMD_NOTHING:
-    break;
+			break;
 
 		// Reset
-    case BCCMD_GEN_RESET:
-    // Serial.println("Resetting BC127...");
-    cmdLine = "RESET\r";
-    break;
+    case BCCMD_RESET:
+			// Serial.println("Resetting BC127...");
+			cmdLine = "RESET\r";
+			break;
 		// Power-off
-		case BCCMD_GEN_PWROFF:
-		// Serial.println("Switching BC127 off");
-		cmdLine = "POWER OFF\r";
-		break;
+		case BCCMD_PWR_OFF:
+			// Serial.println("Switching BC127 off");
+			cmdLine = "POWER OFF\r";
+			break;
 		// Power-on
-		case BCCMD_GEN_PWRON:
-		// Serial.println("Waking BC127 up");
-		cmdLine = "POWER ON\r";
-		break;
+		case BCCMD_PWR_ON:
+			// Serial.println("Waking BC127 up");
+			cmdLine = "POWER ON\r";
+			break;
     // Start advertising on BLE
-    case BCCMD_BLE_ADV_ON:
-    // Serial.println("Starting BLE advertising");
-    cmdLine = "ADVERTISING ON\r";
-    break;
+    case BCCMD_ADV_ON:
+			// Serial.println("Starting BLE advertising");
+			cmdLine = "ADVERTISING ON\r";
+			break;
 		// Stop advertising
-		case BCCMD_BLE_ADV_OFF:
-		cmdLine = "ADVERTISING OFF\r";
-		break;
+		case BCCMD_ADV_OFF:
+			cmdLine = "ADVERTISING OFF\r";
+			break;
     // Start inquiry on BT for 10 s, first clear the device list
-    case BCCMD_BT_INQUIRY:
-    // Serial.println("Start inquiry");
-    for(int i = 0; i < DEVLIST_MAXLEN; i++) {
-      dev_list[i].address = "";
-      dev_list[i].capabilities = "";
-      dev_list[i].strength = 0;
-    }
-    found_dev = 0;
-    peer_address = "";
-    devString = "";
-    cmdLine = "INQUIRY 10\r";
-    break;
+    case BCCMD_INQUIRY:
+			// Serial.println("Start inquiry");
+			for(int i = 0; i < DEVLIST_MAXLEN; i++) {
+				dev_list[i].address = "";
+				dev_list[i].capabilities = "";
+				dev_list[i].strength = 0;
+			}
+			found_dev = 0;
+			peer_address = "";
+			devString = "";
+			cmdLine = "INQUIRY 10\r";
+			break;
 		// Open A2DP connection with 'peer_address'
-    case BCCMD_BT_OPEN:
-    Serial.print("Opening BT connection @"); Serial.println(peer_address);
-    cmdLine = "OPEN " + peer_address + " A2DP\r";
-    break;
+    case BCCMD_DEV_CONNECT:
+			Serial.print("Opening BT connection @"); Serial.println(peer_address);
+			cmdLine = "OPEN " + peer_address + " A2DP\r";
+			break;
 		// Start monitoring -> AVRCP play
-    case BCCMD_BT_STARTMON:
-		working_state.mon_state = MONSTATE_REQ_ON;
-		if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine = "MUSIC PLAY\r";
-    break;
+    case BCCMD_MON_START:
+			working_state.mon_state = MONSTATE_REQ_ON;
+			if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine = "MUSIC PLAY\r";
+			break;
 		// Stop monitoring -> AVRCP pause
-    case BCCMD_BT_STOPMON:
-		working_state.mon_state = MONSTATE_REQ_OFF;
-    if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine = "MUSIC PAUSE\r";
-    break;
+    case BCCMD_MON_STOP:
+			working_state.mon_state = MONSTATE_REQ_OFF;
+			if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine = "MUSIC PAUSE\r";
+			break;
 		// Start recording
-    case BCCMD_BT_STARTREC:
-		working_state.rec_state = RECSTATE_REQ_ON;
-    break;
+    case BCCMD_REC_START:
+			working_state.rec_state = RECSTATE_REQ_ON;
+			break;
 		// Stop recording
-    case BCCMD_BT_STOPREC:
-		working_state.rec_state = RECSTATE_REQ_OFF;
-    break;
+    case BCCMD_REC_STOP:
+			working_state.rec_state = RECSTATE_REQ_OFF;
+			break;
 		// Volume up -> AVRCP volume up
-    case BCCMD_BT_VOLUP:
-    cmdLine = "VOLUME UP\r";
-    break;
+    case BCCMD_VOL_UP:
+			cmdLine = "VOLUME UP\r";
+			break;
 		// Volume down -> AVRCP volume down
-    case BCCMD_BT_VOLDOWN:
-    cmdLine = "VOLUME DOWN\r";
-    break;
+    case BCCMD_VOL_DOWN:
+			cmdLine = "VOLUME DOWN\r";
+			break;
+		case BCNOT_REC_STATE:
+			break;
+		case BCNOT_MON_STATE:
+			break;
+		case BCNOT_BT_STATE:
+			break;
     // Results of the inquiry -> store devices with address & signal strength
-    case ANNOT_INQ_STATE:
-    for(unsigned int i = 0; i < found_dev; i++) {
-      devString = dev_list[i].address;
-      devString.concat(" ");
-      devString.concat(dev_list[i].strength);
-      cmdLine = "SEND BLE " + devString + "\r";
-      Serial4.print(cmdLine);
-    }
-    cmdLine = "";
-    break;
+    case BCNOT_INQ_STATE:
+			for(unsigned int i = 0; i < found_dev; i++) {
+				devString = dev_list[i].address;
+				devString.concat(" ");
+				devString.concat(dev_list[i].strength);
+				cmdLine = "SEND BLE " + devString + "\r";
+				Serial4.print(cmdLine);
+			}
+			cmdLine = "";
+			break;
+		case BCNOT_RWIN_VALS:
+			break;
+		case BCNOT_FILEPATH:
+			break;
 		// No recognised command -> send negative confirmation
     default:
-    return false;
-    break;
+			return false;
+			break;
   }
 	// Send the prepared command line to UART
   Serial4.print(cmdLine);
