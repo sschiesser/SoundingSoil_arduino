@@ -126,6 +126,7 @@ WORK:
 			prepareRecording(true);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(next_record.path);
+			sendCmdOut(BCNOT_REC_STATE);
 			break;
 		}
 			
@@ -133,13 +134,13 @@ WORK:
 			prepareRecording(false);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(next_record.path);
+			sendCmdOut(BCNOT_REC_STATE);
 			break;
 		}
 		
 		case RECSTATE_REQ_WAIT: {
 			stopRecording(next_record.path);
 			pauseRecording();
-			// working_state.rec_state = RECSTATE_WAIT;
 			break;
 		}
 		
@@ -154,6 +155,7 @@ WORK:
 			finishRecording();
 			stopLED(&leds[LED_PEAK]);
 			working_state.rec_state = RECSTATE_OFF;
+			sendCmdOut(BCNOT_REC_STATE);
 			break;
 		}
 		
@@ -166,6 +168,7 @@ WORK:
 			startLED(&leds[LED_MONITOR], LED_MODE_ON);
 			startMonitoring();
 			working_state.mon_state = MONSTATE_ON;
+			sendCmdOut(BCNOT_MON_STATE);
 			break;
 		}
 		
@@ -180,6 +183,7 @@ WORK:
 			stopLED(&leds[LED_MONITOR]);
 			stopLED(&leds[LED_PEAK]);
 			working_state.mon_state = MONSTATE_OFF;
+			sendCmdOut(BCNOT_MON_STATE);
 			break;
 		}
 		
@@ -244,6 +248,7 @@ WORK:
 		case BTSTATE_REQ_CONN: {
 			startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
 			working_state.bt_state = BTSTATE_CONNECTED;
+			sendCmdOut(BCNOT_BT_STATE);
 			break;
 		}
 		
@@ -254,9 +259,10 @@ WORK:
 			else {
 				bc127PowerOff();
 				stopLED(&leds[LED_BLUETOOTH]);
-				working_state.ble_state = BLESTATE_OFF;
+				// working_state.ble_state = BLESTATE_OFF;
 			}
 			working_state.bt_state = BTSTATE_OFF;
+			sendCmdOut(BCNOT_BT_STATE);
 			break;
 		}
 		
@@ -305,32 +311,21 @@ WORK:
 										tm3.Hour, tm3.Minute, tm3.Second);
 			if(ready_to_sleep) {
 				Serial.println("Setting up Snooze alarm");
-				delay(100);
 				snooze_config += alarm_rec;
 				alarm_rec.setRtcTimer(tm3.Hour, tm3.Minute, tm3.Second);
 				working_state.rec_state = RECSTATE_IDLE;
+				sendCmdOut(BCNOT_REC_STATE);
+				delay(100);
 				goto SLEEP;
 			}
 			else {
 				alarm_wait_id = Alarm.alarmOnce(tm2.Hour, tm2.Minute, tm2.Second, alarmNextRec);
 				working_state.rec_state = RECSTATE_WAIT;
+				sendCmdOut(BCNOT_REC_STATE);
 				goto WORK;
 			}
 			break;
 		}
-			
-		// case RECSTATE_REQ_IDLE: {
-			// delta = next_record.ts - now();
-			// breakTime(now(), tm1);
-			// breakTime(next_record.ts, tm2);
-			// breakTime(delta, tm3);
-			// Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-										// tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
-			// Serial.printf("Delta: %02dh%02dm%02ds\n", 
-										// tm3.Hour, tm3.Minute, tm3.Second);
-			
-			// break;
-		// }
 			
 		case RECSTATE_OFF:
 			if(ready_to_sleep) goto SLEEP;
