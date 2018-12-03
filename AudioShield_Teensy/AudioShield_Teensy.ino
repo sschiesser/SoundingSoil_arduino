@@ -127,6 +127,7 @@ WORK:
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(next_record.path);
 			sendCmdOut(BCNOT_REC_STATE);
+			sendCmdOut(BCNOT_FILEPATH);
 			break;
 		}
 			
@@ -169,6 +170,7 @@ WORK:
 			startMonitoring();
 			working_state.mon_state = MONSTATE_ON;
 			sendCmdOut(BCNOT_MON_STATE);
+			sendCmdOut(BCCMD_VOL_UP);
 			break;
 		}
 		

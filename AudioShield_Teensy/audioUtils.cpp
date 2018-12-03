@@ -26,6 +26,7 @@ AudioControlSGTL5000					sgtl5000;						//xy=172,323
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 String 												rec_path;
 int														vol_ctrl;
+float													vol_value;
 elapsedMillis									peak_interval;
 
 /* prepareRecording(bool)

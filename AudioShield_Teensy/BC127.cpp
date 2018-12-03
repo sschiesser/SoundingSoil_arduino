@@ -75,12 +75,18 @@ int parseSerialIn(String input) {
   // - RECV BLE  --> commands received from phone over BLE
   // - other     --> 3+ words inputs like "INQUIRY xxxx 240404 -54dB"
   // ================================================================
-  // Serial.print(input);
+  Serial.print(input);
   String part1, part2, cmd;
   int slice1 = input.indexOf(" ");
   int slice2 = input.indexOf(" ", slice1+1);
+	// no space found -> 1-word notification -> searching for '='
+	if(slice1 == -1) {
+		slice1 = input.indexOf("=");
+		part1 = input.substring(0, slice1);
+		part2 = input.substring(slice1 + 1);
+	}
   // 2nd space not found -> 2-word notification
-  if(slice2 == -1) {
+  else if(slice2 == -1) {
     part1 = input.substring(0, slice1);
     part2 = input.substring(slice1 + 1);
   }
@@ -141,6 +147,12 @@ int parseSerialIn(String input) {
 	// "AVRCP_BACKWARD" -> USED AS REC STOP!!!
 	else if(part1.equalsIgnoreCase("AVRCP_BACKWARD\n")) {
 		return BCCMD_REC_STOP;
+	}
+	// "ABS_VOL" -> A2DP volume (in 8-steps from 0 to 120)
+	else if(part1.equalsIgnoreCase("ABS_VOL")) {
+		vol_value = (float)part2.toInt()/120.0;
+		Serial.printf("Volume: %d (%f\%)\n", part2.toInt(), vol_value);
+		return BCNOT_VOL_LEVEL;
 	}
 	// "INQUIRY xxxxxxxxxxxx yyyyyy -zzdB"
   else if(part1.equalsIgnoreCase("INQUIRY")) {
@@ -258,9 +270,8 @@ int parseSerialIn(String input) {
 		}
   }
   else {
-    Serial.print(input);
+    // Serial.print(input);
   }
-  
   return BCCMD_NOTHING;
 }
 
@@ -381,6 +392,11 @@ bool sendCmdOut(int msg) {
 			if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine += ("BT " + peer_address + "\r");
 			else if(working_state.bt_state == BTSTATE_INQUIRY) cmdLine += "BT INQ\r";
 			else cmdLine += "BT IDLE\r";
+			break;
+		}
+		// VOL level notification
+		case BCNOT_VOL_LEVEL: {
+			cmdLine = "SEND BLE VOL " + String(vol_value) + "\r";
 			break;
 		}
     // Results of the inquiry -> store devices with address & signal strength

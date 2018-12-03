@@ -33,6 +33,7 @@
 
 extern String 								rec_path;
 extern int										vol_ctrl;
+extern float									vol_value;
 
 
 /* ======================
