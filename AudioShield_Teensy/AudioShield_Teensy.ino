@@ -44,6 +44,7 @@ void setup() {
 	setDefaultValues();
 	bc127Init();
 	setDefaultTime();
+	Alarm.delay(500);
 }
 
 void loop() {
@@ -55,7 +56,7 @@ SLEEP:
 	but_blue.update();
 	// switch off i2s clock before sleeping
 	SIM_SCGC6 &= ~SIM_SCGC6_I2S;
-	Alarm.delay(10);
+	Alarm.delay(100);
 	// returns module that woke up processor from hibernation
 	who = Snooze.hibernate(snooze_config);
 	if(who == WAKESOURCE_RTC) {
@@ -73,7 +74,7 @@ SLEEP:
 	}
 	// if not sleeping anymore, re-enable i2s clock
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
-	Alarm.delay(10);
+	Alarm.delay(100);
 
 WORK:
 	// needed for TimeAlarms timers
@@ -261,7 +262,7 @@ WORK:
 			else {
 				bc127PowerOff();
 				stopLED(&leds[LED_BLUETOOTH]);
-				// working_state.ble_state = BLESTATE_OFF;
+				working_state.ble_state = BLESTATE_OFF;
 			}
 			working_state.bt_state = BTSTATE_OFF;
 			sendCmdOut(BCNOT_BT_STATE);
