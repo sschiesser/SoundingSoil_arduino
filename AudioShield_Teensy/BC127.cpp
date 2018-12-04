@@ -151,7 +151,13 @@ int parseSerialIn(String input) {
 	// "ABS_VOL" -> A2DP volume (in 8-steps from 0 to 120)
 	else if(part1.equalsIgnoreCase("ABS_VOL")) {
 		vol_value = (float)part2.toInt()/120.0;
-		Serial.printf("Volume: %d (%f\%)\n", part2.toInt(), vol_value);
+		Serial.printf("Volume: %d (%f)\n", part2.toInt(), vol_value);
+		return BCNOT_VOL_LEVEL;
+	}
+	// "A2DP_VOL" -> same than ABS_VOL, but on a 15 step scale
+	else if(part1.equalsIgnoreCase("A2DP_VOL")) {
+		vol_value = (float)part2.toInt()/15.0;
+		Serial.printf("Volume: %d (%f)\n", part2.toInt(), vol_value);
 		return BCNOT_VOL_LEVEL;
 	}
 	// "INQUIRY xxxxxxxxxxxx yyyyyy -zzdB"
@@ -369,6 +375,11 @@ bool sendCmdOut(int msg) {
 		// Volume down -> AVRCP volume down
     case BCCMD_VOL_DOWN: {
 			cmdLine = "VOLUME DOWN\r";
+			break;
+		}
+		// Volume level request
+		case BCCMD_VOL_A2DP: {
+			cmdLine = "VOLUME A2DP\r";
 			break;
 		}
 		// REC state notification

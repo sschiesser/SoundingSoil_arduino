@@ -171,7 +171,7 @@ WORK:
 			startMonitoring();
 			working_state.mon_state = MONSTATE_ON;
 			sendCmdOut(BCNOT_MON_STATE);
-			sendCmdOut(BCCMD_VOL_UP);
+			sendCmdOut(BCCMD_VOL_A2DP);
 			break;
 		}
 		
