@@ -15,7 +15,9 @@
 
 extern struct btDev 					dev_list[DEVLIST_MAXLEN];
 extern unsigned int 					found_dev;
-extern String									peer_address;
+extern String									BT_peer_address;
+extern int										BT_conn_id;
+extern int										BLE_conn_id;
 
 // Serial command messages
 enum serialMsg {

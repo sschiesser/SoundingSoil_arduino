@@ -19,8 +19,8 @@
 // LEDs pin#
 #define LED_RECORD_PIN				26
 #define LED_MONITOR_PIN				27
-#define LED_BLUETOOTH_PIN			28
-#define LED_PEAK_PIN					34
+#define LED_BLUETOOTH_PIN			34//28
+#define LED_PEAK_PIN					28//34
 // LEDs#
 #define LED_MAX_NUMBER				4
 // LED ON/OFF states

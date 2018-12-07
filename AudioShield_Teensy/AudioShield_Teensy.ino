@@ -365,6 +365,9 @@ void setDefaultValues(void) {
 	rec_window.occurences = RWIN_OCC_DEF;
 	last_record.cnt = 0;
 	next_record = last_record;
+	BT_conn_id = 0;
+	BLE_conn_id = 0;
+	BT_peer_address = "";
 }
 
 
