@@ -16,6 +16,7 @@
 extern struct btDev 					dev_list[DEVLIST_MAXLEN];
 extern unsigned int 					found_dev;
 extern String									BT_peer_address;
+extern String									BT_peer_name;
 extern int										BT_conn_id;
 extern int										BLE_conn_id;
 
@@ -62,6 +63,7 @@ void bc127AdvStop(void);
 void bc127Inquiry(void);
 int parseSerialIn(String input);
 bool sendCmdOut(int msg);
-void populateDevlist(String addr, String caps, unsigned int stren);
+void populateDevlist(String addr, String name, String caps, unsigned int stren);
+bool searchDevlist(String addr);
 
 #endif /* _BC127_H_ */

@@ -236,6 +236,7 @@ WORK:
 			}
 			sendCmdOut(BCCMD_ADV_ON);
 			working_state.ble_state = BLESTATE_ADV;
+			BLE_conn_id = 0;
 			break;
 		}
 		
@@ -256,13 +257,16 @@ WORK:
 		case BTSTATE_REQ_CONN: {
 			startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
 			working_state.bt_state = BTSTATE_CONNECTED;
-			sendCmdOut(BCNOT_BT_STATE);
+			if(working_state.ble_state == BLESTATE_CONNECTED) {
+				sendCmdOut(BCNOT_BT_STATE);
+			}
 			break;
 		}
 		
 		case BTSTATE_REQ_DIS: {
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_SLOW);
+				sendCmdOut(BCNOT_BT_STATE);
 			}
 			else {
 				bc127PowerOff();
@@ -270,7 +274,9 @@ WORK:
 				working_state.ble_state = BLESTATE_OFF;
 			}
 			working_state.bt_state = BTSTATE_OFF;
-			sendCmdOut(BCNOT_BT_STATE);
+			BT_conn_id = 0;
+			BT_peer_address = "";
+			BT_peer_name = "auto";
 			break;
 		}
 		
@@ -373,6 +379,7 @@ void setDefaultValues(void) {
 	BT_conn_id = 0;
 	BLE_conn_id = 0;
 	BT_peer_address = "";
+	BT_peer_name = "auto";
 }
 
 

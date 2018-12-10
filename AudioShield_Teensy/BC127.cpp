@@ -10,6 +10,7 @@
 // BT device informations for connection
 struct btDev {
   String address;
+	String name;
   String capabilities;
   unsigned int strength;
 };
@@ -19,6 +20,8 @@ struct btDev dev_list[DEVLIST_MAXLEN];
 unsigned int									found_dev;
 // Address of the connected BT device
 String 												BT_peer_address;
+// Name of the connected BT device
+String												BT_peer_name;
 // ID of the established BT connection
 int														BT_conn_id;
 // ID of the established BLE connection
@@ -80,7 +83,7 @@ int parseSerialIn(String input) {
   // - other     --> 3+ words inputs like "INQUIRY xxxx 240404 -54dB"
   // ================================================================
 	String notif, param1, param2, param3, param4, param5, param6, trash;
-  unsigned int nb_params;
+  unsigned int nb_params = 0;
   int slice1 = input.indexOf(" ");
   int slice2 = input.indexOf(" ", slice1+1);
 	int slice3 = input.indexOf(" ", slice2+1);
@@ -89,7 +92,7 @@ int parseSerialIn(String input) {
 	int slice6 = input.indexOf(" ", slice5+1);
 	int slice7 = input.indexOf(" ", slice6+1);
 	int slice8 = input.indexOf(" ", slice7+1);
-	Serial.print(input);
+	Serial.print(input.c_str());
 	// no space found -> notification without parameter
 	if(slice1 == -1) {
 		notif = input;
@@ -215,7 +218,6 @@ int parseSerialIn(String input) {
 			
 		// ABS_VOL [link_ID](value)
 		// BLE_READ [link_ID] handle
-		// CLOSE_OK [link_ID] (profile)
 		// CLOSE_ERROR [link_ID] (profile)
 		// LINK_LOSS [link_ID] (status)
 		// NAME [addr] [remote_name]
@@ -228,31 +230,21 @@ int parseSerialIn(String input) {
 				// Serial.printf("Volume: %d (%f)\n", param2.toInt(), vol_value);
 				return BCNOT_VOL_LEVEL;
 			}
-			if(notif.equalsIgnoreCase("BLE_READ")) {
+			else if(notif.equalsIgnoreCase("BLE_READ")) {
 			}
-			if(notif.equalsIgnoreCase("CLOSE_OK")) {
-				if(param1.toInt() == BT_conn_id) {
-					if(working_state.bt_state != BTSTATE_OFF) working_state.bt_state = BTSTATE_REQ_DIS;
-					BT_conn_id = 0;
-					BT_peer_address = "";
-				}
-				else if(param1.toInt() == BLE_conn_id) {
-					if(working_state.ble_state != BLESTATE_OFF) working_state.ble_state = BLESTATE_REQ_DIS;
-					BLE_conn_id = 0;
-				}
+			else if(notif.equalsIgnoreCase("CLOSE_ERROR")) {
 			}
-			if(notif.equalsIgnoreCase("CLOSE_ERROR")) {
+			else if(notif.equalsIgnoreCase("LINK_LOSS")) {
 			}
-			if(notif.equalsIgnoreCase("LINK_LOSS")) {
+			else if(notif.equalsIgnoreCase("NAME")) {
 			}
-			if(notif.equalsIgnoreCase("NAME")) {
-			}
-			if(notif.equalsIgnoreCase("OPEN_ERROR")) {
+			else if(notif.equalsIgnoreCase("OPEN_ERROR")) {
 			}
 			break;
 		}
 		
 		// AT [link_ID] (length) (data)
+		// CLOSE_OK [link_ID] (profile) (Bluetooth address)
 		// OPEN_OK [link_ID] (profile) (Bluetooth address)
 		// RECV [link_ID] (size) (report data)
 		case 3: {
@@ -260,6 +252,14 @@ int parseSerialIn(String input) {
 			// Serial.printf("- param2 = %s\n", param2.c_str());
 			// Serial.printf("- param3 = %s\n", param3.c_str());
 			if(notif.equalsIgnoreCase("AT")) {
+			}
+			else if(notif.equalsIgnoreCase("CLOSE_OK")) {
+				if(param1.toInt() == BT_conn_id) {	
+					if(working_state.bt_state != BTSTATE_OFF) working_state.bt_state = BTSTATE_REQ_DIS;
+				}
+				else if(param1.toInt() == BLE_conn_id) {
+					if(working_state.ble_state != BLESTATE_OFF) working_state.ble_state = BLESTATE_REQ_DIS;
+				}
 			}
 			else if(notif.equalsIgnoreCase("OPEN_OK")) {
 				if(param2.equalsIgnoreCase("A2DP")) {
@@ -321,14 +321,15 @@ int parseSerialIn(String input) {
 			}
 			else if(notif.equalsIgnoreCase("INQUIRY")) {
 				String addr = param1;
-				String name = param2;
+				String name = param2.substring(1, (param2.length()-1));
 				String caps = param3;
 				unsigned int stren = param4.substring(1, 3).toInt();
-				populateDevlist(addr, caps, stren);
+				populateDevlist(addr, name, caps, stren);
 				return BCNOT_INQ_STATE;
 			}
 			else if(notif.equalsIgnoreCase("RECV")) {
 				// BLE commands/requests:
+				// - "conn {address}"
 				// - "time {ts}"
 				// - "rec {start/stop/?}"
 				// - "mon {start/stop/?}"
@@ -338,7 +339,11 @@ int parseSerialIn(String input) {
 				// - "filepath {?}"
 				if(param1.toInt() == BLE_conn_id) {
 					// Serial.println("Receiving 2-params BLE command");
-					if(param3.equalsIgnoreCase("time")) {
+					if(param3.equalsIgnoreCase("conn")) {
+						BT_peer_address = param4;
+						return BCCMD_DEV_CONNECT;
+					}
+					else if(param3.equalsIgnoreCase("time")) {
 						unsigned long rec_time = param4.toInt();
 						if(rec_time > DEFAULT_TIME_DEC) {
 							time_source = TSOURCE_BLE;
@@ -419,19 +424,6 @@ int parseSerialIn(String input) {
 		
 		// RECV [link_ID] (size) (report data) <-- (report data) with 3 parameters
 		case 5: {
-			if(notif.equalsIgnoreCase("RECV")) {
-				// BLE commands:
-				// - "conn {address} 'a2dp'"
-				if(param1.toInt() == BLE_conn_id) {
-					if(param3.equalsIgnoreCase("conn")) {
-						BT_peer_address = param4;
-						return BCCMD_DEV_CONNECT;
-					}
-				}
-			}
-			else {
-				// Serial.printf("%s %s %s %s %s\n", notif, param1, param2, param3, param4);
-			}
 			break;
 		}
 		
@@ -529,8 +521,13 @@ bool sendCmdOut(int msg) {
 		}
 		// Open A2DP connection with 'BT_peer_address'
     case BCCMD_DEV_CONNECT: {
-			Serial.print("Opening BT connection @"); Serial.println(BT_peer_address);
-			cmdLine = "OPEN " + BT_peer_address + " A2DP\r";
+			if(searchDevlist(BT_peer_address)) {
+				Serial.printf("Opening BT connection @%s (%s)\n", BT_peer_address.c_str(), BT_peer_name.c_str());
+				cmdLine = "OPEN " + BT_peer_address + " A2DP\r";
+			}
+			else {
+				Serial.println("Device not found...");
+			}
 			break;
 		}
 		// Start monitoring -> AVRCP play
@@ -600,7 +597,7 @@ bool sendCmdOut(int msg) {
 		// BT state notification
 		case BCNOT_BT_STATE: {
 			cmdLine = "SEND " + String(BLE_conn_id);
-			if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine += (" BT " + BT_peer_address + "\r");
+			if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine += (" BT " + BT_peer_name + "\r");
 			else if(working_state.bt_state == BTSTATE_INQUIRY) cmdLine += " BT INQ\r";
 			else cmdLine += " BT IDLE\r";
 			break;
@@ -659,11 +656,12 @@ bool sendCmdOut(int msg) {
  * If not, fill the list at the next empty place, otherwise
  * just update the signal strength value.
  * IN:	- device address (String)
+ *			- device name (String)
  *			- device capabilities (String)
  *			- absolute signal stregth value (unsigned int)
  * OUT:	- none
  */
-void populateDevlist(String addr, String caps, unsigned int stren) {
+void populateDevlist(String addr, String name, String caps, unsigned int stren) {
   bool found = false;
   int lastPos = 0;
   for(int i = 0; i < DEVLIST_MAXLEN; i++) {
@@ -683,6 +681,7 @@ void populateDevlist(String addr, String caps, unsigned int stren) {
 	// If not matching device has been found, fill the next emplacement.
   if(!found) {
     dev_list[lastPos].address = addr;
+		dev_list[lastPos].name = name;
     dev_list[lastPos].capabilities = caps;
     dev_list[lastPos].strength = stren;
     found_dev += 1;
@@ -695,4 +694,16 @@ void populateDevlist(String addr, String caps, unsigned int stren) {
     // Serial.print(dev_list[i].capabilities); Serial.print(", ");
     // Serial.println(dev_list[i].strength);
   // }
+}
+
+bool searchDevlist(String addr) {
+	for(int i = 0; i < DEVLIST_MAXLEN; i++) {
+		if(dev_list[i].address.equalsIgnoreCase(addr)) {
+			Serial.println("Device found in list!");
+			BT_peer_name = dev_list[i].name;
+			return true;
+		}
+	}
+	Serial.println("Nothing found in list");
+	return false;
 }
