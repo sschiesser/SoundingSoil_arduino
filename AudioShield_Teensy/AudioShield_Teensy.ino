@@ -10,8 +10,8 @@
 // Load drivers
 SnoozeDigital 								button_wakeup; 	// Wakeup pins on Teensy 3.6:
 																							// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
-SnoozeAlarm										alarm_rec;
-SnoozeAlarm										alarm_led;
+SnoozeAlarm										snooze_rec;
+SnoozeAlarm										snooze_led;
 // install driver into SnoozeBlock
 SnoozeBlock 									snooze_config(button_wakeup);
 
@@ -61,7 +61,7 @@ SLEEP:
 	who = Snooze.hibernate(snooze_config);
 	if(who == WAKESOURCE_RTC) {
 		// if alarm wake-up (from 'snooze') -> remove alarm, adjust time and re-start recording
-		snooze_config -= alarm_rec;
+		snooze_config -= snooze_rec;
 		adjustTime(TSOURCE_REC);
 		working_state.rec_state = RECSTATE_RESTART;
 	}
@@ -95,8 +95,9 @@ WORK:
 			working_state.rec_state = RECSTATE_REQ_ON;
     }
     else {
-			snooze_config -= alarm_rec;
-			Alarm.free(alarm_rec_id);
+			snooze_config -= snooze_rec;
+			// Alarm.free(alarm_wait_id);
+			// Alarm.free(alarm_rec_id);
 			working_state.rec_state = RECSTATE_REQ_OFF;
     }
 		button_call = (enum bCalls)BCALL_NONE;
@@ -137,6 +138,7 @@ WORK:
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(next_record.path);
 			sendCmdOut(BCNOT_REC_STATE);
+			sendCmdOut(BCNOT_FILEPATH);
 			break;
 		}
 		
@@ -153,6 +155,9 @@ WORK:
 		}
 		
 		case RECSTATE_REQ_OFF: {
+			Alarm.free(alarm_wait_id);
+			Alarm.free(alarm_rec_id);
+
 			stopRecording(next_record.path);
 			finishRecording();
 			stopLED(&leds[LED_PEAK]);
@@ -171,7 +176,7 @@ WORK:
 			startMonitoring();
 			working_state.mon_state = MONSTATE_ON;
 			sendCmdOut(BCNOT_MON_STATE);
-			sendCmdOut(BCCMD_VOL_A2DP);
+			if(working_state.bt_state == BTSTATE_CONNECTED) sendCmdOut(BCCMD_VOL_A2DP);
 			break;
 		}
 		
@@ -314,8 +319,8 @@ WORK:
 										tm3.Hour, tm3.Minute, tm3.Second);
 			if(ready_to_sleep) {
 				Serial.println("Setting up Snooze alarm");
-				snooze_config += alarm_rec;
-				alarm_rec.setRtcTimer(tm3.Hour, tm3.Minute, tm3.Second);
+				snooze_config += snooze_rec;
+				snooze_rec.setRtcTimer(tm3.Hour, tm3.Minute, tm3.Second);
 				working_state.rec_state = RECSTATE_IDLE;
 				sendCmdOut(BCNOT_REC_STATE);
 				delay(100);

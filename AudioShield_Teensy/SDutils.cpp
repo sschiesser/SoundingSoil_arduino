@@ -72,7 +72,7 @@ String createSDpath(void) {
 	else {
 		sprintf(buf, "u%02d%02d%02d", (tm.Year-30), tm.Month, tm.Day);
 		dir_name.concat(buf);
-		sprintf(buf, "u%02d%02d%02d", tm.Hour, tm.Minute, tm.Second);
+		sprintf(buf, "u%02d%02d%02d.wav", tm.Hour, tm.Minute, tm.Second);
 		file_name.concat(buf);
 	}
 	sprintf(buf, "/%s/%s", dir_name.c_str(), file_name.c_str());
