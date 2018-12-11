@@ -27,22 +27,44 @@ int														BT_conn_id;
 // ID of the established BLE connection
 int														BLE_conn_id;
 
-/* bc127Init(void)
+/* initBc127(void)
  * ---------------
- * Initialize BC127, ...by switching it off!
+ * Initialize BC127 by sending a reset command
  * IN:	- none
  * OUT:	- none
  */
-void bc127Init(void) {
-	bc127PowerOff();
+void initBc127(void) {
+	bc127Reset();
 }
 
-void bc127PowerOn(void) {
-	sendCmdOut(BCCMD_PWR_ON);
+/* bc127BlueOn(void)
+ * -----------------
+ * Switch on the Bluetooth interface
+ * IN:	- none
+ * OUT:	- none
+ */
+void bc127BlueOn(void) {
+	sendCmdOut(BCCMD_BLUE_ON);
 }
 
-void bc127PowerOff(void) {
-	sendCmdOut(BCCMD_PWR_OFF);
+/* bc1267BlueOff(void)
+ * -------------------
+ * Switch off the Bluetooth interface
+ * IN:	- none
+ * OUT:	- none
+ */
+void bc127BlueOff(void) {
+	sendCmdOut(BCCMD_BLUE_OFF);
+}
+
+/* bc127Reset(void)
+ * ----------------
+ * Reset the BC127 device
+ * IN:	- none
+ * OUT:	- none
+ */
+void bc127Reset(void) {
+	sendCmdOut(BCCMD_RESET);
 }
 
 /* bc127AdvStart(void)
@@ -62,9 +84,7 @@ void bc127AdvStart(void) {
  * OUT:	- none
  */
 void bc127AdvStop(void) {
-	if(working_state.ble_state == BLESTATE_ADV) {
 		sendCmdOut(BCCMD_ADV_OFF);
-	}
 }
 
 /* parseSerialIn(String)
@@ -92,7 +112,7 @@ int parseSerialIn(String input) {
 	int slice6 = input.indexOf(" ", slice5+1);
 	int slice7 = input.indexOf(" ", slice6+1);
 	int slice8 = input.indexOf(" ", slice7+1);
-	Serial.print(input.c_str());
+	MONPORT.printf("IN: %s\n", input.c_str());
 	// no space found -> notification without parameter
 	if(slice1 == -1) {
 		notif = input;
@@ -155,7 +175,7 @@ int parseSerialIn(String input) {
 		}
 	}
 
-	// Serial.printf("%d parameters found:\n- notif = %s\n", nb_params, notif.c_str());
+	// MONPORT.printf("%d parameters found:\n- notif = %s\n", nb_params, notif.c_str());
 	
 	switch(nb_params) {
 		// INQU_OK
@@ -169,7 +189,7 @@ int parseSerialIn(String input) {
 			else if(notif.equalsIgnoreCase("READY")) {
 			}
 			else {
-				// Serial.println(notif);
+				// MONPORT.println(notif);
 			}
 			break;
 		}
@@ -185,18 +205,18 @@ int parseSerialIn(String input) {
 		// PAIR_ERROR (Bluetooth address)
 		// PAIR_OK (Bluetooth address)
 		case 1: {
-			// Serial.printf("- param1 = %s\n", param1.c_str());
+			// MONPORT.printf("- param1 = %s\n", param1.c_str());
 			if(notif.equalsIgnoreCase("A2DP_STREAM_START")) {
 			}
 			else if(notif.equalsIgnoreCase("A2DP_STREAM_SUSPEND")) {
 			}
 			else if(notif.equalsIgnoreCase("AVRCP_PLAY")) {
-				working_state.mon_state = MONSTATE_REQ_ON;
+				// working_state.mon_state = MONSTATE_REQ_ON;
 			}
 			else if(notif.equalsIgnoreCase("AVRCP_STOP")) {
 			}
 			else if(notif.equalsIgnoreCase("AVRCP_PAUSE")) {
-				working_state.mon_state = MONSTATE_REQ_OFF;
+				// working_state.mon_state = MONSTATE_REQ_OFF;
 			}
 			else if(notif.equalsIgnoreCase("AVRCP_FORWARD")) {
 				return BCCMD_REC_START;
@@ -211,7 +231,7 @@ int parseSerialIn(String input) {
 			else if(notif.equalsIgnoreCase("PAIR_OK")) {
 			}
 			else {
-				// Serial.printf("%s %s\n", notif, param1);
+				// MONPORT.printf("%s %s\n", notif, param1);
 			}
 			break;
 		}
@@ -223,12 +243,11 @@ int parseSerialIn(String input) {
 		// NAME [addr] [remote_name]
 		// OPEN_ERROR [link_ID] (profile)
 		case 2: {
-			// Serial.printf("- param1 = %s\n", param1.c_str());
-			// Serial.printf("- param2 = %s\n", param2.c_str());
+			// MONPORT.printf("- param1 = %s\n", param1.c_str());
+			// MONPORT.printf("- param2 = %s\n", param2.c_str());
 			if(notif.equalsIgnoreCase("ABS_VOL")) {
-				vol_value = (float)param2.toInt()/120.0;
-				// Serial.printf("Volume: %d (%f)\n", param2.toInt(), vol_value);
-				return BCNOT_VOL_LEVEL;
+				vol_value = (float)param2.toInt()/ABS_VOL_MAX_VAL;
+				if(working_state.ble_state == BLESTATE_CONNECTED) return BCNOT_VOL_LEVEL;
 			}
 			else if(notif.equalsIgnoreCase("BLE_READ")) {
 			}
@@ -248,9 +267,9 @@ int parseSerialIn(String input) {
 		// OPEN_OK [link_ID] (profile) (Bluetooth address)
 		// RECV [link_ID] (size) (report data)
 		case 3: {
-			// Serial.printf("- param1 = %s\n", param1.c_str());
-			// Serial.printf("- param2 = %s\n", param2.c_str());
-			// Serial.printf("- param3 = %s\n", param3.c_str());
+			// MONPORT.printf("- param1 = %s\n", param1.c_str());
+			// MONPORT.printf("- param2 = %s\n", param2.c_str());
+			// MONPORT.printf("- param3 = %s\n", param3.c_str());
 			if(notif.equalsIgnoreCase("AT")) {
 			}
 			else if(notif.equalsIgnoreCase("CLOSE_OK")) {
@@ -265,13 +284,13 @@ int parseSerialIn(String input) {
 				if(param2.equalsIgnoreCase("A2DP")) {
 					BT_conn_id = param1.toInt();
 					BT_peer_address = param3;
-					// Serial.printf("A2DP connection opened. Conn ID: %d, peer address = %s\n",
+					// MONPORT.printf("A2DP connection opened. Conn ID: %d, peer address = %s\n",
 						// BT_conn_id, BT_peer_address.c_str());
 					working_state.bt_state = BTSTATE_REQ_CONN;
 				}
 				else if(param2.equalsIgnoreCase("BLE")) {
 					BLE_conn_id = param1.toInt();
-					// Serial.printf("BLE connection opened. Conn ID: %d\n", BLE_conn_id);
+					// MONPORT.printf("BLE connection opened. Conn ID: %d\n", BLE_conn_id);
 					working_state.ble_state = BLESTATE_REQ_CONN;
 				}
 			}
@@ -280,16 +299,16 @@ int parseSerialIn(String input) {
 				// BLE commands:
 				// - "inq"
 				if(param1.toInt() == BLE_conn_id) {
-					// Serial.println("Receiving 1-param BLE command");
+					// MONPORT.println("Receiving 1-param BLE command");
 					if(param3.equalsIgnoreCase("inq")) {
-					  // Serial.println("Received BT inquiry command");
+					  // MONPORT.println("Received BT inquiry command");
 						return BCCMD_INQUIRY;
 					}
 
 				}
 			}
 			else {
-				Serial.printf("%s %s %s\n", notif, param1, param2);
+				MONPORT.printf("%s %s %s\n", notif, param1, param2);
 			}
 			break;
 		}
@@ -303,10 +322,10 @@ int parseSerialIn(String input) {
 		// INQUIRY(BDADDR) (NAME) (COD) (RSSI)
 		// RECV [link_ID] (size) (report data) <-- (report data) with 2 parameters
 		case 4: {
-			// Serial.printf("- param1 = %s\n", param1.c_str());
-			// Serial.printf("- param2 = %s\n", param2.c_str());
-			// Serial.printf("- param3 = %s\n", param3.c_str());
-			// Serial.printf("- param4 = %s\n", param4.c_str());
+			// MONPORT.printf("- param1 = %s\n", param1.c_str());
+			// MONPORT.printf("- param2 = %s\n", param2.c_str());
+			// MONPORT.printf("- param3 = %s\n", param3.c_str());
+			// MONPORT.printf("- param4 = %s\n", param4.c_str());
 			if(notif.equalsIgnoreCase("BLE_CHAR")) {
 			}
 			else if(notif.equalsIgnoreCase("BLE_INDICATION")) {
@@ -338,7 +357,7 @@ int parseSerialIn(String input) {
 				// - "rwin {?}"
 				// - "filepath {?}"
 				if(param1.toInt() == BLE_conn_id) {
-					// Serial.println("Receiving 2-params BLE command");
+					// MONPORT.println("Receiving 2-params BLE command");
 					if(param3.equalsIgnoreCase("conn")) {
 						BT_peer_address = param4;
 						return BCCMD_DEV_CONNECT;
@@ -348,10 +367,10 @@ int parseSerialIn(String input) {
 						if(rec_time > DEFAULT_TIME_DEC) {
 							time_source = TSOURCE_BLE;
 							adjustTime(TSOURCE_BLE);
-							Serial.printf("Timestamp received: %ld\n", rec_time);
+							MONPORT.printf("Timestamp received: %ld\n", rec_time);
 						}
 						else {
-							Serial.println("Received time not correct!");
+							MONPORT.println("Received time not correct!");
 						}
 					}
 					else if(param3.equalsIgnoreCase("rec")) {
@@ -359,21 +378,15 @@ int parseSerialIn(String input) {
 						else if(param4.equalsIgnoreCase("stop")) return BCCMD_REC_STOP;
 						else if(param4.equalsIgnoreCase("?")) return BCNOT_REC_STATE;
 						else {
-							// Serial.println("BLE rec command not listed");
+							// MONPORT.println("BLE rec command not listed");
 						}
 					}
 					else if(param3.equalsIgnoreCase("mon")) {
-						if(param4.equalsIgnoreCase("start")) {
-							// Serial.println("Start MON");
-							return BCCMD_MON_START;
-						}
-						else if(param4.equalsIgnoreCase("stop")) {
-							// Serial.println("Stop MON");
-							return BCCMD_MON_STOP;
-						}
+						if(param4.equalsIgnoreCase("start")) working_state.mon_state = MONSTATE_REQ_ON;
+						else if(param4.equalsIgnoreCase("stop")) working_state.mon_state = MONSTATE_REQ_OFF;
 						else if(param4.equalsIgnoreCase("?")) return BCNOT_MON_STATE;
 						else {
-							// Serial.println("BLE mon command not listed");
+							// MONPORT.println("BLE mon command not listed");
 						}
 					}
 					else if(param3.equalsIgnoreCase("vol")) {
@@ -388,11 +401,11 @@ int parseSerialIn(String input) {
 								return BCNOT_VOL_LEVEL;
 							}
 							else {
-								// Serial.println("BLE vol command not listed");
+								// MONPORT.println("BLE vol command not listed");
 							}
 						}
 						else {
-							// Serial.println("BT not connected. Cannot read or write volume");
+							// MONPORT.println("BT not connected. Cannot read or write volume");
 							return BCERR_BT_DIS;
 						}
 					}
@@ -406,7 +419,7 @@ int parseSerialIn(String input) {
 							return BCNOT_RWIN_VALS;
 						}
 						else {
-							Serial.println("RWIN request not listed");
+							MONPORT.println("RWIN request not listed");
 						}
 					}
 					else if(param3.equalsIgnoreCase("filepath")) {
@@ -417,7 +430,7 @@ int parseSerialIn(String input) {
 				}
 			}
 			else {
-				// Serial.printf("%s %s %s %s\n", notif, param1, param2, param3);
+				// MONPORT.printf("%s %s %s %s\n", notif, param1, param2, param3);
 			}
 			break;
 		}
@@ -444,7 +457,7 @@ int parseSerialIn(String input) {
 				}
 			}
 			else {
-				// Serial.printf("%s %s %s %s %s %s\n", notif, param1, param2, param3, param4, param5);
+				// MONPORT.printf("%s %s %s %s %s %s\n", notif, param1, param2, param3, param4, param5);
 			}
 			break;
 		}
@@ -454,7 +467,7 @@ int parseSerialIn(String input) {
 		}
 		
 		default:
-			// Serial.println(input.c_str());
+			// MONPORT.println(input.c_str());
 			break;
 	}
 	
@@ -478,25 +491,24 @@ bool sendCmdOut(int msg) {
 
 		// Reset
     case BCCMD_RESET: {
-			// Serial.println("Resetting BC127...");
+			MONPORT.println("Resetting BC127...");
 			cmdLine = "RESET\r";
 			break;
 		}
 		// Power-off
-		case BCCMD_PWR_OFF: {
-			// Serial.println("Switching BC127 off");
+		case BCCMD_BLUE_OFF: {
+			MONPORT.println("Switching bluetooth off");
 			cmdLine = "POWER OFF\r";
 			break;
 		}
 		// Power-on
-		case BCCMD_PWR_ON: {
-			// Serial.println("Waking BC127 up");
+		case BCCMD_BLUE_ON: {
+			MONPORT.println("Switching bluetooth on");
 			cmdLine = "POWER ON\r";
 			break;
 		}
     // Start advertising on BLE
     case BCCMD_ADV_ON: {
-			// Serial.println("Starting BLE advertising");
 			cmdLine = "ADVERTISING ON\r";
 			break;
 		}
@@ -507,7 +519,7 @@ bool sendCmdOut(int msg) {
 		}
     // Start inquiry on BT for 10 s, first clear the device list
     case BCCMD_INQUIRY: {
-			// Serial.println("Start inquiry");
+			// MONPORT.println("Start inquiry");
 			for(int i = 0; i < DEVLIST_MAXLEN; i++) {
 				dev_list[i].address = "";
 				dev_list[i].capabilities = "";
@@ -522,20 +534,20 @@ bool sendCmdOut(int msg) {
 		// Open A2DP connection with 'BT_peer_address'
     case BCCMD_DEV_CONNECT: {
 			if(searchDevlist(BT_peer_address)) {
-				Serial.printf("Opening BT connection @%s (%s)\n", BT_peer_address.c_str(), BT_peer_name.c_str());
+				MONPORT.printf("Opening BT connection @%s (%s)\n", BT_peer_address.c_str(), BT_peer_name.c_str());
 				cmdLine = "OPEN " + BT_peer_address + " A2DP\r";
 			}
 			else {
-				Serial.println("Device not found...");
+				MONPORT.println("Device not found...");
 			}
 			break;
 		}
 		// Start monitoring -> AVRCP play
     case BCCMD_MON_START: {
-			working_state.mon_state = MONSTATE_REQ_ON;
-			if(working_state.bt_state == BTSTATE_CONNECTED) {
+			// working_state.mon_state = MONSTATE_REQ_ON;
+			// if(working_state.bt_state == BTSTATE_CONNECTED) {
 				cmdLine = "MUSIC " + String(BT_conn_id) + " PLAY\r";
-			}
+			// }
 			break;
 		}
 		// Pause monitoring -> AVRCP pause
@@ -614,7 +626,7 @@ bool sendCmdOut(int msg) {
 				devString.concat(" ");
 				devString.concat(dev_list[i].strength);
 				cmdLine = "SEND " + String(BLE_conn_id) + " " + devString + "\r";
-				Serial4.print(cmdLine);
+				BLUEPORT.print(cmdLine);
 			}
 			cmdLine = "";
 			break;
@@ -630,7 +642,7 @@ bool sendCmdOut(int msg) {
 		// FILEPATH notification !!CURRENTLY MAX NOTIFICATION SIZE = 20 chars -> change to at least 26
 		case BCNOT_FILEPATH: {
 			cmdLine = "SEND " + String(BLE_conn_id) + " FP " + rec_path + "\r";
-			Serial.printf("Sending: %s\n", cmdLine.c_str());
+			MONPORT.printf("Sending: %s\n", cmdLine.c_str());
 			break;
 		}
 		// ERROR: BT disconnected
@@ -643,9 +655,9 @@ bool sendCmdOut(int msg) {
 			return false;
 			break;
   }
-	Serial.println(cmdLine.c_str());
+	MONPORT.println(cmdLine.c_str());
 	// Send the prepared command line to UART
-  Serial4.print(cmdLine);
+  BLUEPORT.print(cmdLine);
   // Send positive confirmation
   return true;
 }
@@ -687,23 +699,31 @@ void populateDevlist(String addr, String name, String caps, unsigned int stren) 
     found_dev += 1;
   }
   
-  // Serial.println("Device list:");
+  // MONPORT.println("Device list:");
   // for(unsigned int i = 0; i < found_dev; i++) {
-    // Serial.print(i); Serial.print(": ");
-    // Serial.print(dev_list[i].address); Serial.print(", ");
-    // Serial.print(dev_list[i].capabilities); Serial.print(", ");
-    // Serial.println(dev_list[i].strength);
+    // MONPORT.print(i); MONPORT.print(": ");
+    // MONPORT.print(dev_list[i].address); MONPORT.print(", ");
+    // MONPORT.print(dev_list[i].capabilities); MONPORT.print(", ");
+    // MONPORT.println(dev_list[i].strength);
   // }
 }
 
+
+/* searchDevlist(String)
+ * ---------------------
+ * Search for the requested address into the previously 
+ * filled device list, in order to open a A2DP connection.
+ * IN:	- device address (String)
+ * OUT:	- device found (bool)
+ */
 bool searchDevlist(String addr) {
 	for(int i = 0; i < DEVLIST_MAXLEN; i++) {
 		if(dev_list[i].address.equalsIgnoreCase(addr)) {
-			Serial.println("Device found in list!");
+			MONPORT.println("Device found in list!");
 			BT_peer_name = dev_list[i].name;
 			return true;
 		}
 	}
-	Serial.println("Nothing found in list");
+	MONPORT.println("Nothing found in list");
 	return false;
 }

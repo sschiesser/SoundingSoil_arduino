@@ -31,6 +31,8 @@
 */
 #define SGTL5000_INLEVEL_DEF	0
 
+#define ABS_VOL_MAX_VAL				120.0
+
 extern String 								rec_path;
 extern int										vol_ctrl;
 extern float									vol_value;

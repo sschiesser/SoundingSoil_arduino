@@ -11,6 +11,7 @@
 extern unsigned int						received_time;
 extern int										alarm_rec_id;
 extern int										alarm_wait_id;
+extern int										alarm_adv_id;
 
 // Time sources
 enum tSources {
@@ -27,6 +28,7 @@ extern enum tSources					time_source;
  * ====================== */
 void setDefaultTime(void);
 void adjustTime(enum tSources source);
+void alarmAdvTimeout(void);
 void timerRecDone(void);
 void alarmNextRec(void);
 

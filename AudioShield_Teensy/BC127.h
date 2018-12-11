@@ -11,7 +11,7 @@
 // Time offset to adjust from GPS UTC
 #define TIME_OFFSET						1 // Central European Time
 // BC127 serial port
-#define BC127PORT							Serial4
+#define BLUEPORT							Serial4
 
 extern struct btDev 					dev_list[DEVLIST_MAXLEN];
 extern unsigned int 					found_dev;
@@ -24,8 +24,8 @@ extern int										BLE_conn_id;
 enum serialMsg {
   BCCMD_NOTHING = 0,
   BCCMD_RESET,
-	BCCMD_PWR_OFF,
-	BCCMD_PWR_ON,
+	BCCMD_BLUE_OFF,
+	BCCMD_BLUE_ON,
   BCCMD_ADV_ON,
 	BCCMD_ADV_OFF,
   BCCMD_BLE_SEND,
@@ -55,9 +55,10 @@ enum serialMsg {
 /* ======================
  * FUNCTIONS DECLARATIONS
  * ====================== */
-void bc127Init(void);
-void bc127PowerOn(void);
-void bc127PowerOff(void);
+void initBc127(void);
+void bc127Reset(void);
+void bc127BlueOn(void);
+void bc127BlueOff(void);
 void bc127AdvStart(void);
 void bc127AdvStop(void);
 void bc127Inquiry(void);

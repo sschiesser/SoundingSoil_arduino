@@ -25,8 +25,8 @@ bool													ready_to_sleep;
 
 void setup() {
   // Initialize serial ports:
-  MONITORPORT.begin(115200);	// Serial monitor port
-  BC127PORT.begin(9600);			// BC127 communication port
+  MONPORT.begin(115200);			// Serial monitor port
+  BLUEPORT.begin(9600);				// BC127 communication port
   GPSPORT.begin(9600);				// GPS port
 
 	initLEDButtons();
@@ -42,8 +42,8 @@ void setup() {
 	initSDcard();
 	initWaveHeader();
 	setDefaultValues();
-	bc127Init();
 	setDefaultTime();
+	initBc127();
 	Alarm.delay(500);
 }
 
@@ -90,7 +90,7 @@ WORK:
     
   // centralized button call actions coming from SLEEP or WORK mode
   if(button_call == BUTTON_RECORD_PIN) {
-    // Serial.print("Record button pressed: rec_state = "); Serial.println(working_state.rec_state);
+    // MONPORT.print("Record button pressed: rec_state = "); MONPORT.println(working_state.rec_state);
     if(working_state.rec_state == RECSTATE_OFF) {
 			working_state.rec_state = RECSTATE_REQ_ON;
     }
@@ -128,8 +128,10 @@ WORK:
 			prepareRecording(true);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(next_record.path);
-			sendCmdOut(BCNOT_REC_STATE);
-			sendCmdOut(BCNOT_FILEPATH);
+			if(working_state.ble_state == BLESTATE_CONNECTED) {
+				sendCmdOut(BCNOT_REC_STATE);
+				sendCmdOut(BCNOT_FILEPATH);
+			}
 			break;
 		}
 			
@@ -137,8 +139,10 @@ WORK:
 			prepareRecording(false);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(next_record.path);
-			sendCmdOut(BCNOT_REC_STATE);
-			sendCmdOut(BCNOT_FILEPATH);
+			if(working_state.ble_state == BLESTATE_CONNECTED) {
+				sendCmdOut(BCNOT_REC_STATE);
+				sendCmdOut(BCNOT_FILEPATH);
+			}
 			break;
 		}
 		
@@ -162,7 +166,9 @@ WORK:
 			finishRecording();
 			stopLED(&leds[LED_PEAK]);
 			working_state.rec_state = RECSTATE_OFF;
-			sendCmdOut(BCNOT_REC_STATE);
+			if(working_state.ble_state == BLESTATE_CONNECTED) {
+				sendCmdOut(BCNOT_REC_STATE);
+			}
 			break;
 		}
 		
@@ -172,11 +178,22 @@ WORK:
   // MON state actions
 	switch(working_state.mon_state) {
 		case MONSTATE_REQ_ON: {
+			MONPORT.printf("MON req... states: BT %d, BLE %d, REC %d, MON %d\n",
+				working_state.bt_state, working_state.ble_state,
+				working_state.rec_state, working_state.mon_state);
 			startLED(&leds[LED_MONITOR], LED_MODE_ON);
 			startMonitoring();
+			if(working_state.bt_state == BTSTATE_CONNECTED) {
+				sendCmdOut(BCCMD_MON_START);
+				Alarm.delay(50);
+				sendCmdOut(BCCMD_VOL_A2DP);
+				Alarm.delay(50);
+			}
+			if(working_state.ble_state == BLESTATE_CONNECTED) {
+				sendCmdOut(BCNOT_MON_STATE);
+				Alarm.delay(50);
+			}
 			working_state.mon_state = MONSTATE_ON;
-			sendCmdOut(BCNOT_MON_STATE);
-			if(working_state.bt_state == BTSTATE_CONNECTED) sendCmdOut(BCCMD_VOL_A2DP);
 			break;
 		}
 		
@@ -190,8 +207,15 @@ WORK:
 			stopMonitoring();
 			stopLED(&leds[LED_MONITOR]);
 			stopLED(&leds[LED_PEAK]);
+			if(working_state.bt_state == BTSTATE_CONNECTED) {
+				sendCmdOut(BCCMD_MON_STOP);
+				Alarm.delay(50);
+			}
+			if(working_state.ble_state == BLESTATE_CONNECTED) {
+				sendCmdOut(BCNOT_MON_STATE);
+				Alarm.delay(50);
+			}
 			working_state.mon_state = MONSTATE_OFF;
-			sendCmdOut(BCNOT_MON_STATE);
 			break;
 		}
 		
@@ -201,15 +225,24 @@ WORK:
   // BLE state actions
 	switch(working_state.ble_state) {
 		case BLESTATE_REQ_ADV: {
-			startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
-			bc127PowerOn();
-			Alarm.delay(1000);
+			if(working_state.bt_state == BTSTATE_CONNECTED) {
+				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
+			}
+			else {
+				bc127Reset();
+				delay(500);
+				bc127BlueOn();
+				delay(500);
+				startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
+				alarm_adv_id = Alarm.timerOnce(BLEADV_TIMEOUT_S, alarmAdvTimeout);
+			}
 			bc127AdvStart();
 			working_state.ble_state = BLESTATE_ADV;
 			break;
 		}
 		
 		case BLESTATE_REQ_CONN: {
+			Alarm.free(alarm_adv_id);
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
 			}
@@ -228,23 +261,27 @@ WORK:
 		}
 		
 		case BLESTATE_REQ_DIS: {
+			BLE_conn_id = 0;
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
-				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
+				working_state.ble_state = BLESTATE_REQ_ADV;
 			}
 			else {
-				startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
+				working_state.ble_state = BLESTATE_REQ_OFF;
 			}
-			sendCmdOut(BCCMD_ADV_ON);
-			working_state.ble_state = BLESTATE_ADV;
-			BLE_conn_id = 0;
 			break;
 		}
 		
 		case BLESTATE_REQ_OFF: {
+			Alarm.free(alarm_adv_id);
 			bc127AdvStop();
 			Alarm.delay(100);
-			bc127PowerOff();
-			stopLED(&leds[LED_BLUETOOTH]);
+			if(working_state.bt_state != BTSTATE_OFF) {
+				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
+			}
+			else {
+				bc127BlueOff();
+				stopLED(&leds[LED_BLUETOOTH]);
+			}
 			working_state.ble_state = BLESTATE_OFF;
 			break;
 		}
@@ -255,6 +292,7 @@ WORK:
   // BT state actions
 	switch(working_state.bt_state) {
 		case BTSTATE_REQ_CONN: {
+			Alarm.free(alarm_adv_id);
 			startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
 			working_state.bt_state = BTSTATE_CONNECTED;
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
@@ -269,7 +307,7 @@ WORK:
 				sendCmdOut(BCNOT_BT_STATE);
 			}
 			else {
-				bc127PowerOff();
+				bc127BlueOff();
 				stopLED(&leds[LED_BLUETOOTH]);
 				working_state.ble_state = BLESTATE_OFF;
 			}
@@ -277,6 +315,7 @@ WORK:
 			BT_conn_id = 0;
 			BT_peer_address = "";
 			BT_peer_name = "auto";
+			
 			break;
 		}
 		
@@ -285,17 +324,17 @@ WORK:
 	}
 	
 	// Serial messaging
-  if (Serial4.available()) {
-    String inMsg = Serial4.readStringUntil('\r');
+  if (BLUEPORT.available()) {
+    String inMsg = BLUEPORT.readStringUntil('\r');
     int outMsg = parseSerialIn(inMsg);
     if(!sendCmdOut(outMsg)) {
-      Serial.println("Sending command error!!");
+      MONPORT.println("Sending command error!!");
     }
   }	
-  if (Serial.available()) {
-    String manInput = Serial.readStringUntil('\n');
+  if (MONPORT.available()) {
+    String manInput = MONPORT.readStringUntil('\n');
     int len = manInput.length() - 1;
-    Serial4.print(manInput.substring(0, len)+'\r');
+    BLUEPORT.print(manInput.substring(0, len)+'\r');
   }
 
 	// Stay awake or go to sleep?...
@@ -319,23 +358,27 @@ WORK:
 			breakTime(now(), tm1);
 			breakTime(next_record.ts, tm2);
 			breakTime(delta, tm3);
-			Serial.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
+			MONPORT.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
 										tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
-			Serial.printf("Delta: %02dh%02dm%02ds\n", 
+			MONPORT.printf("Delta: %02dh%02dm%02ds\n", 
 										tm3.Hour, tm3.Minute, tm3.Second);
 			if(ready_to_sleep) {
-				Serial.println("Setting up Snooze alarm");
+				MONPORT.println("Setting up Snooze alarm");
 				snooze_config += snooze_rec;
 				snooze_rec.setRtcTimer(tm3.Hour, tm3.Minute, tm3.Second);
 				working_state.rec_state = RECSTATE_IDLE;
-				sendCmdOut(BCNOT_REC_STATE);
-				delay(100);
+				if(working_state.ble_state == BLESTATE_CONNECTED) {
+					sendCmdOut(BCNOT_REC_STATE);
+					delay(100);
+				}
 				goto SLEEP;
 			}
 			else {
 				alarm_wait_id = Alarm.alarmOnce(tm2.Hour, tm2.Minute, tm2.Second, alarmNextRec);
 				working_state.rec_state = RECSTATE_WAIT;
-				sendCmdOut(BCNOT_REC_STATE);
+				if(working_state.ble_state == BLESTATE_CONNECTED) {
+					sendCmdOut(BCNOT_REC_STATE);
+				}
 				goto WORK;
 			}
 			break;

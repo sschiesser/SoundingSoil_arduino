@@ -55,7 +55,7 @@ void prepareRecording(bool sync) {
 			startLED(&leds[LED_RECORD], LED_MODE_ON);
 		}
 		next_record.ts = now();
-		Serial.printf("Next record: %ld\n", next_record.ts);
+		MONPORT.printf("Next record: %ld\n", next_record.ts);
 	}
 	rec_path = createSDpath();
 	setRecInfos(&next_record, rec_path);
@@ -95,7 +95,7 @@ void startRecording(String path) {
     tot_rec_bytes = 0;
   }
   else {
-    Serial.println("file opening error");
+    MONPORT.println("file opening error");
 		working_state.rec_state = RECSTATE_REQ_OFF;
     // while(1);
   }
@@ -121,8 +121,8 @@ void continueRecording(void) {
 //    elapsedMicros usec = 0;
     frec.write(buffer, 512);
     tot_rec_bytes += 512;
-//    Serial.print("SD write, us=");
-//    Serial.println(usec);
+//    MONPORT.print("SD write, us=");
+//    MONPORT.println(usec);
   }
 }
 
@@ -134,7 +134,7 @@ void continueRecording(void) {
  * OUT:	- none
  */
 void stopRecording(String path) {
-  // Serial.println("Stop recording");
+  // MONPORT.println("Stop recording");
   queueSdc.end();
   if(working_state.rec_state) {
     while(queueSdc.available() > 0) {
@@ -158,7 +158,7 @@ void pauseRecording(void) {
 	last_record = next_record;
 	next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
 									(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
-	// Serial.printf("Next record: %ld\n", next_record.ts);
+	// MONPORT.printf("Next record: %ld\n", next_record.ts);
 	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);
 }

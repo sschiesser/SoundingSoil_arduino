@@ -25,7 +25,9 @@
 #include "timeUtils.h"
 
 // Monitoring serial port
-#define MONITORPORT						Serial
+#define MONPORT								Serial
+
+#define BLEADV_TIMEOUT_S			120			
 
 // Wake-up sources from hibernating mode
 #define WAKESOURCE_BUT_REC		BUTTON_RECORD_PIN

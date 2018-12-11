@@ -42,7 +42,7 @@ void initSDcard(void) {
   SPI.setSCK(SDCARD_SCK_PIN);
   if(!(SD.begin(SDCARD_CS_PIN))) {
     while(1) {
-      Serial.println("Unable to access the SD card");
+      MONPORT.println("Unable to access the SD card");
       Alarm.delay(500);
     }
   }
