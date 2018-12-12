@@ -14,26 +14,26 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
+#include <Audio.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <SD.h>
+#include <SerialFlash.h>
+
 // GUItool: begin automatically generated code
 AudioInputI2S									i2sRec;		//xy=388,213
 AudioPlaySdWav								playWav;	//xy=388,313
-AudioMixer4										btMixer;	//xy=565,424
-AudioMixer4										hpMixer;	//xy=566,313
+AudioMixer4										monMixer;	//xy=566,313
 AudioRecordQueue							queueSdc;	//xy=728,208
 AudioAnalyzePeak							peak;			//xy=728,257
-AudioOutputI2S								i2sHpMon;	//xy=728,313
-AudioOutputI2S								i2sBtMon;	//xy=729,421
+AudioOutputI2S								i2sMon;		//xy=728,313
 AudioConnection								patchCord1(i2sRec, 0, queueSdc, 0);
 AudioConnection								patchCord2(i2sRec, 0, peak, 0);
-AudioConnection								patchCord3(i2sRec, 0, hpMixer, 0);
-AudioConnection								patchCord4(i2sRec, 0, btMixer, 0);
-AudioConnection								patchCord5(playWav, 0, hpMixer, 1);
-AudioConnection								patchCord6(playWav, 0, btMixer, 1);
-AudioConnection								patchCord7(btMixer, 0, i2sBtMon, 0);
-AudioConnection								patchCord8(btMixer, 0, i2sBtMon, 1);
-AudioConnection								patchCord9(hpMixer, 0, i2sHpMon, 0);
-AudioConnection								patchCord10(hpMixer, 0, i2sHpMon, 1);
-AudioControlSGTL5000					sgtl5000;	//xy=561,516
+AudioConnection								patchCord3(i2sRec, 0, monMixer, 0);
+AudioConnection								patchCord4(playWav, 0, monMixer, 1);
+AudioConnection								patchCord5(monMixer, 0, i2sMon, 0);
+AudioConnection								patchCord6(monMixer, 0, i2sMon, 1);
+AudioControlSGTL5000					sgtl5000;	//xy=557,396
 // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 String 												rec_path;
@@ -215,11 +215,9 @@ void finishRecording(void) {
  * OUT:	- none
  */
 void startMonitoring(void) {
-	float gain;
-	vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
-	gain = (float)vol_ctrl / 1023.0;
-	hpMixer.gain(MIXER_CH_REC, gain);
-	btMixer.gain(MIXER_CH_REC, 1);
+	monMixer.gain(MIXER_CH_REC, 1);
+	// sgtl5000.lineOutLevel(GSTL5000_OUTLEVEL_DEF);
+	setHpGain();
 }
 
 /* stopMonitoring(void)
@@ -227,8 +225,7 @@ void startMonitoring(void) {
  * To stop monitoring, close the mixer channel
  */
 void stopMonitoring(void) {
-	hpMixer.gain(MIXER_CH_REC, 0);
-	btMixer.gain(MIXER_CH_REC, 0);
+	monMixer.gain(MIXER_CH_REC, 0);
 }
 
 /* setHpGain(void)
@@ -240,8 +237,9 @@ void stopMonitoring(void) {
 void setHpGain(void) {
 	float gain;
 	vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
-	gain = (float)vol_ctrl / 1023.0;
-	hpMixer.gain(MIXER_CH_REC, gain);
+	gain = (float)vol_ctrl * 0.8 / 1023.0;
+	sgtl5000.volume(gain);
+	// sgtl5000.lineOutLevel(GSTL5000_OUTLEVEL_DEF);
 }
 
 /* detectPeaks(void)
@@ -281,8 +279,7 @@ void initAudio(void) {
   sgtl5000.inputSelect(audioInput);
   sgtl5000.volume(SGTL5000_VOLUME_DEF);
 	sgtl5000.lineInLevel(SGTL5000_INLEVEL_DEF);
-  hpMixer.gain(MIXER_CH_REC, 0);
-  hpMixer.gain(MIXER_CH_SDC, 0);
-	btMixer.gain(MIXER_CH_REC, 0);
-	btMixer.gain(MIXER_CH_SDC, 0);
+	sgtl5000.lineOutLevel(GSTL5000_OUTLEVEL_DEF);
+  monMixer.gain(MIXER_CH_REC, 0);
+  monMixer.gain(MIXER_CH_SDC, 0);
 }
