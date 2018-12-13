@@ -43,7 +43,14 @@ void initSDcard(void) {
   if(!(SD.begin(SDCARD_CS_PIN))) {
     while(1) {
       MONPORT.println("Unable to access the SD card");
-      Alarm.delay(500);
+			startLED(&leds[LED_RECORD], LED_MODE_ON);
+			startLED(&leds[LED_MONITOR], LED_MODE_ON);
+			startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
+      Alarm.delay(250);
+			stopLED(&leds[LED_RECORD]);
+			stopLED(&leds[LED_MONITOR]);
+			stopLED(&leds[LED_BLUETOOTH]);
+			Alarm.delay(250);
     }
   }
 }

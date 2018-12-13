@@ -51,7 +51,7 @@
  *	30: 1.22 Volts p-p
  *	31: 1.16 Volts p-p
  */
-#define GSTL5000_OUTLEVEL_DEF	29
+#define GSTL5000_OUTLEVEL_DEF	13
 
 #define ABS_VOL_MAX_VAL				120.0
 

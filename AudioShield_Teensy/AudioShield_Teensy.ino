@@ -38,6 +38,7 @@ void setup() {
 	digitalWrite(GPS_SWITCH_PIN, LOW);
 	pinMode(AUDIO_VOLUME_PIN, INPUT);
 
+	Alarm.delay(500);
 	initAudio();
 	initSDcard();
 	initWaveHeader();

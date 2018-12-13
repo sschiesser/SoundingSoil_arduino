@@ -35,6 +35,9 @@ int														BLE_conn_id;
  */
 void initBc127(void) {
 	bc127Reset();
+	Alarm.delay(2000);
+	bc127BlueOff();
+	Alarm.delay(2000);
 }
 
 /* bc127BlueOn(void)
