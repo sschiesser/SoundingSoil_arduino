@@ -12,6 +12,8 @@
 #define TIME_OFFSET						1 // Central European Time
 // BC127 serial port
 #define BLUEPORT							Serial4
+// BC127 reset pin
+#define BC127_RST_PIN					30
 
 extern struct btDev 					dev_list[DEVLIST_MAXLEN];
 extern unsigned int 					found_dev;

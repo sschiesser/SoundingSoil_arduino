@@ -34,10 +34,12 @@ int														BLE_conn_id;
  * OUT:	- none
  */
 void initBc127(void) {
+	pinMode(BC127_RST_PIN, OUTPUT);
+	digitalWrite(BC127_RST_PIN, HIGH);
 	bc127Reset();
-	Alarm.delay(2000);
-	bc127BlueOff();
-	Alarm.delay(2000);
+	// Alarm.delay(2000);
+	// bc127BlueOff();
+	// Alarm.delay(2000);
 }
 
 /* bc127BlueOn(void)
@@ -67,7 +69,11 @@ void bc127BlueOff(void) {
  * OUT:	- none
  */
 void bc127Reset(void) {
-	sendCmdOut(BCCMD_RESET);
+	// sendCmdOut(BCCMD_RESET);
+	Alarm.delay(10);
+	digitalWrite(BC127_RST_PIN, LOW);
+	Alarm.delay(30);
+	digitalWrite(BC127_RST_PIN, HIGH);
 }
 
 /* bc127AdvStart(void)
@@ -207,6 +213,7 @@ int parseSerialIn(String input) {
 		// ERROR 0xXXXX
 		// PAIR_ERROR (Bluetooth address)
 		// PAIR_OK (Bluetooth address)
+		// TIME (timestamp)
 		case 1: {
 			// MONPORT.printf("- param1 = %s\n", param1.c_str());
 			if(notif.equalsIgnoreCase("A2DP_STREAM_START")) {
@@ -369,7 +376,7 @@ int parseSerialIn(String input) {
 						unsigned long rec_time = param4.toInt();
 						if(rec_time > DEFAULT_TIME_DEC) {
 							time_source = TSOURCE_BLE;
-							adjustTime(TSOURCE_BLE);
+							setCurTime(rec_time, TSOURCE_BLE);
 							MONPORT.printf("Timestamp received: %ld\n", rec_time);
 						}
 						else {

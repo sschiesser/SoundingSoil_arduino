@@ -63,7 +63,7 @@ SLEEP:
 	if(who == WAKESOURCE_RTC) {
 		// if alarm wake-up (from 'snooze') -> remove alarm, adjust time and re-start recording
 		snooze_config -= snooze_rec;
-		adjustTime(TSOURCE_REC);
+		setCurTime(NULL, TSOURCE_REC);
 		working_state.rec_state = RECSTATE_RESTART;
 	}
 	else {
@@ -91,7 +91,7 @@ WORK:
     
   // centralized button call actions coming from SLEEP or WORK mode
   if(button_call == BUTTON_RECORD_PIN) {
-    // MONPORT.print("Record button pressed: rec_state = "); MONPORT.println(working_state.rec_state);
+    MONPORT.print("Record button pressed: rec_state = "); MONPORT.println(working_state.rec_state);
     if(working_state.rec_state == RECSTATE_OFF) {
 			working_state.rec_state = RECSTATE_REQ_ON;
     }
@@ -104,6 +104,7 @@ WORK:
 		button_call = (enum bCalls)BCALL_NONE;
   }
   if(button_call == BUTTON_MONITOR_PIN) {
+    MONPORT.print("Monitor button pressed: mon_state = "); MONPORT.println(working_state.mon_state);
 		if(working_state.mon_state == MONSTATE_OFF) {
 			working_state.mon_state = MONSTATE_REQ_ON;
 		}
@@ -113,6 +114,7 @@ WORK:
 		button_call = (enum bCalls)BCALL_NONE;
 	}
   if(button_call == BUTTON_BLUETOOTH_PIN) {
+    MONPORT.print("Bluetooth button pressed: ble_state = "); MONPORT.println(working_state.ble_state);
 		if(working_state.ble_state == BLESTATE_OFF) {
 			working_state.ble_state = BLESTATE_REQ_ADV;
 		}
@@ -184,6 +186,7 @@ WORK:
 				working_state.rec_state, working_state.mon_state);
 			startLED(&leds[LED_MONITOR], LED_MODE_ON);
 			startMonitoring();
+			working_state.mon_state = MONSTATE_ON;
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
 				sendCmdOut(BCCMD_MON_START);
 				Alarm.delay(50);
@@ -194,7 +197,6 @@ WORK:
 				sendCmdOut(BCNOT_MON_STATE);
 				Alarm.delay(50);
 			}
-			working_state.mon_state = MONSTATE_ON;
 			break;
 		}
 		
@@ -230,8 +232,8 @@ WORK:
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
 			}
 			else {
-				bc127Reset();
-				delay(500);
+				// bc127Reset();
+				// delay(500);
 				bc127BlueOn();
 				delay(500);
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
@@ -336,6 +338,7 @@ WORK:
     String manInput = MONPORT.readStringUntil('\n');
     int len = manInput.length() - 1;
     BLUEPORT.print(manInput.substring(0, len)+'\r');
+		MONPORT.printf("Sent to BLUEPORT: %s\n", manInput.c_str());
   }
 
 	// Stay awake or go to sleep?...

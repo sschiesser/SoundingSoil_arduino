@@ -8,7 +8,7 @@
 
 #define DEFAULT_TIME_DEC			946684800 // 01.01.2000, 00h00m00
 
-extern unsigned int						received_time;
+extern time_t									received_time;
 extern int										alarm_rec_id;
 extern int										alarm_wait_id;
 extern int										alarm_adv_id;
@@ -27,7 +27,7 @@ extern enum tSources					time_source;
  * FUNCTIONS DECLARATIONS
  * ====================== */
 void setDefaultTime(void);
-void adjustTime(enum tSources source);
+void setCurTime(time_t cur_time, enum tSources source);
 void alarmAdvTimeout(void);
 void timerRecDone(void);
 void alarmNextRec(void);

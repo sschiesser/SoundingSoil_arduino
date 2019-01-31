@@ -27,7 +27,7 @@
 // Monitoring serial port
 #define MONPORT								Serial
 
-#define BLEADV_TIMEOUT_S			120			
+#define BLEADV_TIMEOUT_S			3600			
 
 // Wake-up sources from hibernating mode
 #define WAKESOURCE_BUT_REC		BUTTON_RECORD_PIN

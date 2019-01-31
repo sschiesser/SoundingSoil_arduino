@@ -9,7 +9,7 @@
 // Time source
 enum tSources									time_source;
 // Last received time from external source
-unsigned int									received_time = 0;
+time_t												received_time = 0;
 // Ids of the WORK-state timers
 int														alarm_rec_id;
 int														alarm_wait_id;
@@ -29,14 +29,15 @@ void setDefaultTime(void) {
 }
 
 
-/* adjustTime(enum tSources)
- * -------------------------
+/* setCurTime(time_t, enum tSources)
+ * ---------------------------------
  * Adjust local time according to an external source
  * (GPS or app over BLE) which has provided a new value.
- * IN:	- external source (enum tSources)
+ * IN:	- time value (time_t)
+ *			- external source (enum tSources)
  * OUT:	- none
  */
-void adjustTime(enum tSources source) {
+void setCurTime(time_t cur_time, enum tSources source) {
 	int year;
 	byte month, day, hour, minute, second;
 	unsigned long fix_age;
@@ -50,8 +51,8 @@ void adjustTime(enum tSources source) {
 			break;
 			
 		case TSOURCE_BLE:
-			setTime(received_time);
-			Teensy3Clock.set(received_time);
+			setTime(cur_time);
+			Teensy3Clock.set(cur_time);
 			break;
 		
 		case TSOURCE_REC:
