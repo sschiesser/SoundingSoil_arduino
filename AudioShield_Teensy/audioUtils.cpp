@@ -63,7 +63,7 @@ void prepareRecording(bool sync) {
 			startLED(&leds[LED_RECORD], LED_MODE_WARNING_LONG);
 		}
 		else {
-			time_source = TSOURCE_GPS;
+			setCurTime(0, TSOURCE_GPS);
 			startLED(&leds[LED_RECORD], LED_MODE_ON);
 		}
 		next_record.ts = now();
@@ -202,7 +202,7 @@ void resetRecInfo(struct recInfo* rec) {
 void finishRecording(void) {
 	resetRecInfo(&last_record);
 	resetRecInfo(&next_record);
-	time_source = TSOURCE_NONE;
+	if(time_source == TSOURCE_GPS) time_source = TSOURCE_TEENSY;
 	startLED(&leds[LED_RECORD], LED_MODE_WARNING_SHORT);
 	// Wait until the notification is finished before sleeping or doing whatever.
 	Alarm.delay(500);

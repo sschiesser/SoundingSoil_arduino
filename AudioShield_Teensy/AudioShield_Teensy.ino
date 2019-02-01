@@ -43,7 +43,7 @@ void setup() {
 	initSDcard();
 	initWaveHeader();
 	setDefaultValues();
-	setDefaultTime();
+	setTimeSource();
 	initBc127();
 	Alarm.delay(500);
 }
@@ -63,7 +63,6 @@ SLEEP:
 	if(who == WAKESOURCE_RTC) {
 		// if alarm wake-up (from 'snooze') -> remove alarm, adjust time and re-start recording
 		snooze_config -= snooze_rec;
-		setCurTime(NULL, TSOURCE_REC);
 		working_state.rec_state = RECSTATE_RESTART;
 	}
 	else {

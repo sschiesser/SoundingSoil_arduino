@@ -63,7 +63,6 @@ bool gpsGetData(void) {
 			retries++;
 		}
 		else {
-			setCurTime(NULL, TSOURCE_GPS);
 			fix_found = true;
 		}
 	} while((!fix_found) && (retries < 3));

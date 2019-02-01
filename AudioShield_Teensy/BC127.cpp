@@ -374,8 +374,7 @@ int parseSerialIn(String input) {
 					}
 					else if(param3.equalsIgnoreCase("time")) {
 						unsigned long rec_time = param4.toInt();
-						if(rec_time > DEFAULT_TIME_DEC) {
-							time_source = TSOURCE_BLE;
+						if(rec_time > MIN_TIME_DEC) {
 							setCurTime(rec_time, TSOURCE_BLE);
 							MONPORT.printf("Timestamp received: %ld\n", rec_time);
 						}

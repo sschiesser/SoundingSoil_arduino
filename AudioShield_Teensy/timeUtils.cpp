@@ -15,17 +15,16 @@ int														alarm_rec_id;
 int														alarm_wait_id;
 int														alarm_adv_id;
 
-/* setDefaultTime(void)
- * --------------------
- * Set the Teensy clock to DEFAULT_TIME and
- * the time source to none
+/* setTimeSource(void)
+ * -------------------
+ * Test if the time value stored in Teensy3Clock
+ * has been already set once or is somewhere in the 70s.
  * IN:	- none
  * OUT:	- none
  */
-void setDefaultTime(void) {
-	setTime(DEFAULT_TIME_DEC);
-	Teensy3Clock.set(DEFAULT_TIME_DEC);
-	time_source = TSOURCE_NONE;
+void setTimeSource(void) {
+	if(now() < MIN_TIME_DEC) time_source = TSOURCE_NONE;
+	else time_source = TSOURCE_TEENSY;
 }
 
 
@@ -48,18 +47,15 @@ void setCurTime(time_t cur_time, enum tSources source) {
 			setTime(hour, minute, second, day, month, year);
 			adjustTime(TIME_OFFSET * SECS_PER_HOUR);
 			Teensy3Clock.set(now());
+			time_source = TSOURCE_TEENSY;
 			break;
 			
 		case TSOURCE_BLE:
 			setTime(cur_time);
 			Teensy3Clock.set(cur_time);
+			time_source = TSOURCE_TEENSY;
 			break;
 		
-		case TSOURCE_REC:
-			setTime(next_record.ts);
-			Teensy3Clock.set(next_record.ts);
-			break;
-			
 		default:
 			break;
 	}

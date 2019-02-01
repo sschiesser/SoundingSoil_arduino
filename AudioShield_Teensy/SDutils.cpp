@@ -69,14 +69,15 @@ String createSDpath(void) {
 	tmElements_t tm;
 	char buf[24];
 	
-	breakTime(next_record.ts, tm);
 	if(time_source != TSOURCE_NONE) {
+		breakTime(now(), tm);
 		sprintf(buf, "%02d%02d%02d", (tm.Year-30), tm.Month, tm.Day);
 		dir_name.concat(buf);
 		sprintf(buf, "%02d%02d%02d.wav", tm.Hour, tm.Minute, tm.Second);
 		file_name.concat(buf);
 	}
 	else {
+		breakTime(next_record.ts, tm);
 		sprintf(buf, "u%02d%02d%02d", (tm.Year-30), tm.Month, tm.Day);
 		dir_name.concat(buf);
 		sprintf(buf, "u%02d%02d%02d.wav", tm.Hour, tm.Minute, tm.Second);

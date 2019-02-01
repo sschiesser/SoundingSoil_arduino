@@ -6,7 +6,7 @@
 
 #include "main.h"
 
-#define DEFAULT_TIME_DEC			946684800 // 01.01.2000, 00h00m00
+#define MIN_TIME_DEC					1549014885  // 01.02.2019, 09h54m00
 
 extern time_t									received_time;
 extern int										alarm_rec_id;
@@ -16,7 +16,7 @@ extern int										alarm_adv_id;
 // Time sources
 enum tSources {
 	TSOURCE_NONE,
-	TSOURCE_REC,
+	TSOURCE_TEENSY,
 	TSOURCE_GPS,
 	TSOURCE_BLE
 };
@@ -26,7 +26,7 @@ extern enum tSources					time_source;
 /* ======================
  * FUNCTIONS DECLARATIONS
  * ====================== */
-void setDefaultTime(void);
+void setTimeSource(void);
 void setCurTime(time_t cur_time, enum tSources source);
 void alarmAdvTimeout(void);
 void timerRecDone(void);
