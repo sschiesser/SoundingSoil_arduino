@@ -15,6 +15,9 @@ int														alarm_rec_id;
 int														alarm_wait_id;
 int														alarm_adv_id;
 
+time_t getTeensy3Time() {
+	return Teensy3Clock.get();
+}
 /* setTimeSource(void)
  * -------------------
  * Test if the time value stored in Teensy3Clock
@@ -23,6 +26,8 @@ int														alarm_adv_id;
  * OUT:	- none
  */
 void setTimeSource(void) {
+	setSyncProvider(getTeensy3Time);
+	MONPORT.printf("Time at startup: %ld\n", now());
 	if(now() < MIN_TIME_DEC) time_source = TSOURCE_NONE;
 	else time_source = TSOURCE_TEENSY;
 }
