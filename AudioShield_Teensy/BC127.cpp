@@ -121,7 +121,7 @@ int parseSerialIn(String input) {
 	int slice6 = input.indexOf(" ", slice5+1);
 	int slice7 = input.indexOf(" ", slice6+1);
 	int slice8 = input.indexOf(" ", slice7+1);
-	MONPORT.printf("IN: %s\n", input.c_str());
+	MONPORT.printf("From BC127: %s\n", input.c_str());
 	// no space found -> notification without parameter
 	if(slice1 == -1) {
 		notif = input;
@@ -183,15 +183,21 @@ int parseSerialIn(String input) {
 			}
 		}
 	}
+	MONPORT.printf("#params: %d\n", nb_params);
 
 	// MONPORT.printf("%d parameters found:\n- notif = %s\n", nb_params, notif.c_str());
 	
 	switch(nb_params) {
+		// PENDING
 		// INQU_OK
 		// PAIR_PENDING
 		// READY
 		case 0: {
-			if(notif.equalsIgnoreCase("INQU_OK")) {
+			if(notif.equalsIgnoreCase("PENDING")) {
+				return BCNOT_INQ_START;
+			}
+			else if(notif.equalsIgnoreCase("INQU_OK")) {
+				return BCNOT_INQ_DONE;
 			}
 			else if(notif.equalsIgnoreCase("PAIR_PENDING")) {
 			}
@@ -444,8 +450,17 @@ int parseSerialIn(String input) {
 			break;
 		}
 		
+		// INQUIRY(BDADDR) ("NAME SURNAME") (COD) (RSSI)
 		// RECV [link_ID] (size) (report data) <-- (report data) with 3 parameters
 		case 5: {
+			if(notif.equalsIgnoreCase("INQUIRY")) {
+				String addr = param1;
+				String name = param2.substring(1, (param2.length()-1));
+				String caps = param4;
+				unsigned int stren = param5.substring(1, 3).toInt();
+				populateDevlist(addr, name, caps, stren);
+				return BCNOT_INQ_STATE;
+			}
 			break;
 		}
 		
@@ -628,16 +643,26 @@ bool sendCmdOut(int msg) {
 			cmdLine = "SEND " + String(BLE_conn_id) + " VOL " + String(vol_value) + "\r";
 			break;
 		}
+		// Starting inquiry sequences -> send notification
+		case BCNOT_INQ_START: {
+			cmdLine = "SEND " + String(BLE_conn_id) + " INQ START\r";
+			break;
+		}
     // Results of the inquiry -> store devices with address & signal strength
     case BCNOT_INQ_STATE: {
 			for(unsigned int i = 0; i < found_dev; i++) {
 				devString = dev_list[i].address;
 				devString.concat(" ");
 				devString.concat(dev_list[i].strength);
-				cmdLine = "SEND " + String(BLE_conn_id) + " " + devString + "\r";
+				cmdLine = "SEND " + String(BLE_conn_id) + " INQ " + devString + "\r";
 				BLUEPORT.print(cmdLine);
 			}
 			cmdLine = "";
+			break;
+		}
+		// Inquiry sequence done -> send notification
+		case BCNOT_INQ_DONE: {
+			cmdLine = "SEND " + String(BLE_conn_id) + " INQ DONE\r";
 			break;
 		}
 		// RWIN values notification
@@ -651,12 +676,12 @@ bool sendCmdOut(int msg) {
 		// FILEPATH notification !!CURRENTLY MAX NOTIFICATION SIZE = 20 chars -> change to at least 26
 		case BCNOT_FILEPATH: {
 			cmdLine = "SEND " + String(BLE_conn_id) + " FP " + rec_path + "\r";
-			MONPORT.printf("Sending: %s\n", cmdLine.c_str());
+			// MONPORT.printf("Sending: %s\n", cmdLine.c_str());
 			break;
 		}
 		// ERROR: BT disconnected
 		case BCERR_BT_DIS: {
-			cmdLine = "SEND " + String(BLE_conn_id) + " ERR 0x0001\r";
+			cmdLine = "SEND " + String(BLE_conn_id) + " ERROR NO BT!\r";
 			break;
 		}
 		// No recognised command -> send negative confirmation
@@ -664,7 +689,7 @@ bool sendCmdOut(int msg) {
 			return false;
 			break;
   }
-	MONPORT.println(cmdLine.c_str());
+	MONPORT.printf("To BC127: %s\n", cmdLine.c_str());
 	// Send the prepared command line to UART
   BLUEPORT.print(cmdLine);
   // Send positive confirmation

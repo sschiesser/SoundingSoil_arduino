@@ -7,10 +7,10 @@
 // Arduino or Teensyduino libraries
 #include <Audio.h>
 #include <Bounce.h>
-#include <SD.h>
+#include <SPI.h>
+#include <SdFat.h>
 #include <SerialFlash.h>
 #include <Snooze.h>
-#include <SPI.h>
 #include <TimeLib.h>
 #include <TimeAlarms.h>
 #include <TinyGPS.h>
@@ -23,6 +23,8 @@
 #include "IOutils.h"
 #include "audioUtils.h"
 #include "timeUtils.h"
+
+// SdFat													SD;
 
 // Monitoring serial port
 #define MONPORT								Serial

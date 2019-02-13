@@ -93,7 +93,9 @@ String createSDpath(void) {
 	else {
 		SD.mkdir(dir_name);
 	}
-
+	
+	// String temppath = "il etait une fois un petit canard vert...";
+	// return temppath;
 	return path;
 }
 

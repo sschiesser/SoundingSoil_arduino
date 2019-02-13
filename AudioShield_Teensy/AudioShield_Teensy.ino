@@ -151,6 +151,10 @@ WORK:
 		case RECSTATE_REQ_WAIT: {
 			stopRecording(next_record.path);
 			pauseRecording();
+			// if(working_state.ble_state == BLESTATE_CONNECTED) {
+				// sendCmdOut(BCNOT_REC_STATE);
+				// sendCmdOut(BCNOT_FILEPATH);
+			// }
 			break;
 		}
 		
@@ -170,6 +174,7 @@ WORK:
 			working_state.rec_state = RECSTATE_OFF;
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_REC_STATE);
+				sendCmdOut(BCNOT_FILEPATH);
 			}
 			break;
 		}
@@ -372,6 +377,7 @@ WORK:
 				working_state.rec_state = RECSTATE_IDLE;
 				if(working_state.ble_state == BLESTATE_CONNECTED) {
 					sendCmdOut(BCNOT_REC_STATE);
+					sendCmdOut(BCNOT_FILEPATH);
 					delay(100);
 				}
 				goto SLEEP;
@@ -381,6 +387,7 @@ WORK:
 				working_state.rec_state = RECSTATE_WAIT;
 				if(working_state.ble_state == BLESTATE_CONNECTED) {
 					sendCmdOut(BCNOT_REC_STATE);
+					sendCmdOut(BCNOT_FILEPATH);
 				}
 				goto WORK;
 			}

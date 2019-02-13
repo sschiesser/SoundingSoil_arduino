@@ -8,17 +8,6 @@
 #include "audioUtils.h"
 
 // Audio connections definition
-#include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
-#include <SD.h>
-#include <SerialFlash.h>
-
-#include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
-#include <SD.h>
-#include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
 AudioInputI2S									i2sRec;		//xy=388,213
@@ -36,7 +25,7 @@ AudioConnection								patchCord6(monMixer, 0, i2sMon, 1);
 AudioControlSGTL5000					sgtl5000;	//xy=557,396
 // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
-String 												rec_path;
+String 												rec_path = "--";
 int														vol_ctrl;
 float													vol_value;
 elapsedMillis									peak_interval;
@@ -170,6 +159,7 @@ void pauseRecording(void) {
 	last_record = next_record;
 	next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
 									(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
+	rec_path = "--";
 	// MONPORT.printf("Next record: %ld\n", next_record.ts);
 	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);
@@ -202,6 +192,7 @@ void resetRecInfo(struct recInfo* rec) {
 void finishRecording(void) {
 	resetRecInfo(&last_record);
 	resetRecInfo(&next_record);
+	rec_path = "--";
 	if(time_source == TSOURCE_GPS) time_source = TSOURCE_TEENSY;
 	startLED(&leds[LED_RECORD], LED_MODE_WARNING_SHORT);
 	// Wait until the notification is finished before sleeping or doing whatever.
