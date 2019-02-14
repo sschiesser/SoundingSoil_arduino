@@ -19,7 +19,8 @@ extern struct btDev 					dev_list[DEVLIST_MAXLEN];
 extern unsigned int 					found_dev;
 extern String									BT_peer_address;
 extern String									BT_peer_name;
-extern int										BT_conn_id;
+extern int										BT_conn_id1;
+extern int										BT_conn_id2;
 extern int										BLE_conn_id;
 
 // Serial command messages
@@ -27,12 +28,11 @@ enum serialMsg {
   BCCMD__NOTHING = 0,
   BCCMD_ADV_ON,
 	BCCMD_ADV_OFF,
-  BCCMD_BLE_SEND,
 	BCCMD_BLUE_OFF,
 	BCCMD_BLUE_ON,
   BCCMD_DEV_CONNECT,
-	BCCMD_DEV_DISCONNECT,
-  BCCMD_DEV_LIST,
+	BCCMD_DEV_DISCONNECT1,
+	BCCMD_DEV_DISCONNECT2,
   BCCMD_INQUIRY,
 	BCCMD_MON_PAUSE,
   BCCMD_MON_START,
@@ -40,21 +40,24 @@ enum serialMsg {
   BCCMD_REC_START,
   BCCMD_REC_STOP,
 	BCCMD_RESET,
-	BCCMD_RWIN_SET,
+	BCCMD_STATUS,
 	BCCMD_VOL_A2DP,
   BCCMD_VOL_DOWN,
   BCCMD_VOL_UP,
+	// ----------
 	BCNOT_BT_STATE,
 	BCNOT_FILEPATH,
+	BCNOT_INQ_DONE,
 	BCNOT_INQ_START,
   BCNOT_INQ_STATE,
-	BCNOT_INQ_DONE,
 	BCNOT_MON_STATE,
 	BCNOT_REC_STATE,
-	BCNOT_RWIN_ERR,
 	BCNOT_RWIN_OK,
 	BCNOT_RWIN_VALS,
 	BCNOT_VOL_LEVEL,
+	// ----------
+	BCERR_RWIN_BAD_REQ,
+	BCERR_RWIN_WRONG_PARAMS,
 	BCERR_VOL_BT_DIS,
   MAX_OUTPUTS
 };

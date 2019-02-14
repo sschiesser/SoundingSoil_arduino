@@ -295,17 +295,24 @@ WORK:
   // BT state actions
 	switch(working_state.bt_state) {
 		case BTSTATE_REQ_CONN: {
-			Alarm.free(alarm_adv_id);
-			startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
+			// Alarm.free(alarm_adv_id);
 			working_state.bt_state = BTSTATE_CONNECTED;
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
-				sendCmdOut(BCNOT_BT_STATE);
+				startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
 			}
+			else {
+				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
+			}
+			sendCmdOut(BCNOT_BT_STATE);
 			break;
 		}
 		
 		case BTSTATE_REQ_DIS: {
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
+				sendCmdOut(BCCMD_DEV_DISCONNECT1);
+				Alarm.delay(100);
+				sendCmdOut(BCCMD_DEV_DISCONNECT2);
+				Alarm.delay(100);
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_SLOW);
 				sendCmdOut(BCNOT_BT_STATE);
 			}
@@ -315,7 +322,8 @@ WORK:
 				working_state.ble_state = BLESTATE_OFF;
 			}
 			working_state.bt_state = BTSTATE_OFF;
-			BT_conn_id = 0;
+			BT_conn_id1 = 0;
+			BT_conn_id2 = 0;
 			BT_peer_address = "";
 			BT_peer_name = "auto";
 			
@@ -425,7 +433,8 @@ void setDefaultValues(void) {
 	rec_window.occurences = RWIN_OCC_DEF;
 	last_record.cnt = 0;
 	next_record = last_record;
-	BT_conn_id = 0;
+	BT_conn_id1 = 0;
+	BT_conn_id2 = 0;
 	BLE_conn_id = 0;
 	BT_peer_address = "";
 	BT_peer_name = "auto";
