@@ -1,0 +1,1109 @@
+
+C:\_code\Arduino\SoundingSoil\AudioShield_Teensy\build/AudioShield_Teensy.ino.elf:     file format elf32-littlearm
+
+SYMBOL TABLE:
+00000000 l    d  .text	00000000 .text
+00017d28 l    d  .fini	00000000 .fini
+00017d2c l    d  .ARM.exidx	00000000 .ARM.exidx
+1fff0000 l    d  .usbdescriptortable	00000000 .usbdescriptortable
+1fff0200 l    d  .dmabuffers	00000000 .dmabuffers
+1fff45d0 l    d  .usbbuffers	00000000 .usbbuffers
+1fff4930 l    d  .data	00000000 .data
+1fff5560 l    d  .bss	00000000 .bss
+00000000 l    d  .ARM.attributes	00000000 .ARM.attributes
+00000000 l    d  .comment	00000000 .comment
+00000000 l    d  .debug_info	00000000 .debug_info
+00000000 l    d  .debug_abbrev	00000000 .debug_abbrev
+00000000 l    d  .debug_loc	00000000 .debug_loc
+00000000 l    d  .debug_aranges	00000000 .debug_aranges
+00000000 l    d  .debug_ranges	00000000 .debug_ranges
+00000000 l    d  .debug_line	00000000 .debug_line
+00000000 l    d  .debug_str	00000000 .debug_str
+00000000 l    d  .debug_frame	00000000 .debug_frame
+00000000 l    df *ABS*	00000000 mk20dx128.c
+0000e800 l     F .text	00000002 startup_default_late_hook
+00000000 l    df *ABS*	00000000 crtstuff.c
+00000410 l     F .text	00000000 __do_global_dtors_aux
+1fff5560 l       .bss	00000000 completed.8605
+00000434 l     F .text	00000000 frame_dummy
+1fff5564 l       .bss	00000000 object.8610
+00017cc4 l     O .text	00000000 __frame_dummy_init_array_entry
+00000000 l    df *ABS*	00000000 AudioShield_Teensy.ino.cpp
+00001490 l     F .text	000001a0 _GLOBAL__sub_I_button_wakeup
+00000000 l    df *ABS*	00000000 BC127.cpp
+00001630 l     F .text	0000002c __tcf_0
+0000165c l     F .text	00000064 sendCmdOut(int) [clone .constprop.5]
+000016c0 l     F .text	00000064 sendCmdOut(int) [clone .constprop.6]
+00001724 l     F .text	00000074 sendCmdOut(int) [clone .constprop.3]
+00001798 l     F .text	00000074 sendCmdOut(int) [clone .constprop.4]
+000032b0 l     F .text	00000074 _GLOBAL__sub_I_dev_list
+00000000 l    df *ABS*	00000000 IOutils.cpp
+00003324 l     F .text	0000002c __tcf_0
+00003350 l     F .text	0000002c __tcf_1
+00003a1c l     F .text	00000088 _GLOBAL__sub_I_but_rec
+00000000 l    df *ABS*	00000000 SDutils.cpp
+00003ca8 l     F .text	0000000c _GLOBAL__sub_I_wave_header
+00000000 l    df *ABS*	00000000 audioUtils.cpp
+000043b8 l     F .text	00000450 _GLOBAL__sub_I_i2sRec
+1fff0200 l     O .dmabuffers	00003cf0 initAudio()::data
+00000000 l    df *ABS*	00000000 gpsRoutines.cpp
+000049c0 l     F .text	0000000c _GLOBAL__sub_I_gps
+000172a8 l     O .text	00000045 str1
+00017318 l     O .text	00000051 str2
+0001736c l     O .text	00000044 str3
+000173b0 l     O .text	00000051 str4
+00000000 l    df *ABS*	00000000 timeUtils.cpp
+00000000 l    df *ABS*	00000000 analyze_peak.cpp
+00000000 l    df *ABS*	00000000 control_sgtl5000.cpp
+00000000 l    df *ABS*	00000000 filter_biquad.cpp
+00000000 l    df *ABS*	00000000 input_adc.cpp
+00005644 l     F .text	00000018 _GLOBAL__sub_I__ZN16AudioInputAnalog10block_leftE
+00000000 l    df *ABS*	00000000 input_adcs.cpp
+0000565c l     F .text	00000030 _GLOBAL__sub_I__ZN22AudioInputAnalogStereo10block_leftE
+00000000 l    df *ABS*	00000000 input_i2s.cpp
+0000588c l     F .text	00000018 _GLOBAL__sub_I__ZN13AudioInputI2S10block_leftE
+1fff3ef0 l     O .dmabuffers	00000200 i2s_rx_buffer
+00000000 l    df *ABS*	00000000 input_i2s_quad.cpp
+000058a4 l     F .text	00000018 _GLOBAL__sub_I__ZN17AudioInputI2SQuad9block_ch1E
+00000000 l    df *ABS*	00000000 input_pdm.cpp
+000058bc l     F .text	00000018 _GLOBAL__sub_I__ZN13AudioInputPDM10block_leftE
+00000000 l    df *ABS*	00000000 input_tdm.cpp
+000058d4 l     F .text	00000018 _GLOBAL__sub_I__ZN13AudioInputTDM14block_incomingE
+00000000 l    df *ABS*	00000000 C:\_code\Arduino\SoundingSoil\AudioShield_Teensy\build\libraries\Audio\memcpy_audio.S.o
+000058f4 l       .text	00000000 .loopLR
+00005938 l       .text	00000000 .loopL
+00005978 l       .text	00000000 .loopR
+000059b4 l       .text	00000000 .loopQuad
+00000000 l    df *ABS*	00000000 mixer.cpp
+00000000 l    df *ABS*	00000000 output_adat.cpp
+00005ad8 l     F .text	00000018 _GLOBAL__sub_I__ZN15AudioOutputADAT13block_ch1_1stE
+00000000 l    df *ABS*	00000000 output_dac.cpp
+00005af0 l     F .text	00000018 _GLOBAL__sub_I__ZN17AudioOutputAnalog14block_left_1stE
+00000000 l    df *ABS*	00000000 output_dacs.cpp
+00005b08 l     F .text	00000018 _GLOBAL__sub_I__ZN23AudioOutputAnalogStereo14block_left_1stE
+00000000 l    df *ABS*	00000000 output_i2s.cpp
+00005f70 l     F .text	00000018 _GLOBAL__sub_I__ZN14AudioOutputI2S14block_left_1stE
+1fff40f0 l     O .dmabuffers	00000200 i2s_tx_buffer
+00000000 l    df *ABS*	00000000 output_i2s_quad.cpp
+00005f88 l     F .text	00000018 _GLOBAL__sub_I__ZN18AudioOutputI2SQuad13block_ch1_1stE
+00000000 l    df *ABS*	00000000 output_pt8211.cpp
+00005fa0 l     F .text	00000018 _GLOBAL__sub_I__ZN17AudioOutputPT821114block_left_1stE
+00000000 l    df *ABS*	00000000 output_pwm.cpp
+00005fb8 l     F .text	00000018 _GLOBAL__sub_I__ZN14AudioOutputPWM9block_1stE
+00000000 l    df *ABS*	00000000 output_spdif.cpp
+00005fd0 l     F .text	00000018 _GLOBAL__sub_I__ZN16AudioOutputSPDIF14block_left_1stE
+00000000 l    df *ABS*	00000000 output_tdm.cpp
+00005fe8 l     F .text	00000018 _GLOBAL__sub_I__ZN14AudioOutputTDM11block_inputE
+00000000 l    df *ABS*	00000000 play_sd_wav.cpp
+00000000 l    df *ABS*	00000000 record_queue.cpp
+00000000 l    df *ABS*	00000000 SPI.cpp
+00000000 l    df *ABS*	00000000 File.cpp
+00000000 l    df *ABS*	00000000 SD.cpp
+00007a34 l     F .text	0000002c _GLOBAL__sub_I__ZN5SDLib20getNextPathComponentEPKcPjPc
+00000000 l    df *ABS*	00000000 Sd2Card.cpp
+00007a60 l     F .text	000000a4 Sd2Card::readEnd() [clone .part.6]
+000085f4 l     F .text	00000010 _GLOBAL__sub_I__ZN7Sd2Card11cardCommandEhm
+1fff6404 l     O .bss	00000004 settings
+1fff6408 l     O .bss	00000001 chip_select_asserted
+00000000 l    df *ABS*	00000000 SdFile.cpp
+000089b0 l     F .text	00000264 SdFile::open(SdFile*, char const*, unsigned char) [clone .part.25] [clone .constprop.29]
+00000000 l    df *ABS*	00000000 SdVolume.cpp
+00009308 l     F .text	000000d8 SdVolume::fatPut(unsigned long, unsigned long) [clone .part.3]
+00000000 l    df *ABS*	00000000 Bounce.cpp
+00000000 l    df *ABS*	00000000 SdioTeensy.cpp
+1fff661c l     O .bss	00000004 m_irqstat
+1fff6620 l     O .bss	00000001 m_dmaBusy
+00000000 l    df *ABS*	00000000 SnoozeAlarm.cpp
+00000000 l    df *ABS*	00000000 SnoozeDigital.cpp
+00000000 l    df *ABS*	00000000 Time.cpp
+1fff6670 l     O .bss	00000007 tm
+1fff6678 l     O .bss	00000004 sysTime
+1fff667c l     O .bss	00000001 Status
+1fff6684 l     O .bss	00000004 prevMillis
+1fff498c l     O .data	00000004 syncInterval
+000175d0 l     O .text	0000000c monthDays
+1fff6688 l     O .bss	00000004 nextSyncTime
+00000000 l    df *ABS*	00000000 TimeAlarms.cpp
+0000b09c l     F .text	00000180 AlarmClass::updateNextTrigger() [clone .part.0]
+0000b6dc l     F .text	0000000c _GLOBAL__sub_I__ZN10AlarmClassC2Ev
+00000000 l    df *ABS*	00000000 TinyGPS.cpp
+00000000 l    df *ABS*	00000000 WireKinetis.cpp
+0000c584 l       .text	00000000 L_1647_delayMicroseconds
+0000c592 l       .text	00000000 L_1661_delayMicroseconds
+0000c5d8 l       .text	00000000 L_1710_delayMicroseconds
+0000c90c l       .text	00000000 L_3206_delayMicroseconds
+1fff6750 l     O .bss	00000001 TwoWire::isr()::receiving
+00000000 l    df *ABS*	00000000 AudioStream.cpp
+00000000 l    df *ABS*	00000000 DMAChannel.cpp
+00000000 l    df *ABS*	00000000 EventResponder.cpp
+00000000 l    df *ABS*	00000000 HardwareSerial4.cpp
+00000000 l    df *ABS*	00000000 IntervalTimer.cpp
+0000d688 l     F .text	00000002 dummy_funct()
+1fff4ae4 l     O .data	00000010 funct_table
+00000000 l    df *ABS*	00000000 Print.cpp
+00000000 l    df *ABS*	00000000 Stream.cpp
+00000000 l    df *ABS*	00000000 WString.cpp
+00000000 l    df *ABS*	00000000 analog.c
+0000e34c l     F .text	00000144 wait_for_cal
+1fff67fc l     O .bss	00000001 analog_right_shift
+1fff67fd l     O .bss	00000001 calibrating
+0001773c l     O .text	00000048 pin2sc1a
+1fff4af4 l     O .data	00000001 analog_config_bits
+1fff67fe l     O .bss	00000001 analogReadBusyADC1
+1fff67ff l     O .bss	00000001 analogReadBusyADC0
+1fff6800 l     O .bss	00000001 analog_reference_internal
+1fff4af5 l     O .data	00000001 analog_num_average
+00000000 l    df *ABS*	00000000 main.cpp
+00000000 l    df *ABS*	00000000 memcpy-armv7m.S.o
+00000000 l    df *ABS*	00000000 nonstd.c
+00000000 l    df *ABS*	00000000 pins_teensy.c
+00000000 l    df *ABS*	00000000 serial1.c
+1fff6808 l     O .bss	00000004 rts_pin
+1fff680c l     O .bss	00000001 transmitting
+1fff680d l     O .bss	00000001 rx_buffer_tail
+1fff6810 l     O .bss	00000040 tx_buffer
+1fff6850 l     O .bss	00000001 rx_pin_num
+1fff6854 l     O .bss	00000040 rx_buffer
+1fff6894 l     O .bss	00000001 rx_buffer_head
+1fff4afc l     O .data	00000001 tx_pin_num
+1fff6895 l     O .bss	00000001 tx_buffer_tail
+1fff6898 l     O .bss	00000004 transmit_pin
+1fff689c l     O .bss	00000001 tx_buffer_head
+00000000 l    df *ABS*	00000000 serial4.c
+1fff68a0 l     O .bss	00000004 rts_pin
+1fff68a4 l     O .bss	00000001 transmitting
+1fff4afd l     O .data	00000001 rx_pin_num
+1fff68a5 l     O .bss	00000001 rx_buffer_tail
+1fff68a8 l     O .bss	00000028 tx_buffer
+1fff68d0 l     O .bss	00000040 rx_buffer
+1fff6910 l     O .bss	00000001 rx_buffer_head
+1fff4afe l     O .data	00000001 tx_pin_num
+1fff6911 l     O .bss	00000001 tx_buffer_tail
+1fff6914 l     O .bss	00000004 transmit_pin
+1fff6918 l     O .bss	00000001 tx_buffer_head
+00000000 l    df *ABS*	00000000 usb_dev.c
+1fff691c l     O .bss	00000004 ep0_tx_ptr
+1fff6920 l     O .bss	00000010 rx_last
+1fff6930 l     O .bss	00000002 ep0_tx_len
+1fff6934 l     O .bss	00000040 ep0_rx0_buf
+1fff6974 l     O .bss	00000010 rx_first
+1fff6984 l     O .bss	00000001 ep0_tx_data_toggle
+1fff6988 l     O .bss	00000040 ep0_rx1_buf
+1fff69c8 l     O .bss	00000010 tx_first
+1fff0000 l     O .usbdescriptortable	000000a0 table
+1fff69d8 l     O .bss	00000010 tx_last
+1fff69e8 l     O .bss	00000008 setup
+1fff69f0 l     O .bss	00000001 ep0_tx_bdt_bank
+1fff69f4 l     O .bss	00000008 reply_buffer
+1fff6a00 l     O .bss	00000004 tx_state
+00000000 l    df *ABS*	00000000 usb_inst.cpp
+00000000 l    df *ABS*	00000000 usb_mem.c
+1fff4b10 l     O .data	00000004 usb_buffer_available
+00000000 l    df *ABS*	00000000 usb_serial.c
+1fff6a05 l     O .bss	00000001 tx_noautoflush
+1fff6a08 l     O .bss	00000004 tx_packet
+1fff6a0c l     O .bss	00000001 transmit_previous_timeout
+1fff6a10 l     O .bss	00000004 rx_packet
+00000000 l    df *ABS*	00000000 yield.cpp
+1fff6a15 l     O .bss	00000001 yield::running
+00000000 l    df *ABS*	00000000 HardwareSerial1.cpp
+00000000 l    df *ABS*	00000000 HardwareSerial2.cpp
+00000000 l    df *ABS*	00000000 HardwareSerial3.cpp
+00000000 l    df *ABS*	00000000 HardwareSerial5.cpp
+00000000 l    df *ABS*	00000000 HardwareSerial6.cpp
+00000000 l    df *ABS*	00000000 serial2.c
+1fff6a18 l     O .bss	00000004 rts_pin
+1fff6a1c l     O .bss	00000001 transmitting
+1fff6a1d l     O .bss	00000001 rx_buffer_tail
+1fff6a20 l     O .bss	00000028 tx_buffer
+1fff6a48 l     O .bss	00000040 rx_buffer
+1fff6a88 l     O .bss	00000001 rx_buffer_head
+1fff6a89 l     O .bss	00000001 tx_buffer_tail
+1fff6a8c l     O .bss	00000004 transmit_pin
+1fff6a90 l     O .bss	00000001 tx_buffer_head
+00000000 l    df *ABS*	00000000 serial3.c
+1fff6a94 l     O .bss	00000004 rts_pin
+1fff6a98 l     O .bss	00000001 transmitting
+1fff6a99 l     O .bss	00000001 rx_buffer_tail
+1fff6a9c l     O .bss	00000028 tx_buffer
+1fff6ac4 l     O .bss	00000040 rx_buffer
+1fff6b04 l     O .bss	00000001 rx_buffer_head
+1fff6b05 l     O .bss	00000001 tx_buffer_tail
+1fff6b08 l     O .bss	00000004 transmit_pin
+1fff6b0c l     O .bss	00000001 tx_buffer_head
+00000000 l    df *ABS*	00000000 serial5.c
+1fff6b10 l     O .bss	00000004 rts_pin
+1fff6b14 l     O .bss	00000001 transmitting
+1fff6b15 l     O .bss	00000001 rx_buffer_tail
+1fff6b18 l     O .bss	00000028 tx_buffer
+1fff6b40 l     O .bss	00000040 rx_buffer
+1fff6b80 l     O .bss	00000001 rx_buffer_head
+1fff6b81 l     O .bss	00000001 tx_buffer_tail
+1fff6b84 l     O .bss	00000004 transmit_pin
+1fff6b88 l     O .bss	00000001 tx_buffer_head
+00000000 l    df *ABS*	00000000 serial6_lpuart.c
+1fff6b8c l     O .bss	00000004 rts_pin
+1fff6b90 l     O .bss	00000001 transmitting
+1fff6b91 l     O .bss	00000001 rx_buffer_tail
+1fff6b94 l     O .bss	00000028 tx_buffer
+1fff6bbc l     O .bss	00000040 rx_buffer
+1fff6bfc l     O .bss	00000001 rx_buffer_head
+1fff6bfd l     O .bss	00000001 tx_buffer_tail
+1fff6c00 l     O .bss	00000004 transmit_pin
+1fff6c04 l     O .bss	00000001 tx_buffer_head
+00000000 l    df *ABS*	00000000 usb_desc.c
+1fff4b14 l     O .data	00000012 device_descriptor
+1fff4b40 l     O .data	00000043 config_descriptor
+00000000 l    df *ABS*	00000000 _arm_addsubdf3.o
+00000000 l    df *ABS*	00000000 _arm_muldivdf3.o
+00000000 l    df *ABS*	00000000 _arm_cmpdf2.o
+00000000 l    df *ABS*	00000000 _arm_unorddf2.o
+00000000 l    df *ABS*	00000000 _arm_fixdfsi.o
+00000000 l    df *ABS*	00000000 libgcc2.c
+00000000 l    df *ABS*	00000000 libgcc2.c
+00000000 l    df *ABS*	00000000 _dvmd_tls.o
+00000000 l    df *ABS*	00000000 aeabi_atexit.c
+00000000 l    df *ABS*	00000000 atoi.c
+00000000 l    df *ABS*	00000000 atol.c
+00000000 l    df *ABS*	00000000 cxa_atexit.c
+00000000 l    df *ABS*	00000000 efgcvt.c
+00000000 l    df *ABS*	00000000 errno.c
+00000000 l    df *ABS*	00000000 init.c
+00000000 l    df *ABS*	00000000 itoa.c
+00000000 l    df *ABS*	00000000 locale.c
+00011e38 l     F .text	00000018 __get_current_locale
+00000000 l    df *ABS*	00000000 malloc.c
+00000000 l    df *ABS*	00000000 mallocr.c
+00000000 l    df *ABS*	00000000 mbtowc_r.c
+00000000 l    df *ABS*	00000000 lib_a-memchr.o
+00000000 l    df *ABS*	00000000 memcmp.c
+00000000 l    df *ABS*	00000000 memmove.c
+00000000 l    df *ABS*	00000000 memset.c
+00000000 l    df *ABS*	00000000 mlock.c
+00000000 l    df *ABS*	00000000 realloc.c
+00000000 l    df *ABS*	00000000 mallocr.c
+00000000 l    df *ABS*	00000000 sbrkr.c
+00000000 l    df *ABS*	00000000 sprintf.c
+00000000 l    df *ABS*	00000000 strchr.c
+00000000 l    df *ABS*	00000000 lib_a-strcmp.o
+00000000 l    df *ABS*	00000000 strcpy.c
+00000000 l    df *ABS*	00000000 lib_a-strlen.o
+00000000 l    df *ABS*	00000000 strncpy.c
+00000000 l    df *ABS*	00000000 strstr.c
+000130c4 l     F .text	000000b8 critical_factorization
+0001317c l     F .text	000001fe two_way_long_needle
+00000000 l    df *ABS*	00000000 strtol.c
+0001359c l     F .text	00000136 _strtol_l.isra.0
+00000000 l    df *ABS*	00000000 vfprintf.c
+00017a1c l     O .text	00000010 zeroes.7258
+00017a6c l     O .text	00000010 blanks.7257
+00000000 l    df *ABS*	00000000 tolower.c
+00000000 l    df *ABS*	00000000 utoa.c
+00000000 l    df *ABS*	00000000 vdprintf.c
+00000000 l    df *ABS*	00000000 wctomb_r.c
+00000000 l    df *ABS*	00000000 writer.c
+00000000 l    df *ABS*	00000000 __atexit.c
+00000000 l    df *ABS*	00000000 __call_atexit.c
+00014fd4 l     F .text	00000014 register_fini
+00000000 l    df *ABS*	00000000 atexit.c
+00000000 l    df *ABS*	00000000 dtoa.c
+00014ff4 l     F .text	00000128 quorem
+00000000 l    df *ABS*	00000000 ecvtbuf.c
+00000000 l    df *ABS*	00000000 fini.c
+00000000 l    df *ABS*	00000000 mallocr.c
+00000000 l    df *ABS*	00000000 localeconv.c
+00000000 l    df *ABS*	00000000 mprec.c
+00017ca8 l     O .text	0000000c p05.6087
+00000000 l    df *ABS*	00000000 vfprintf.c
+00000000 l    df *ABS*	00000000 vasnprintf.c
+00000000 l    df *ABS*	00000000 mallocr.c
+00000000 l    df *ABS*	00000000 _aeabi_uldivmod.o
+00000000 l    df *ABS*	00000000 impure.c
+1fff4bb8 l     O .data	00000428 impure_data
+00000000 l    df *ABS*	00000000 ctype_.c
+00000000 l    df *ABS*	00000000 c:/program files (x86)/arduino/hardware/tools/arm/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crti.o
+00000000 l    df *ABS*	00000000 c:/program files (x86)/arduino/hardware/tools/arm/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtn.o
+00000000 l    df *ABS*	00000000 spi_interrupt.cpp
+00000000 l    df *ABS*	00000000 SnoozeBlock.cpp
+00000000 l    df *ABS*	00000000 wake.c
+00000000 l    df *ABS*	00000000 avr_emulation.cpp
+00000000 l    df *ABS*	00000000 reent.c
+00000000 l    df *ABS*	00000000 
+1fff5560 l       .bss	00000000 __bss_start__
+1fff6c68 l       .bss	00000000 __bss_end__
+00000000 l       *UND*	00000000 software_init_hook
+00000000 l       *UND*	00000000 hardware_init_hook
+00000000 l       *UND*	00000000 __stack
+00000608  w    F .text	00000058 SnoozeBlock::~SnoozeBlock()
+0000e7f8  w    F .text	00000006 adc0_isr
+1fff5970 g     O .bss	00000010 BT_peer_address
+000119ac g     F .text	0000002c .hidden __aeabi_dcmpun
+00006ab8 g     F .text	00000016 AudioRecordQueue::available()
+00010830 g     F .text	0000001c usb_serial_available
+0000db44 g     F .text	0000007c String::String(float, unsigned char)
+00011970 g     F .text	00000012 .hidden __aeabi_dcmple
+00012ebc g     F .text	000000ba strcpy
+0000f7e4 g     F .text	00000020 serial4_available
+0000da4c g     F .text	0000007a String::String(int, unsigned char)
+000006b4  w    F .text	00000058 SnoozeDigital::~SnoozeDigital()
+00008194 g     F .text	000000f4 Sd2Card::readBlock(unsigned long, unsigned char*)
+0000ae1c g     F .text	00000254 setTime(int, int, int, int, int, int)
+000118ac g     F .text	0000007a .hidden __cmpdf2
+00003d90 g     F .text	00000108 prepareRecording(bool)
+1fff675c g     O .bss	00000004 AudioStream::memory_pool
+00010b30  w    F .text	000000c4 yield
+0000a5a4 g     F .text	0000034c SnoozeDigital::isr()
+1fff61fc g     O .bss	000000e4 gps
+000176d8  w    O .text	00000060 vtable for HardwareSerial4
+000118ac g     F .text	0000007a .hidden __eqdf2
+0000f804 g     F .text	00000068 serial4_getchar
+0000d53c  w    F .text	0000000c HardwareSerial4::write9bit(unsigned long)
+1fff4b28 g     O .data	00000018 usb_string_manufacturer_name_default
+0000f1ac g     F .text	00000020 serial_available
+00003cb4 g     F .text	0000007c writeWaveHeader(String, unsigned long)
+1fff4a68 g     O .data	0000006c Wire1
+0000070c  w    F .text	00000058 SnoozeAlarm::~SnoozeAlarm()
+0001141c g     F .text	0000005a .hidden __floatdidf
+0000e7b0  w    F .text	00000048 hard_fault_isr
+0000e7f8  w    F .text	00000006 dma_ch6_isr
+1fff6760 g     O .bss	00000001 AudioStream::update_scheduled
+000006b0  w    F .text	00000002 SnoozeBlock::clearIsrFlags()
+000174a0 g     O .text	0000000c vtable for AudioOutputI2S
+00003e98 g     F .text	00000094 startRecording(String)
+0000d8e0 g     F .text	00000020 Print::println()
+00010c08 g     F .text	00000020 serial2_available
+1fff67d8 g     O .bss	00000002 AudioStream::memory_used
+0000e7f8  w    F .text	00000006 uart0_lon_isr
+00015f54 g     F .text	00000100 fcvtbuf
+0000fa00 g     F .text	000000c8 usb_rx_memory
+00010c00  w    F .text	00000002 serialEvent5()
+0000e1c4 g     F .text	000000b6 String::substring(unsigned int) const
+0000dd58 g     F .text	00000086 String::append(char const*)
+0000d5b0  w    F .text	00000006 HardwareSerial4::transmitterEnable(unsigned char)
+1fff42f4 g     O .dmabuffers	00000001 SnoozeBlock::mode
+0000e7f8  w    F .text	00000006 dma_ch8_isr
+00008c14 g     F .text	000001b8 SdFile::makeDir(SdFile*, char const*)
+00003754 g     F .text	00000120 toggleRecLED()
+0000b21c g     F .text	0000027e TimeAlarmsClass::TimeAlarmsClass()
+00010f24 g     F .text	00000020 serial6_available
+0001269c g     F .text	00000002 __malloc_unlock
+0000e490 g     F .text	000000e0 analog_init
+0000fac8 g     F .text	00000084 usb_tx
+0000e7f8  w    F .text	00000006 portcd_isr
+00014e84 g     F .text	0000004a _vdprintf_r
+00006e30 g     F .text	000000b0 SPIClass::setSCK(unsigned char)
+00005cbc g     F .text	000001bc AudioOutputI2S::begin()
+1fff4934 g     O .data	00000004 led_pins
+00008604 g     F .text	00000074 SdFile::close()
+000092f0 g     F .text	00000018 SdFile::write(unsigned char)
+000040a4 g     F .text	0000005c setHpGain()
+0000703c g     F .text	0000001c SDLib::File::File()
+0000e27c g     F .text	000000b4 String::substring(unsigned int, unsigned int) const
+00012534 g     F .text	000000c6 memmove
+1fff6664 g     O .bss	00000001 SnoozeBlock::current_block
+000039fc g     F .text	0000001e stopLED(leds_s*)
+0000b4c8 g     F .text	000000d8 TimeAlarmsClass::delay(unsigned long)
+0000d320 g     F .text	0000020c MillisTimer::runFromTimer()
+00009f68 g     F .text	0000003c SnoozeAlarm::isr()
+1fff634c g     O .bss	00000008 AudioOutputAnalogStereo::dma
+00011e58 g     F .text	00000014 __locale_ctype_ptr
+00016304 g     F .text	0000004c _Balloc
+0000f6d8 g     F .text	000000d0 serial4_write
+0000e7f8  w    F .text	00000006 can1_rx_warn_isr
+00006f50 g     F .text	0000003a SDLib::File::peek()
+00017d34 g       .ARM.exidx	00000000 __exidx_end
+0000e7f8  w    F .text	00000006 dma_error_isr
+1fff636c g     O .bss	00000004 AudioOutputI2S::block_right_2nd
+1fff67f4 g     O .bss	00000001 EventResponder::runningFromYield
+1fff668c g     O .bss	000000c4 Alarm
+00000764  w    F .text	0000000e recInfo::~recInfo()
+0000c92c g     F .text	00000138 i2c0_isr
+1fff5e3c g     O .bss	00000004 peak_interval
+1fff6312 g     O .bss	00000001 AudioInputI2S::update_responsibility
+0000d7bc g     F .text	00000026 Print::write(unsigned char const*, unsigned int)
+0001189c g     F .text	0000008a .hidden __gtdf2
+00011d70 g     F .text	00000008 atol
+00011da8 g     F .text	0000000c __errno
+1fff596c g     O .bss	00000004 BLE_conn_id
+1fff603c g     O .bss	0000009c biquad4
+0000e7f8  w    F .text	00000006 portd_isr
+0000c190 g     F .text	000000d0 TinyGPS::encode(char)
+0000db44 g     F .text	0000007c String::String(float, unsigned char)
+0000e7f8  w    F .text	00000006 enet_error_isr
+00017694 g     O .text	00000020 TwoWire::i2c2_hardware
+1fff67e0 g     O .bss	00000004 EventResponder::firstInterrupt
+1fff5d68 g     O .bss	00000014 patchCord2
+00009dac g     F .text	00000012 Bounce::fallingEdge()
+0000e7f8  w    F .text	00000006 tpm1_isr
+00017454 g     O .text	0000000c vtable for AudioAnalyzePeak
+0000d9f4 g     F .text	00000056 String::String(String const&)
+00010718  w    F .text	00000008 usb_serial_class::write(unsigned char const*, unsigned int)
+0000d5a0  w    F .text	00000008 HardwareSerial4::setTX(unsigned char, bool)
+0001778c g     O .text	00000200 digital_pin_to_info_PGM
+0000e1a0 g     F .text	00000024 String::indexOf(String const&, unsigned int) const
+1fff6c64 g     O .bss	00000004 errno
+00004a10 g     F .text	0000008c setCurTime(long, tSources)
+00017d34 g       .ARM.exidx	00000000 _etext
+00006b90 g     F .text	00000134 _spi_dma_rxISR0()
+1fff57f4 g     O .bss	00000001 ready_to_sleep
+0000d5f0  w    F .text	00000004 HardwareSerial4::peek()
+1fff5560 g       .bss	00000000 _sbss
+00011938 g     F .text	00000010 .hidden __aeabi_cdcmple
+1fff6418 g     O .bss	00000200 SdVolume::cacheBuffer_
+00010c04  w    F .text	00000002 serialEvent6()
+0000ef64 g     F .text	0000001c digitalRead
+0000e7f8  w    F .text	00000006 porte_isr
+0000ce6c g     F .text	00000018 AudioStream::receiveReadOnly(unsigned int)
+00000be8 g     F .text	000008a8 loop
+0000e7f8  w    F .text	00000006 portb_isr
+00000660  w    F .text	00000050 SnoozeBlock::enableDriver()
+00006498 g     F .text	000005e0 AudioPlaySdWav::update()
+000087dc g     F .text	000001d4 SdFile::read(void*, unsigned short)
+1fff5a2c g     O .bss	00000010 but_blue
+0000e7f8  w    F .text	00000006 spi1_isr
+0000f8c0 g     F .text	000000d8 uart3_status_isr
+1fff59bc g     O .bss	00000010 but_rec
+1fff5a64 g     O .bss	0000002c wave_header
+00010bf4  w    F .text	00000002 serialEvent1()
+0000e7f8  w    F .text	00000006 mcm_isr
+1fff57f8 g     O .bss	00000028 snooze_config
+1fff5d7c g     O .bss	00000014 patchCord3
+00004b84  w    F .text	00000004 AudioControlSGTL5000::disable()
+000093e0 g     F .text	0000026c SdVolume::allocContiguous(unsigned long, unsigned long*)
+0000c5f8 g     F .text	00000114 TwoWire::endTransmission(unsigned char)
+1fff62e0 g     O .bss	00000004 cur_lat
+1fff67e4 g     O .bss	00000004 EventResponder::lastInterrupt
+00010c28 g     F .text	0000010c uart1_status_isr
+0000e67c g     F .text	00000134 memcpy
+0000e7f8  w    F .text	00000006 randnum_isr
+00006f98 g     F .text	00000048 SDLib::File::write(unsigned char)
+00011928 g     F .text	00000020 .hidden __aeabi_cdrcmple
+00017494 g     O .text	0000000c vtable for AudioMixer4
+00013700 g     F .text	000016e4 _svfprintf_r
+1fff640c g     O .bss	00000004 SdFile::dateTime_
+000113ac g     F .text	00000022 .hidden __floatsidf
+0000b6e8 g     F .text	00000058 TinyGPS::TinyGPS()
+1fff6804 g     O .bss	00000004 systick_millis_count
+000118a4 g     F .text	00000082 .hidden __ltdf2
+1fff6410 g     O .bss	00000004 SdVolume::cacheMirrorBlock_
+00006f8c g     F .text	0000000a SDLib::File::flush()
+0000e7b0  w    F .text	00000048 bus_fault_isr
+000048f8 g     F .text	000000c8 gpsGetData()
+0000c50c g     F .text	000000ec TwoWire::wait_idle()
+0000e7f8  w    F .text	00000006 watchdog_isr
+00016ae8 g     F .text	00000000 .hidden __aeabi_uldivmod
+0000e834 g     F .text	0000003c nvic_execution_priority
+0000ca64 g     F .text	00000138 i2c1_isr
+1fff69fc g     O .bss	00000001 usb_configuration
+0000e7f8  w    F .text	00000006 dma_ch11_isr
+0000d624  w    F .text	00000020 HardwareSerial4::write(unsigned long)
+00000000  w      *UND*	00000000 __fini_array_end
+000096a0 g     F .text	0000008c SdVolume::cacheRawBlock(unsigned long, unsigned char)
+0000349c g     F .text	0000015c toggleBtLED()
+1fff6801 g     O .bss	00000001 SPCRemulation::pinout
+0000f2d8 g     F .text	000000e0 serial4_begin
+00014de4 g     F .text	0000001c tolower
+00010bf8  w    F .text	00000002 serialEvent2()
+0000cb9c g     F .text	00000138 i2c2_isr
+1fff6764 g     O .bss	00000070 AudioStream::memory_pool_available_mask
+1fff6344 g     O .bss	00000008 AudioOutputAnalog::dma
+1fff4b28  w    O .data	00000018 usb_string_manufacturer_name
+1fff6c50 g     O .bss	00000008 usb_rx_byte_count_data
+1fff63a4 g     O .bss	00000060 SDLib::SD
+1fff5df4 g     O .bss	00000014 patchCord9
+0000d780 g     F .text	00000014 pit1_isr
+00011e6c g     F .text	00000010 malloc
+0000e7f8  w    F .text	00000006 dma_ch4_isr
+00017674 g     O .text	00000020 TwoWire::i2c1_hardware
+0000d064 g     F .text	00000084 software_isr
+0000e7f8  w    F .text	00000006 dma_ch7_isr
+0000c3d8  w    F .text	0000001e TwoWire::read()
+00005518 g     F .text	000000da AudioFilterBiquad::update()
+00006b74  w    F .text	0000001c EventResponder::triggerEvent(int, void*)
+000035f8 g     F .text	0000015c togglePeakLED()
+00017bb8 g     O .text	000000c8 __mprec_tens
+00010600 g     F .text	00000100 usb_init
+1fff67d6 g     O .bss	00000002 AudioStream::memory_pool_first_mask
+0000da4c g     F .text	0000007a String::String(int, unsigned char)
+00003f2c g     F .text	00000084 pauseRecording()
+1fff5ae8 g     O .bss	00000280 playWav
+1fff5e08 g     O .bss	00000014 patchCord10
+0000e7f8  w    F .text	00000006 lptmr_isr
+1fff6c10 g     O .bss	00000004 __malloc_top_pad
+0000ec74 g     F .text	00000024 rtc_set
+1fff4930 g     O .data	00000000 .hidden __dso_handle
+00011e34 g     F .text	00000004 itoa
+0001138c g     F .text	0000001e .hidden __aeabi_ui2d
+00003d3c  w    F .text	00000054 AudioStream::AudioStream(unsigned char, audio_block_struct**)
+000162e8 g     F .text	0000001c _localeconv_r
+0000ec58 g     F .text	00000010 attachInterruptVector
+00016480 g     F .text	00000012 __i2b
+1fff4930 g       .data	00000000 _sdata
+00017654 g     O .text	00000020 TwoWire::i2c0_hardware
+0000e8a4 g     F .text	00000034 kinetis_hsrun_enable
+1fff62e4 g     O .bss	00000004 cur_long
+00011a74 g     F .text	000002e2 .hidden __udivmoddi4
+00011108 g     F .text	00000000 .hidden __aeabi_drsub
+00012a90 g     F .text	00000024 _sbrk_r
+0000b49c g     F .text	0000002a TimeAlarmsClass::free(unsigned char)
+0000dac8 g     F .text	0000007a String::String(unsigned int, unsigned char)
+000001d0 g     F .text	00000200 ResetHandler
+000107b8 g     F .text	00000048 usb_serial_getchar
+0000e7f8  w    F .text	00000006 can1_bus_off_isr
+000058ec g     F .text	00000000 memcpy_tointerleaveLR
+0000e7f8  w    F .text	00000006 ftm2_isr
+1fff6c58 g     O .bss	00000008 usb_cdc_line_coding
+0000ef1c g     F .text	00000048 digitalWrite
+0000e7f8  w    F .text	00000006 uart5_status_isr
+00010f44 g     F .text	000000e4 lpuart0_status_isr
+1fff67ec g     O .bss	00000004 EventResponder::lastYield
+0000f628 g     F .text	000000b0 serial4_putchar
+00017488 g     O .text	0000000c vtable for AudioInputI2S
+000179b4 g     O .text	00000004 usb_endpoint_config_table
+00004c44 g     F .text	000000e8 AudioControlSGTL5000::lineOutLevel(unsigned char)
+0000e7f8  w    F .text	00000006 dma_ch9_isr
+1fff60d8 g     O .bss	00000018 i2sRec
+1fff6364 g     O .bss	00000002 AudioOutputI2S::block_right_offset
+1fff4938 g     O .data	00000010 teststrs
+0000d794 g     F .text	00000014 pit2_isr
+0001195c g     F .text	00000012 .hidden __aeabi_dcmplt
+00010d34 g     F .text	00000020 serial3_available
+1fff598c g     O .bss	00000020 led_timers
+1fff6c0c g     O .bss	00000004 __malloc_max_sbrked_mem
+0000ef80 g     F .text	00000078 pinMode
+0000e148 g     F .text	00000032 String::getBytes(unsigned char*, unsigned int, unsigned int) const
+0001076c g     F .text	0000004c usb_free
+0000e7f8  w    F .text	00000006 i2c3_isr
+000113d0 g     F .text	0000003a .hidden __extendsfdf2
+000116cc g     F .text	000001d0 .hidden __aeabi_ddiv
+0000180c g     F .text	0000003c initBc127()
+00009d3c g     F .text	00000070 Bounce::update()
+00011114 g     F .text	00000276 .hidden __adddf3
+1fff6414 g     O .bss	00000004 SdVolume::sdCard_
+1fff4990 g     O .data	0000006c Wire2
+0000a560 g     F .text	00000044 SnoozeDigital::pinMode(int, int, int)
+1fff5720 g     O .bss	00000020 last_record
+0000f86c g     F .text	00000030 serial4_peek
+00017d2c g       .ARM.exidx	00000000 __exidx_start
+0000d600  w    F .text	00000004 HardwareSerial4::availableForWrite()
+00005638  w    F .text	0000000c DMAChannel::~DMAChannel()
+00011478 g     F .text	00000254 .hidden __aeabi_dmul
+0000d76c g     F .text	00000014 pit0_isr
+1fff67f0 g     O .bss	00000004 EventResponder::firstYield
+00008eec g     F .text	00000064 SdFile::seekSet(unsigned long)
+00017a0c g     O .text	00000004 _global_impure_ptr
+1fff6354 g     O .bss	00000002 AudioOutputI2S::block_left_offset
+1fff5fa0 g     O .bss	0000009c biquad3
+0000e7f8  w    F .text	00000006 can1_error_isr
+000126b0 g     F .text	000003de _realloc_r
+00011db4 g     F .text	00000050 __libc_init_array
+1fff6c68 g       .bss	00000000 __bss_end
+0000e924 g     F .text	00000334 dtostrf
+0000c3cc  w    F .text	0000000c TwoWire::available()
+0000e7f8  w    F .text	00000006 can0_wakeup_isr
+0000f5e0 g     F .text	00000044 serial4_set_rts
+0000d5a8  w    F .text	00000006 HardwareSerial4::setRX(unsigned char)
+0000e7f8  w    F .text	00000006 flash_cmd_isr
+0000d548  w    F .text	0000000c HardwareSerial4::write(unsigned char)
+0000707c g     F .text	0000001c SDLib::File::close()
+00017c80 g     O .text	00000028 __mprec_bigtens
+0000c70c g     F .text	00000220 TwoWire::requestFrom(unsigned char, unsigned char, unsigned char)
+00010700  w    F .text	00000004 usb_serial_class::clear()
+0001138c g     F .text	0000001e .hidden __floatunsidf
+00010d54 g     F .text	000000d8 uart2_status_isr
+0000e804 g     F .text	0000002c _sbrk
+00016714 g     F .text	00000042 __mcmp
+1fff67f8 g     O .bss	00000004 MillisTimer::listWaiting
+1fff6398 g     O .bss	00000008 AudioOutputTDM::dma
+1fff4af8 g     O .data	00000004 __brkval
+1fff6a14 g     O .bss	00000001 usb_cdc_line_rtsdtr
+0000568c g     F .text	0000008c AudioInputI2S::isr()
+0000dcd8 g     F .text	0000007e String::append(String const&)
+00009d10 g     F .text	0000002c Bounce::Bounce(unsigned char, unsigned long)
+1fff6668 g     O .bss	00000008 SnoozeDigital::isr_pin
+00001848 g     F .text	00000004 bc127BlueOn()
+00010ae8 g     F .text	00000048 usb_serial_flush_callback
+00017cb4 g     F .text	00000000 _init
+1fff5988 g     O .bss	00000004 BT_conn_id2
+0000dbc0 g     F .text	0000000e String::~String()
+000136d4 g     F .text	0000002c strtol
+1fff5824 g     O .bss	00000010 BT_peer_name
+0000e7f8  w    F .text	00000006 svcall_isr
+1fff62e8 g     O .bss	00000004 alarm_rec_id
+0000ccd4 g     F .text	00000068 AudioStream::initialize_memory(audio_block_struct*, unsigned int)
+0000e7f8  w    F .text	00000006 dma_ch15_isr
+0000d9f4 g     F .text	00000056 String::String(String const&)
+0000f09c g     F .text	00000110 serial_begin
+0000f7c0 g     F .text	00000024 serial4_write_buffer_free
+0000996c g     F .text	000001bc SdVolume::freeChain(unsigned long)
+0000df08 g     F .text	0000007e operator+(StringSumHelper const&, String const&)
+000176b4 g     O .text	00000024 vtable for TwoWire
+00016b18  w    O .text	00000014 vtable for SnoozeBlock
+0000e7f8  w    F .text	00000006 uart1_error_isr
+00016054 g     F .text	00000028 __libc_fini_array
+0000e7f8  w    F .text	00000006 usbhs_phy_isr
+1fff6300 g     O .bss	00000008 AudioInputAnalogStereo::dma0
+1fff6c68 g       .bss	00000000 _ebss
+0000c2d0 g     F .text	000000fc TinyGPS::crack_datetime(int*, unsigned char*, unsigned char*, unsigned char*, unsigned char*, unsigned char*, unsigned char*, unsigned long*)
+1fff62f4 g     O .bss	00000001 time_source
+00002074 g     F .text	00000088 populateDevlist(String, String, String, unsigned int)
+000055f4 g     F .text	00000044 AudioFilterBiquad::setCoefficients(unsigned long, int const*)
+1fff633c g     O .bss	00000008 AudioOutputADAT::dma
+1fff6360 g     O .bss	00000004 AudioOutputI2S::block_right_1st
+00004874 g     F .text	00000074 stopRecording(String)
+00009b28 g     F .text	000001e8 SdVolume::init(Sd2Card*, unsigned char)
+000163e4 g     F .text	00000040 __hi0bits
+1fff6370 g     O .bss	00000001 AudioOutputI2S::update_responsibility
+0000972c g     F .text	0000006c SdVolume::cacheZeroBlock(unsigned long)
+00014e80 g     F .text	00000004 utoa
+000119d8 g     F .text	0000004e .hidden __fixdfsi
+0000e7f8 g     F .text	00000006 unused_isr
+00006fe0 g     F .text	0000005c SDLib::File::File(SdFile, char const*)
+0000e7f8  w    F .text	00000006 spi0_isr
+0000e7f8  w    F .text	00000006 dma_ch3_isr
+000059aa g     F .text	00000000 memcpy_tointerleaveQuad
+000072e0 g     F .text	0000029c SDLib::SDClass::exists(char const*)
+0000d5d0  w    F .text	00000020 HardwareSerial4::begin(unsigned long, unsigned long)
+00006d40 g     F .text	0000002e SPIClass::notUsingInterrupt(IRQ_NUMBER_t)
+00005638  w    F .text	0000000c DMAChannel::~DMAChannel()
+00008678 g     F .text	00000114 SdFile::openCachedEntry(unsigned char, unsigned char)
+0000b070 g     F .text	00000010 adjustTime(long)
+1fff59ac g     O .bss	00000010 but_mon
+00000a2c  w    F .text	0000007c SnoozeBlock::disableDriver()
+1fff6644 g     O .bss	00000020 SnoozeBlock::root_class_address
+00009fc8 g     F .text	00000458 SnoozeDigital::enableDriver()
+0000e7f8  w    F .text	00000006 flash_error_isr
+00011114 g     F .text	00000276 .hidden __aeabi_dadd
+000118a4 g     F .text	00000082 .hidden __ledf2
+00010e2c g     F .text	00000020 serial5_available
+0000e7f8  w    F .text	00000006 uart5_error_isr
+0000dbc0 g     F .text	0000000e String::~String()
+0000e7f8  w    F .text	00000006 rtc_seconds_isr
+000174c4 g     O .text	00000094 SPIClass::spi0_hardware
+0000e7f8  w    F .text	00000006 pdb_isr
+000165c4 g     F .text	000000a0 __pow5mult
+000174b8 g     O .text	0000000c vtable for AudioRecordQueue
+0001140c g     F .text	0000006a .hidden __aeabi_ul2d
+0000e7b0  w    F .text	00000048 usage_fault_isr
+0000e7f8  w    F .text	00000006 dac1_isr
+00000000 g     O .text	000001d0 _VectorsFlash
+0000e7f8  w    F .text	00000006 dma_ch14_isr
+000049cc g     F .text	00000004 getTeensy3Time()
+00000000  w      *UND*	00000000 __deregister_frame_info
+1fff6c60 g     O .bss	00000004 usb_cdc_line_rtsdtr_millis
+1fff59cc g     O .bss	00000060 leds
+1fff5de0 g     O .bss	00000014 patchCord8
+00005718 g     F .text	000000a4 AudioInputI2S::update()
+0000d52c g     F .text	00000010 systick_isr
+0000e7f8  w    F .text	00000006 rtc_alarm_isr
+1fff63a0 g     O .bss	00000002 AudioUsingSPICount
+00004100 g     F .text	000000a8 detectPeaks()
+0000f624 g     F .text	00000004 serial4_set_cts
+1fff6374 g     O .bss	00000004 AudioOutputI2S::block_left_2nd
+00011e04 g     F .text	0000002e __itoa
+1fff6754 g     O .bss	00000004 AudioStream::first_update
+0000e7f8  w    F .text	00000006 dma_ch2_isr
+1fff4b00 g     O .data	00000010 Serial
+1fff6758 g     O .bss	00000002 AudioStream::memory_used_max
+00008dcc g     F .text	00000016 SdFile::open(SdFile*, char const*, unsigned char)
+0000e7f8  w    F .text	00000006 ftm1_isr
+00003d30  w    F .text	0000000c AudioConnection::~AudioConnection()
+00017460 g     O .text	0000001c vtable for AudioControlSGTL5000
+0000b5a0 g     F .text	0000013c TimeAlarmsClass::create(long, void (*)(), unsigned char, dtAlarmPeriod_t)
+0000dbd0 g     F .text	00000060 String::operator=(String const&)
+000084a0 g     F .text	00000154 Sd2Card::writeBlock(unsigned long, unsigned char const*)
+00010720  w    F .text	00000006 usb_serial_class::write(unsigned char)
+00000774  w    F .text	00000198 startup_early_hook
+0000e7f8  w    F .text	00000006 dma_ch13_isr
+00004b88  w    F .text	00000004 AudioControlSGTL5000::inputLevel(float)
+00004098 g     F .text	0000000c stopMonitoring()
+0000e7f8  w    F .text	00000006 uart2_error_isr
+00010800 g     F .text	00000030 usb_serial_peekchar
+00011998 g     F .text	00000012 .hidden __aeabi_dcmpgt
+1fff6368 g     O .bss	00000004 AudioOutputI2S::block_left_1st
+0000f89c g     F .text	00000024 serial4_clear
+00007058 g     F .text	0000000e SDLib::File::read(void*, unsigned short)
+00012430 g     F .text	00000000 memchr
+1fff4ba0 g     O .data	00000016 usb_string_serial_number_default
+0000e7b0 g     F .text	00000048 fault_isr
+00016118 g     F .text	000001d0 _free_r
+00011984 g     F .text	00000012 .hidden __aeabi_dcmpge
+0000e7f8  w    F .text	00000006 usb_charge_isr
+0000add8 g     F .text	00000044 setTime(long)
+00010710  w    F .text	00000004 usb_serial_class::flush()
+0000d5b8  w    F .text	00000004 HardwareSerial4::end()
+0000e7f8  w    F .text	00000006 cmt_isr
+00011110 g     F .text	0000027a .hidden __aeabi_dsub
+0000e7f8  w    F .text	00000006 usbhs_isr
+1fff555c g     O .data	00000004 __malloc_sbrk_base
+00010708  w    F .text	00000004 usb_serial_class::read()
+0000e7f8  w    F .text	00000006 ftm3_isr
+0001337c g     F .text	0000021e strstr
+0000e7f8  w    F .text	00000006 tsi0_isr
+0001140c g     F .text	0000006a .hidden __floatundidf
+0000e830  w    F .text	00000002 __cxa_pure_virtual
+00016664 g     F .text	000000ae __lshift
+0000e7f8  w    F .text	00000006 spi2_isr
+1fff60f0 g     O .bss	000000f8 queueSdc
+000057bc g     F .text	000000d0 AudioInputI2S::begin()
+1fff6308 g     O .bss	00000008 AudioInputAnalogStereo::dma1
+0000de6c g     F .text	0000009a String::append(unsigned int)
+00016928 g     F .text	00000100 __ssprint_r
+0000d684  w    F .text	00000002 serialEvent4()
+00016a28 g     F .text	0000005e _vasnprintf_r
+00010728  w    F .text	00000002 serialEvent()
+000053b4  w    F .text	00000164 AudioControlSGTL5000::inputSelect(int)
+1fff6985 g     O .bss	00000001 usb_reboot_timer
+1fff6388 g     O .bss	00000008 AudioOutputPWM::dma
+00014f30 g     F .text	000000a4 __register_exitproc
+0000b21c g     F .text	0000027e TimeAlarmsClass::TimeAlarmsClass()
+0000dc30 g     F .text	00000044 String::operator=(String&&)
+0000ce84 g     F .text	000000e8 AudioStream::receiveWritable(unsigned int)
+00000608  w    F .text	00000058 SnoozeBlock::~SnoozeBlock()
+0000b080 g     F .text	0000001c setSyncProvider(long (*)())
+00003b2c g     F .text	00000130 createSDpath()
+0000df88 g     F .text	00000086 operator+(StringSumHelper const&, char const*)
+00003d3c  w    F .text	00000054 AudioStream::AudioStream(unsigned char, audio_block_struct**)
+0001084c g     F .text	00000038 usb_serial_flush_input
+00016494 g     F .text	00000130 __multiply
+1fff5e40 g     O .bss	00000004 vol_ctrl
+0000757c g     F .text	00000284 SDLib::SDClass::mkdir(char const*)
+00010a30 g     F .text	00000018 usb_serial_putchar
+0001305c g     F .text	00000066 strncpy
+0000070c  w    F .text	00000058 SnoozeAlarm::~SnoozeAlarm()
+1fff6c14 g     O .bss	00000028 __malloc_current_mallinfo
+1fff57a0 g     O .bss	00000040 snooze_rec
+000050e0  w    F .text	00000178 AudioControlSGTL5000::volume(float)
+0001686c g     F .text	000000ba __d2b
+0000d580  w    F .text	00000010 HardwareSerial4::attachCts(unsigned char)
+0000a420 g     F .text	00000140 SnoozeDigital::disableDriver()
+0000d644  w    F .text	00000020 HardwareSerial4::write(long)
+0000e7f8  w    F .text	00000006 can0_bus_off_isr
+0000d68c g     F .text	0000009c IntervalTimer::beginCycles(void (*)(), unsigned long)
+0000602c g     F .text	0000046c AudioPlaySdWav::consume(unsigned long)
+000126a0 g     F .text	00000010 realloc
+1fff69f1 g     O .bss	00000001 usb_rx_memory_needed
+0000fb4c g     F .text	00000ab2 usb_isr
+00004be4 g     F .text	00000060 AudioControlSGTL5000::lineInLevel(unsigned char, unsigned char)
+00011d78 g     F .text	0000000c __cxa_atexit
+0000d034 g     F .text	00000030 AudioStream::update_setup()
+1fff6314 g     O .bss	00000004 AudioInputI2S::block_right
+0000d5fc  w    F .text	00000004 HardwareSerial4::flush()
+000113ac g     F .text	00000022 .hidden __aeabi_i2d
+00006ee8 g     F .text	00000016 SDLib::File::available()
+1fff4948 g     O .data	00000040 SPI
+000124d0 g     F .text	00000062 memcmp
+0001798c  w    O .text	00000028 vtable for usb_serial_class
+0000e7f8  w    F .text	00000006 uart3_error_isr
+0000d99c g     F .text	00000058 String::String(char const*)
+00005c24 g     F .text	00000098 AudioOutputI2S::update()
+1fff67e8 g     O .bss	00000004 MillisTimer::listActive
+00011d58  w    F .text	00000002 .hidden __aeabi_ldiv0
+0000e7f8  w    F .text	00000006 porta_isr
+000116cc g     F .text	000001d0 .hidden __divdf3
+00008fc0 g     F .text	00000330 SdFile::write(void const*, unsigned short)
+1fff45d0 g     O .usbbuffers	00000360 usb_buffer_memory
+1fff5da4 g     O .bss	00000014 patchCord5
+0000e7f8  w    F .text	00000006 low_voltage_isr
+1fff5150 g     O .data	00000408 __malloc_av_
+0000e7f8  w    F .text	00000006 can0_error_isr
+0000f4dc g     F .text	00000038 serial4_set_transmit_pin
+1fff5e44 g     O .bss	00000024 peak
+0000ec98 g     F .text	00000284 _init_Teensyduino_internal_
+00011478 g     F .text	00000254 .hidden __muldf3
+000175a8 g     O .text	00000014 vtable for SnoozeAlarm
+00010a90 g     F .text	00000058 usb_serial_flush_output
+1fff6c3c g     O .bss	00000014 llwuMask
+0000e7f8  w    F .text	00000006 dma_ch12_isr
+1fff6318 g     O .bss	00000008 AudioInputI2S::dma
+00012698 g     F .text	00000002 __malloc_lock
+00000000  w      *UND*	00000000 __fini_array_start
+0000e7f8  w    F .text	00000006 can1_wakeup_isr
+1fff4400 g     O .dmabuffers	000001d0 _VectorsRam
+00006a78 g     F .text	0000003e AudioRecordQueue::update()
+00016a88 g     F .text	0000005e _calloc_r
+0000e0d8 g     F .text	0000002c String::equals(char const*) const
+0000d7a8 g     F .text	00000014 pit3_isr
+00006f00 g     F .text	00000024 SDLib::File::write(unsigned char const*, unsigned int)
+00006fe0 g     F .text	0000005c SDLib::File::File(SdFile, char const*)
+1fff5984 g     O .bss	00000004 BT_conn_id1
+00006cc4 g     F .text	0000007c SPIClass::begin()
+1fff6680 g     O .bss	00000004 getTimePtr
+000041a8 g     F .text	00000210 initAudio()
+00014e00 g     F .text	00000080 __utoa
+1fff5a40 g     O .bss	00000004 tot_rec_bytes
+0000d554  w    F .text	00000018 HardwareSerial4::write(char const*)
+0000e7f8  w    F .text	00000006 enet_rx_isr
+00007800 g     F .text	00000234 SDLib::SDClass::remove(char const*)
+00001858 g     F .text	0000081c sendCmdOut(int)
+0000e7f8  w    F .text	00000006 portc_isr
+0000d590  w    F .text	00000010 HardwareSerial4::attachRts(unsigned char)
+0000592a g     F .text	00000000 memcpy_tointerleaveL
+1fff6324 g     O .bss	00000008 AudioInputI2SQuad::dma
+000125fc g     F .text	0000009a memset
+00005258 g     F .text	0000015c AudioControlSGTL5000::volumeInteger(unsigned int)
+0000e66c g     F .text	00000010 main
+00009898 g     F .text	000000d4 SdVolume::fatGet(unsigned long, unsigned long*) const
+1fff6358 g     O .bss	00000008 AudioOutputI2S::dma
+1fff5a90 g     O .bss	00000038 monMixer
+1fff6c08 g     O .bss	00000004 __malloc_max_total_mem
+1fff62ec g     O .bss	00000004 alarm_wait_id
+00003aa4 g     F .text	00000088 initSDcard()
+1fff42f0 g     O .dmabuffers	00000004 SnoozeBlock::source
+0000ad38 g     F .text	000000a0 now()
+0000046c  w    F .text	0000019c SnoozeBlock::wakeupIsr()
+0000e7b0  w    F .text	00000048 memmanage_fault_isr
+1fff5740 g     O .bss	00000020 next_record
+0000e330 g     F .text	00000010 String::remove(unsigned int)
+00004b8c g     F .text	00000058 AudioControlSGTL5000::write(unsigned int, unsigned int)
+00011028 g     F .text	000000e0 usb_init_serialnumber
+00004b24 g     F .text	00000020 alarmNextRec()
+00017d28 g       .text	00000000 __init_array_end
+1fff5a44 g     O .bss	00000020 frec
+00015120 g     F .text	00000e34 _dtoa_r
+00011e8c g     F .text	00000570 _malloc_r
+0000e7f8  w    F .text	00000006 debugmonitor_isr
+00014ee8 g     F .text	0000001a __ascii_wctomb
+0000e340 g     F .text	0000000a String::toInt() const
+0001141c g     F .text	0000005a .hidden __aeabi_l2d
+0000d25c g     F .text	00000080 EventResponder::triggerEventNotImmediate()
+5c65d586 g       *ABS*	00000000 __rtc_localtime
+00004d2c g     F .text	000003b4 AudioControlSGTL5000::enable()
+00009f2c g     F .text	0000003c SnoozeAlarm::clearIsrFlags()
+00000000  w      *UND*	00000000 __libc_fini
+0000e17c g     F .text	00000022 String::indexOf(String const&) const
+0000e7f8  w    F .text	00000006 cmp1_isr
+000059e4 g     F .text	000000f4 AudioMixer4::update()
+00008f50 g     F .text	00000070 SdFile::sync()
+0000e7f8  w    F .text	00000006 ftm0_isr
+0001607c g     F .text	0000009c _malloc_trim_r
+1fff4b9c g     O .data	00000004 string0
+00010884 g     F .text	000001ac usb_serial_write
+00003fb0 g     F .text	00000080 finishRecording()
+0000e800  w    F .text	00000002 startup_late_hook
+0000d57c  w    F .text	00000004 HardwareSerial4::clear()
+0001070c  w    F .text	00000004 usb_serial_class::available()
+00012be8 g     F .text	000002dc strcmp
+0000e09c g     F .text	0000003a String::equals(String const&) const
+000048f0 g     F .text	00000008 gpsPowerOff()
+00004b44 g     F .text	00000040 AudioAnalyzePeak::update()
+0000c260 g     F .text	00000070 TinyGPS::f_get_position(float*, float*, unsigned long*)
+0000d5bc  w    F .text	00000014 HardwareSerial4::begin(unsigned long)
+1fff4b84  w    O .data	00000016 usb_string_product_name
+1fff5580 g     O .bss	000001a0 button_wakeup
+0000090c  w    F .text	0000011e SnoozeBlock::reverseList(SnoozeBlock*, unsigned char)
+0000eff8 g     F .text	000000a4 delay
+000118ac g     F .text	0000007a .hidden __nedf2
+0000e7f8  w    F .text	00000006 tpm0_isr
+00004030 g     F .text	00000068 startMonitoring()
+1fff67dc g     O .bss	00000002 dma_channel_allocated_mask
+00017d28 g     F .fini	00000000 _fini
+1fff4988 g     O .data	00000004 SdVolume::cacheBlockNumber_
+0000dc74 g     F .text	00000064 String::operator=(char const*)
+0000c450 g     F .text	00000026 TwoWire::write(unsigned char)
+1fff6380 g     O .bss	00000008 AudioOutputPT8211::dma
+00012ab4 g     F .text	0000004c sprintf
+0000d910 g     F .text	0000001c Print::printf(char const*, ...)
+0000e7f8  w    F .text	00000006 i2s0_rx_isr
+0000e7f8  w    F .text	00000006 uart4_error_isr
+00006ad0 g     F .text	0000004a AudioRecordQueue::clear()
+0000d830 g     F .text	000000b0 Print::print(long)
+1fff6624 g     O .bss	00000020 SnoozeBlock::root_block
+1fff62f0 g     O .bss	00000004 alarm_adv_id
+0000703c g     F .text	0000001c SDLib::File::File()
+00014fe8 g     F .text	0000000c atexit
+1fff6665 g     O .bss	00000001 SnoozeBlock::global_block_count
+00014f04 g     F .text	0000002c _write_r
+0000337c g     F .text	00000120 toggleMonLED()
+0000cde4 g     F .text	00000054 AudioStream::release(audio_block_struct*)
+0000d99c g     F .text	00000058 String::String(char const*)
+0000e7f8  w    F .text	00000006 can0_message_isr
+00006d70 g     F .text	000000c0 SPIClass::setMOSI(unsigned char)
+00009e48 g     F .text	000000e4 SnoozeAlarm::enableDriver()
+1fff4fe0 g     O .data	00000004 _impure_ptr
+0000b740 g     F .text	00000a50 TinyGPS::term_complete()
+0000e7f8  w    F .text	00000006 can1_message_isr
+1fff6390 g     O .bss	00000008 AudioOutputSPDIF::dma
+0000e7f8  w    F .text	00000006 nmi_isr
+1fff49fc g     O .data	0000006c Wire
+0000ce38 g     F .text	00000034 AudioStream::transmit(audio_block_struct*, unsigned char)
+0000b6e8 g     F .text	00000058 TinyGPS::TinyGPS()
+0000d728 g     F .text	00000044 IntervalTimer::end()
+00017cc0 g       .text	00000000 __preinit_array_end
+0000f7a8 g     F .text	00000018 serial4_flush
+1fff6334 g     O .bss	00000008 AudioInputTDM::dma
+00009dc0 g     F .text	00000030 sdhc_isr
+00009df0 g     F .text	00000058 SnoozeAlarm::disableDriver()
+000123fc g     F .text	0000002a __ascii_mbtowc
+0000cd3c g     F .text	000000a8 AudioStream::allocate()
+1fff57e0 g     O .bss	00000014 rec_window
+0000c3f8  w    F .text	00000016 TwoWire::peek()
+0000c410  w    F .text	00000002 TwoWire::flush()
+00000aa8 g     F .text	00000140 setup
+000179b8 g     O .text	00000054 usb_descriptor_list
+0000f998 g     F .text	0000003c usb_rx
+00007c88 g     F .text	00000454 Sd2Card::init(unsigned char, unsigned char)
+0000e7f8  w    F .text	00000006 dma_ch10_isr
+00006ee4  w    F .text	00000002 Print::flush()
+00006b1c g     F .text	0000003a AudioRecordQueue::readBuffer()
+1fff61e8 g     O .bss	00000014 patchCord1
+0000e7f8  w    F .text	00000006 uart0_error_isr
+1fff5d90 g     O .bss	00000014 patchCord4
+0001072c g     F .text	00000040 usb_malloc
+0000e7f8  w    F .text	00000006 i2s0_isr
+0000a8f0 g     F .text	00000004 SnoozeDigital::clearIsrFlags()
+20030000 g       .bss	00000000 _estack
+0000d224 g     F .text	00000038 DMAChannel::release()
+00006b58 g     F .text	0000001a AudioRecordQueue::freeBuffer()
+00010a48 g     F .text	00000048 usb_serial_write_buffer_free
+1fff5e1c g     O .bss	00000010 rec_path
+0000e7f8  w    F .text	00000006 enet_timer_isr
+0000cf6c g     F .text	00000068 AudioConnection::connect()
+00011948 g     F .text	00000012 .hidden __aeabi_dcmpeq
+000080dc g     F .text	000000b8 Sd2Card::waitStartBlock()
+0000ab64 g     F .text	000001d4 makeTime(tmElements_t const&)
+1fff632c g     O .bss	00000008 AudioInputPDM::dma
+0000c414 g     F .text	0000003a TwoWire::write(unsigned char const*, unsigned int)
+0000184c g     F .text	00000004 bc127BlueOff()
+0000d900  w    F .text	0000000e _write
+0000e010 g     F .text	0000008a operator+(StringSumHelper const&, char)
+1fff5560 g       .data	00000000 _edata
+0000e104 g     F .text	00000044 String::equalsIgnoreCase(String const&) const
+1fff5dcc g     O .bss	00000014 patchCord7
+00008288 g     F .text	00000134 Sd2Card::readData(unsigned long, unsigned short, unsigned short, unsigned char*)
+0000e7f8  w    F .text	00000006 i2s0_tx_isr
+0000e7f8  w    F .text	00000006 adc1_isr
+00007098 g     F .text	0000000e SDLib::File::operator bool()
+1fff5f04 g     O .bss	0000009c biquad2
+00010714  w    F .text	00000004 usb_serial_class::availableForWrite()
+0000e7f8  w    F .text	00000006 cmp0_isr
+00009d10 g     F .text	0000002c Bounce::Bounce(unsigned char, unsigned long)
+00006f24 g     F .text	0000002a SDLib::File::read()
+0000e8d8 g     F .text	0000004c ultoa
+00003874 g     F .text	000000f0 initLEDButtons()
+00017580 g     O .text	00000018 vtable for SdFile
+00011a28 g     F .text	0000004c .hidden __popcountdi2
+0000878c g     F .text	00000050 SdFile::openRoot(SdVolume*)
+0000c478 g     F .text	00000094 TwoWire::begin()
+0000f3b8 g     F .text	0000006c serial4_format
+0000dac8 g     F .text	0000007a String::String(unsigned int, unsigned char)
+00006000 g     F .text	0000002a AudioPlaySdWav::begin()
+00007068 g     F .text	00000014 SDLib::File::seek(unsigned long)
+0000d92c g     F .text	00000070 Stream::readStringUntil(char, unsigned int)
+1fff5558 g     O .data	00000004 __malloc_trim_threshold
+00010704  w    F .text	00000004 usb_serial_class::peek()
+0000f424 g     F .text	000000b8 serial4_end
+0000cfd4 g     F .text	00000060 AudioConnection::disconnect()
+000083bc g     F .text	000000e4 Sd2Card::writeData(unsigned char, unsigned char const*)
+1fff5820 g     O .bss	00000004 working_state
+00011d84 g     F .text	00000024 fcvtf
+0000f584 g     F .text	0000005c serial4_set_rx
+000006b4  w    F .text	00000058 SnoozeDigital::~SnoozeDigital()
+00016758 g     F .text	00000114 __mdiff
+000119d8 g     F .text	0000004e .hidden __aeabi_d2iz
+1fff6a04 g     O .bss	00000001 usb_cdc_transmit_flush_timer
+000175bc g     O .text	00000014 vtable for SnoozeDigital
+00004a9c g     F .text	00000020 alarmAdvTimeout()
+00008de4 g     F .text	00000108 SdFile::remove(SdFile*, char const*)
+1fff67da g     O .bss	00000002 AudioStream::cpu_cycles_total
+0000e7f8  w    F .text	00000006 pit_isr
+00009fa4 g     F .text	00000024 SnoozeAlarm::setRtcTimer(unsigned char, unsigned char, unsigned char)
+00007b04 g     F .text	00000184 Sd2Card::cardCommand(unsigned char, unsigned long)
+0000964c g     F .text	00000054 SdVolume::cacheFlush()
+00011d68 g     F .text	00000008 atoi
+1fff4ad4 g     O .data	00000010 Serial4
+00000764  w    F .text	0000000e recInfo::~recInfo()
+00017aa4 g     O .text	00000101 _ctype_
+0000e7f8  w    F .text	00000006 dac0_isr
+00017cc0 g       .text	00000000 __init_array_start
+00011d58  w    F .text	00000002 .hidden __aeabi_idiv0
+0000e7f8  w    F .text	00000006 can1_tx_warn_isr
+000119ac g     F .text	0000002c .hidden __unorddf2
+0000e570 g     F .text	000000fc analogRead
+0000f1cc g     F .text	0000010c uart0_status_isr
+00005b20 g     F .text	00000104 AudioOutputI2S::isr()
+1fff6310 g     O .bss	00000002 AudioInputI2S::block_offset
+0000d5f8  w    F .text	00000004 HardwareSerial4::available()
+0000e7f8  w    F .text	00000006 mcg_isr
+000049d0 g     F .text	00000040 setTimeSource()
+00005e78 g     F .text	000000f8 AudioOutputI2S::config_i2s()
+1fff5e2c g     O .bss	00000004 vol_value
+00003c5c g     F .text	0000004c initWaveHeader()
+00000400 g     O .text	00000010 flashconfigbytes
+0000d0e8 g     F .text	0000013c DMAChannel::begin(bool)
+1fff5e30 g     O .bss	0000000c sgtl5000
+00012f80 g     F .text	000000dc strlen
+00004abc g     F .text	00000068 timerRecDone()
+00011e50 g     F .text	00000006 __locale_ctype_ptr_l
+00011938 g     F .text	00000010 .hidden __aeabi_cdcmpeq
+0001189c g     F .text	0000008a .hidden __gedf2
+1fff5980 g     O .bss	00000004 found_dev
+1fff4b84 g     O .data	00000016 usb_string_product_name_default
+1fff6378 g     O .bss	00000008 AudioOutputI2SQuad::dma
+0000e7f8  w    F .text	00000006 dma_ch1_isr
+00014ed0 g     F .text	00000018 vdprintf
+1fff5db8 g     O .bss	00000014 patchCord6
+0000f9d4 g     F .text	0000002c usb_tx_packet_count
+00012b00 g     F .text	000000ce strchr
+0000596a g     F .text	00000000 memcpy_tointerleaveR
+0000d7e4 g     F .text	0000004a Print::print(String const&)
+000113d0 g     F .text	0000003a .hidden __aeabi_f2d
+0000e7f8  w    F .text	00000006 dma_ch5_isr
+0000e7f8  w    F .text	00000006 can0_rx_warn_isr
+000071f8 g     F .text	000000e8 SDLib::SDClass::open(char const*, unsigned char)
+0000e7f8  w    F .text	00000006 can0_tx_warn_isr
+000070a8 g     F .text	00000058 SDLib::SDClass::begin(unsigned char)
+00010e4c g     F .text	000000d8 uart4_status_isr
+00000000  w      *UND*	00000000 _Jv_RegisterClasses
+1fff62f8 g     O .bss	00000008 AudioInputAnalog::dma
+1fff67d4 g     O .bss	00000002 AudioStream::cpu_cycles_total_max
+0000f514 g     F .text	00000070 serial4_set_tx
+00011110 g     F .text	0000027a .hidden __subdf3
+0000e870 g     F .text	00000034 kinetis_hsrun_disable
+00017cc0 g       .text	00000000 __preinit_array_start
+00017270  w    O .text	0000000c vtable for AudioStream
+1fff5760 g     O .bss	00000040 snooze_led
+0000dde0 g     F .text	0000008a String::append(char)
+00003964 g     F .text	00000098 startLED(leds_s*, lMode)
+00016424 g     F .text	0000005a __lo0bits
+00004808 g     F .text	0000006c continueRecording()
+0001747c g     O .text	0000000c vtable for AudioFilterBiquad
+00007100 g     F .text	000000f8 SDLib::SDClass::getParentDir(char const*, int*)
+00001854 g     F .text	00000004 bc127AdvStop()
+00010bfc  w    F .text	00000002 serialEvent3()
+00011d5c g     F .text	0000000a __aeabi_atexit
+00000000  w      *UND*	00000000 __register_frame_info
+000020fc g     F .text	000011b4 parseSerialIn(String)
+00009798 g     F .text	00000100 SdVolume::chainSize(unsigned long, unsigned long*) const
+0000ec68 g     F .text	0000000c rtc_get
+000174ac g     O .text	0000000c vtable for AudioPlaySdWav
+1fff5ac8 g     O .bss	00000020 i2sMon
+0000d5f4  w    F .text	00000004 HardwareSerial4::read()
+0000e7f8  w    F .text	00000006 cmp2_isr
+000048e8 g     F .text	00000008 gpsPowerOn()
+0000d2dc g     F .text	00000044 pendablesrvreq_isr
+00006ee0  w    F .text	00000004 Print::availableForWrite()
+00003d30  w    F .text	0000000c AudioConnection::~AudioConnection()
+1fff4fe4 g     O .data	0000016c __global_locale
+0000e7f8  w    F .text	00000006 wakeup_isr
+00017558 g     O .text	00000024 vtable for SDLib::File
+1fff5a3c g     O .bss	00000001 button_call
+1fff6320 g     O .bss	00000004 AudioInputI2S::block_left
+1fff5e68 g     O .bss	0000009c biquad1
+0000d56c  w    F .text	00000010 HardwareSerial4::write(unsigned char const*, unsigned int)
+0000e7f8  w    F .text	00000006 cmp3_isr
+0000a8f4 g     F .text	00000270 breakTime(long, tmElements_t&)
+00001850 g     F .text	00000004 bc127AdvStart()
+00011e7c g     F .text	00000010 free
+1fff6618 g     O .bss	00000001 SdVolume::cacheDirty_
+0000e7f8  w    F .text	00000006 tpm2_isr
+00016364 g     F .text	00000080 __multadd
+00016350 g     F .text	00000012 _Bfree
+0000e7f8  w    F .text	00000006 dma_ch0_isr
+1fff4ba0  w    O .data	00000016 usb_string_serial_number
+0000d664  w    F .text	00000020 HardwareSerial4::write(unsigned int)
+0000d604  w    F .text	00000020 HardwareSerial4::write(int)
+0000e7f8  w    F .text	00000006 enet_tx_isr
+1fff5834 g     O .bss	00000138 dev_list
+
+
