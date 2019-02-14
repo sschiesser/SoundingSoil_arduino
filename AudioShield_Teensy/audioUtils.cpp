@@ -10,19 +10,27 @@
 // Audio connections definition
 
 // GUItool: begin automatically generated code
-AudioInputI2S									i2sRec;		//xy=388,213
-AudioPlaySdWav								playWav;	//xy=388,313
-AudioMixer4										monMixer;	//xy=566,313
-AudioRecordQueue							queueSdc;	//xy=728,208
-AudioAnalyzePeak							peak;			//xy=728,257
-AudioOutputI2S								i2sMon;		//xy=728,313
-AudioConnection								patchCord1(i2sRec, 0, queueSdc, 0);
-AudioConnection								patchCord2(i2sRec, 0, peak, 0);
-AudioConnection								patchCord3(i2sRec, 0, monMixer, 0);
-AudioConnection								patchCord4(playWav, 0, monMixer, 1);
-AudioConnection								patchCord5(monMixer, 0, i2sMon, 0);
-AudioConnection								patchCord6(monMixer, 0, i2sMon, 1);
-AudioControlSGTL5000					sgtl5000;	//xy=557,396
+AudioInputI2S            i2sRec;         //xy=67,33
+AudioPlaySdWav           playWav;        //xy=76,217
+AudioFilterBiquad        biquad1;        //xy=134,71
+AudioFilterBiquad        biquad2;        //xy=164,107
+AudioFilterBiquad        biquad3;        //xy=213,144
+AudioFilterBiquad        biquad4;        //xy=259,183
+AudioMixer4              monMixer;       //xy=486,212
+AudioAnalyzePeak         peak;           //xy=686,113
+AudioRecordQueue         queueSdc;       //xy=692,37
+AudioOutputI2S           i2sMon;         //xy=700,207
+AudioConnection          patchCord1(i2sRec, 0, biquad1, 0);
+AudioConnection          patchCord2(playWav, 0, monMixer, 1);
+AudioConnection          patchCord3(biquad1, biquad2);
+AudioConnection          patchCord4(biquad2, biquad3);
+AudioConnection          patchCord5(biquad3, biquad4);
+AudioConnection          patchCord6(biquad4, 0, monMixer, 0);
+AudioConnection          patchCord7(biquad4, peak);
+AudioConnection          patchCord8(biquad4, queueSdc);
+AudioConnection          patchCord9(monMixer, 0, i2sMon, 0);
+AudioConnection          patchCord10(monMixer, 0, i2sMon, 1);
+AudioControlSGTL5000     sgtl5000;       //xy=382,39
 // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 String 												rec_path = "--";
@@ -271,6 +279,22 @@ void initAudio(void) {
   sgtl5000.volume(SGTL5000_VOLUME_DEF);
 	sgtl5000.lineInLevel(SGTL5000_INLEVEL_DEF);
 	sgtl5000.lineOutLevel(GSTL5000_OUTLEVEL_DEF);
+	biquad1.setNotch(0, 340, 0.5);
+	biquad1.setNotch(1, 340, 0.5);
+	biquad1.setNotch(2, 340, 0.5);
+	biquad1.setNotch(3, 340, 0.5);
+	biquad2.setNotch(0, 680, 0.5);
+	biquad2.setNotch(1, 680, 0.5);
+	biquad2.setNotch(2, 680, 0.5);
+	biquad2.setNotch(3, 680, 0.5);
+	biquad3.setNotch(0, 1020, 0.5);
+	biquad3.setNotch(1, 1020, 0.5);
+	biquad3.setNotch(2, 1020, 0.5);
+	biquad3.setNotch(3, 1020, 0.5);
+	biquad4.setNotch(0, 170, 0.5);
+	biquad4.setNotch(1, 170, 0.5);
+	biquad4.setNotch(2, 170, 0.5);
+	biquad4.setNotch(3, 170, 0.5);
   monMixer.gain(MIXER_CH_REC, 0);
   monMixer.gain(MIXER_CH_SDC, 0);
 }

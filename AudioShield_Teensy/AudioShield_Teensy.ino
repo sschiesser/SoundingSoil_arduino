@@ -49,6 +49,7 @@ void setup() {
 }
 
 void loop() {
+goto WORK;
 SLEEP:
 	int who;
 	// you need to update before sleeping.
@@ -307,7 +308,7 @@ WORK:
 			break;
 		}
 		
-		case BTSTATE_REQ_DIS: {
+		case BTSTATE_REQ_DISC: {
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCCMD_DEV_DISCONNECT1);
 				Alarm.delay(100);
@@ -384,7 +385,8 @@ WORK:
 					sendCmdOut(BCNOT_FILEPATH);
 					delay(100);
 				}
-				goto SLEEP;
+				// goto SLEEP;
+				goto WORK;
 			}
 			else {
 				alarm_wait_id = Alarm.alarmOnce(tm2.Hour, tm2.Minute, tm2.Second, alarmNextRec);
@@ -399,7 +401,7 @@ WORK:
 		}
 			
 		case RECSTATE_OFF:
-			if(ready_to_sleep) goto SLEEP;
+			if(ready_to_sleep) goto WORK;//goto SLEEP;
 			else goto WORK;
 			break;
 		

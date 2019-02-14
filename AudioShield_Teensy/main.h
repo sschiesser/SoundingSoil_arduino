@@ -38,7 +38,7 @@
 #define WAKESOURCE_RTC				35
 
 // Default recording window values
-#define RWIN_LEN_DEF_SEC			10 // }
+#define RWIN_LEN_DEF_SEC			0 // }
 #define RWIN_LEN_DEF_MIN			0 // } Zero values -> continuous recording
 #define RWIN_LEN_DEF_HOUR			0 // }
 #define RWIN_PER_DEF_SEC			20
@@ -86,7 +86,7 @@ enum btState {
   BTSTATE_REQ_CONN,						// 3
 	BTSTATE_CONNECTED,					// 4
   BTSTATE_PLAY,								// 5
-	BTSTATE_REQ_DIS							// 6
+	BTSTATE_REQ_DISC							// 6
 };
 extern enum btState 					bt_state;
 // low energy (BLE)

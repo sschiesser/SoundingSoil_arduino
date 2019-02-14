@@ -299,6 +299,8 @@ int parseSerialIn(String input) {
 			else if(notif.equalsIgnoreCase("LINK_LOSS")) {
 			}
 			else if(notif.equalsIgnoreCase("NAME")) {
+				BT_peer_name = param2;
+				return BCNOT_BT_STATE;
 			}
 			else if(notif.equalsIgnoreCase("OPEN_ERROR")) {
 			}
@@ -307,6 +309,7 @@ int parseSerialIn(String input) {
 		
 		// AT [link_ID] (length) (data)
 		// CLOSE_OK [link_ID] (profile) (Bluetooth address)
+		// NAME [addr] (remote) (name)
 		// OPEN_OK [link_ID] (profile) (Bluetooth address)
 		// RECV [link_ID] (size) (report data)
 		case 3: {
@@ -317,11 +320,15 @@ int parseSerialIn(String input) {
 			}
 			else if(notif.equalsIgnoreCase("CLOSE_OK")) {
 				if(param1.toInt() == BT_conn_id1) {	
-					if(working_state.bt_state != BTSTATE_OFF) working_state.bt_state = BTSTATE_REQ_DIS;
+					if(working_state.bt_state != BTSTATE_OFF) working_state.bt_state = BTSTATE_REQ_DISC;
 				}
 				else if(param1.toInt() == BLE_conn_id) {
 					if(working_state.ble_state != BLESTATE_OFF) working_state.ble_state = BLESTATE_REQ_DIS;
 				}
+			}
+			else if(notif.equalsIgnoreCase("NAME")) {
+				BT_peer_name = param2 + " " + param3;
+				return BCNOT_BT_STATE;
 			}
 			else if(notif.equalsIgnoreCase("OPEN_OK")) {
 				if(param2.equalsIgnoreCase("A2DP")) {
@@ -345,15 +352,15 @@ int parseSerialIn(String input) {
 			else if(notif.equalsIgnoreCase("RECV")) {
 				// BLE commands:
 				// - "inq"
-				// - "discon"
+				// - "disc"
 				if(param1.toInt() == BLE_conn_id) {
 					// MONPORT.println("Receiving 1-param BLE command");
 					if(param3.equalsIgnoreCase("inq")) {
 					  // MONPORT.println("Received BT inquiry command");
 						return BCCMD_INQUIRY;
 					}
-					if(param3.equalsIgnoreCase("discon")) {
-						working_state.bt_state = BTSTATE_REQ_DIS;
+					if(param3.equalsIgnoreCase("disc")) {
+						working_state.bt_state = BTSTATE_REQ_DISC;
 					}
 				}
 			}
@@ -504,20 +511,21 @@ int parseSerialIn(String input) {
 				return BCNOT_INQ_STATE;
 			}
 			else if(notif.equalsIgnoreCase("LINK")) {
-				MONPORT.println("LINK5 received");
+				// MONPORT.println("LINK5 received");
 				if(param3.equalsIgnoreCase("A2DP")) {
 					BT_conn_id1 = param1.toInt();
 					BT_peer_address = param4;
 					MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id1);
 					working_state.bt_state = BTSTATE_CONNECTED;
-					return BCNOT_BT_STATE;
+					// return BCNOT_BT_STATE;
+					return BCCMD_BT_NAME;
 				}
 				else if(param3.equalsIgnoreCase("AVRCP")) {
 					BT_conn_id2 = param1.toInt();
 					BT_peer_address = param4;
 					MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id2);
 					working_state.bt_state = BTSTATE_CONNECTED;
-					return BCNOT_BT_STATE;
+					// return BCNOT_BT_STATE;
 				}
 			}
 			break;
@@ -553,14 +561,15 @@ int parseSerialIn(String input) {
 					BT_peer_address = param4;
 					MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id1);
 					working_state.bt_state = BTSTATE_CONNECTED;
-					return BCNOT_BT_STATE;
+					// return BCNOT_BT_STATE;
+					return BCCMD_BT_NAME;
 				}
 				else if(param3.equalsIgnoreCase("AVRCP")) {
 					BT_conn_id2 = param1.toInt();
 					BT_peer_address = param4;
 					MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id2);
 					working_state.bt_state = BTSTATE_CONNECTED;
-					return BCNOT_BT_STATE;
+					// return BCNOT_BT_STATE;
 				}
 			}
 			else {
@@ -578,14 +587,15 @@ int parseSerialIn(String input) {
 					BT_peer_address = param4;
 					MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id1);
 					working_state.bt_state = BTSTATE_CONNECTED;
-					return BCNOT_BT_STATE;
+					// return BCNOT_BT_STATE;
+					return BCCMD_BT_NAME;
 				}
 				else if(param3.equalsIgnoreCase("AVRCP")) {
 					BT_conn_id2 = param1.toInt();
 					BT_peer_address = param4;
 					MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id2);
 					working_state.bt_state = BTSTATE_CONNECTED;
-					return BCNOT_BT_STATE;
+					// return BCNOT_BT_STATE;
 				}
 			}
 			break;
@@ -600,14 +610,15 @@ int parseSerialIn(String input) {
 					BT_peer_address = param4;
 					MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id1);
 					working_state.bt_state = BTSTATE_CONNECTED;
-					return BCNOT_BT_STATE;
+					// return BCNOT_BT_STATE;
+					return BCCMD_BT_NAME;
 				}
 				else if(param3.equalsIgnoreCase("AVRCP")) {
 					BT_conn_id2 = param1.toInt();
 					BT_peer_address = param4;
 					MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id2);
 					working_state.bt_state = BTSTATE_CONNECTED;
-					return BCNOT_BT_STATE;
+					// return BCNOT_BT_STATE;
 				}
 			}
 			break;
@@ -622,14 +633,15 @@ int parseSerialIn(String input) {
 					BT_peer_address = param4;
 					MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id1);
 					working_state.bt_state = BTSTATE_CONNECTED;
-					return BCNOT_BT_STATE;
+					// return BCNOT_BT_STATE;
+					return BCCMD_BT_NAME;
 				}
 				else if(param3.equalsIgnoreCase("AVRCP")) {
 					BT_conn_id2 = param1.toInt();
 					BT_peer_address = param4;
 					MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id2);
 					working_state.bt_state = BTSTATE_CONNECTED;
-					return BCNOT_BT_STATE;
+					// return BCNOT_BT_STATE;
 				}
 			}
 			break;
@@ -680,6 +692,11 @@ bool sendCmdOut(int msg) {
 		case BCCMD_BLUE_ON: {
 			MONPORT.println("Switching bluetooth on");
 			cmdLine = "POWER ON\r";
+			break;
+		}
+		// Ask for friendly name of connected BT device
+		case BCCMD_BT_NAME: {
+			cmdLine = "NAME " + String(BT_peer_address) + "\r";
 			break;
 		}
 		// Open A2DP connection with 'BT_peer_address'
@@ -872,9 +889,9 @@ bool sendCmdOut(int msg) {
   }
 	if(cmdLine != "") {
 		MONPORT.printf("To BC127: %s\n", cmdLine.c_str());
-		// Send the prepared command line to UART
-		BLUEPORT.print(cmdLine);
 	}
+	// Send the prepared command line to UART
+	BLUEPORT.print(cmdLine);
   // Send positive confirmation
   return true;
 }
