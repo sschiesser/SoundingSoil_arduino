@@ -10,8 +10,10 @@
 
 // GPS instance
 TinyGPS												gps;
+// Latitude & longitude values
+float													cur_lat, cur_long;							
 
-#define GPS_STATIC						0
+#define GPS_STATIC						1
 #if(GPS_STATIC==1)
 	const char str1[] PROGMEM = "$GPRMC,201547.000,A,3014.5527,N,09749.5808,W,0.24,163.05,040109,,*1A";
 	const char str2[] PROGMEM = "$GPGGA,201548.000,3014.5529,N,09749.5808,W,1,07,1.5,225.6,M,-22.5,M,18.8,0000*78";
@@ -43,7 +45,7 @@ void gpsPowerOff(void) {
  * OUT:	- valid fix received (bool)
  */
 bool gpsGetData(void) {
-	float flat, flon;
+	// float flat, flon;
 	unsigned long age;
 	byte retries = 0;
 	bool fix_found = false;
@@ -57,7 +59,8 @@ bool gpsGetData(void) {
 #else
 		gpsEncodeData(1000);
 #endif	
-		gps.f_get_position(&flat, &flon, &age);
+		// gps.f_get_position(&flat, &flon, &age);
+		gps.f_get_position(&cur_lat, &cur_long, &age);
 		if((age == TinyGPS::GPS_INVALID_AGE) || (age > 10000)) {
 			// MONPORT.print(". ");
 			retries++;
@@ -66,7 +69,9 @@ bool gpsGetData(void) {
 			fix_found = true;
 		}
 	} while((!fix_found) && (retries < 3));
-	// MONPORT.println("");
+	MONPORT.printf("Fix found? %d", fix_found);
+	if(fix_found) MONPORT.printf(" fLat: %f, fLong: %f\n", cur_lat, cur_long);
+	else MONPORT.println("");
 	return fix_found;
 }
 
@@ -83,6 +88,7 @@ void gpsEncodeData(unsigned long timeout) {
 			gps.encode(GPSPORT.read());
 	} while (millis() - start < timeout);
 }
+
 
 /* gpsSendString(TinyGPS &, const char)
  * ------------------------------------

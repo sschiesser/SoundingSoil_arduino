@@ -420,8 +420,7 @@ int parseSerialIn(String input) {
 							}
 						}
 						else {
-							// MONPORT.println("BT not connected. Cannot read or write volume");
-							return BCERR_BT_DIS;
+							return BCERR_VOL_BT_DIS;
 						}
 					}
 					else if(param3.equalsIgnoreCase("bt")) {
@@ -474,9 +473,15 @@ int parseSerialIn(String input) {
 						unsigned int d, p;
 						d = param4.toInt();
 						p = param5.toInt();
-						breakTime(d, rec_window.length);
-						breakTime(p, rec_window.period);
-						rec_window.occurences = param6.toInt();
+						if(d < p) {
+							breakTime(d, rec_window.length);
+							breakTime(p, rec_window.period);
+							rec_window.occurences = param6.toInt();
+							return BCNOT_RWIN_OK;
+						}
+						else {
+							return BCNOT_RWIN_ERR;
+						}
 					}
 				}
 			}
@@ -495,7 +500,7 @@ int parseSerialIn(String input) {
 			break;
 	}
 	
-  return BCCMD_NOTHING;
+  return BCCMD__NOTHING;
 }
 
 /* sendCmdOut(int)
@@ -510,13 +515,16 @@ bool sendCmdOut(int msg) {
 	unsigned int l, p, o;
   
   switch(msg) {
-    case BCCMD_NOTHING:
+    case BCCMD__NOTHING:
 			break;
-
-		// Reset
-    case BCCMD_RESET: {
-			MONPORT.println("Resetting BC127...");
-			cmdLine = "RESET\r";
+    // Start advertising on BLE
+    case BCCMD_ADV_ON: {
+			cmdLine = "ADVERTISING ON\r";
+			break;
+		}
+		// Stop advertising
+		case BCCMD_ADV_OFF: {
+			cmdLine = "ADVERTISING OFF\r";
 			break;
 		}
 		// Power-off
@@ -531,15 +539,25 @@ bool sendCmdOut(int msg) {
 			cmdLine = "POWER ON\r";
 			break;
 		}
-    // Start advertising on BLE
-    case BCCMD_ADV_ON: {
-			cmdLine = "ADVERTISING ON\r";
+		// Open A2DP connection with 'BT_peer_address'
+    case BCCMD_DEV_CONNECT: {
+			if(searchDevlist(BT_peer_address)) {
+				MONPORT.printf("Opening BT connection @%s (%s)\n", BT_peer_address.c_str(), BT_peer_name.c_str());
+				cmdLine = "OPEN " + BT_peer_address + " A2DP\r";
+			}
+			else {
+				cmdLine = "SEND " + String(BLE_conn_id) + "CONN ERR NO BT DEVICE!\r";
+			}
 			break;
 		}
-		// Stop advertising
-		case BCCMD_ADV_OFF: {
-			cmdLine = "ADVERTISING OFF\r";
-			break;
+		// Close connection with BT device
+		case BCCMD_DEV_DISCONNECT: {
+			if(working_state.bt_state == BTSTATE_CONNECTED) {
+				cmdLine = "CLOSE all\r";
+			}
+			else {
+				cmdLine = "SEND " + String(BLE_conn_id) + " DISC ERR NO BT DEVICE\r";
+			}
 		}
     // Start inquiry on BT for 10 s, first clear the device list
     case BCCMD_INQUIRY: {
@@ -555,14 +573,11 @@ bool sendCmdOut(int msg) {
 			cmdLine = "INQUIRY 10\r";
 			break;
 		}
-		// Open A2DP connection with 'BT_peer_address'
-    case BCCMD_DEV_CONNECT: {
-			if(searchDevlist(BT_peer_address)) {
-				MONPORT.printf("Opening BT connection @%s (%s)\n", BT_peer_address.c_str(), BT_peer_name.c_str());
-				cmdLine = "OPEN " + BT_peer_address + " A2DP\r";
-			}
-			else {
-				MONPORT.println("Device not found...");
+		// Pause monitoring -> AVRCP pause
+		case BCCMD_MON_PAUSE: {
+			working_state.mon_state = MONSTATE_REQ_OFF;
+			if(working_state.bt_state == BTSTATE_CONNECTED) {
+				cmdLine = "MUSIC " + String(BT_conn_id) + " PAUSE\r";
 			}
 			break;
 		}
@@ -572,14 +587,6 @@ bool sendCmdOut(int msg) {
 			// if(working_state.bt_state == BTSTATE_CONNECTED) {
 				cmdLine = "MUSIC " + String(BT_conn_id) + " PLAY\r";
 			// }
-			break;
-		}
-		// Pause monitoring -> AVRCP pause
-		case BCCMD_MON_PAUSE: {
-			working_state.mon_state = MONSTATE_REQ_OFF;
-			if(working_state.bt_state == BTSTATE_CONNECTED) {
-				cmdLine = "MUSIC " + String(BT_conn_id) + " PAUSE\r";
-			}
 			break;
 		}
 		// Stop monitoring -> AVRCP pause
@@ -600,6 +607,12 @@ bool sendCmdOut(int msg) {
 			working_state.rec_state = RECSTATE_REQ_OFF;
 			break;
 		}
+		// Reset
+    case BCCMD_RESET: {
+			MONPORT.println("Resetting BC127...");
+			cmdLine = "RESET\r";
+			break;
+		}
 		// Volume up -> AVRCP volume up
     case BCCMD_VOL_UP: {
 			cmdLine = "VOLUME " + String(BT_conn_id) + " UP\r";
@@ -615,21 +628,6 @@ bool sendCmdOut(int msg) {
 			cmdLine = "VOLUME " + String(BT_conn_id) + "\r";
 			break;
 		}
-		// REC state notification
-		case BCNOT_REC_STATE: {
-			cmdLine = "SEND " + String(BLE_conn_id);
-			if(working_state.rec_state == RECSTATE_ON) cmdLine += " REC ON\r";
-			else if((working_state.rec_state == RECSTATE_WAIT) || (working_state.rec_state == RECSTATE_IDLE)) cmdLine += " REC WAIT\r";
-			else cmdLine += " REC OFF\r";
-			break;
-		}
-		// MON state notification
-		case BCNOT_MON_STATE: {
-			cmdLine = "SEND " + String(BLE_conn_id);
-			if(working_state.mon_state == MONSTATE_ON) cmdLine += " MON ON\r";
-			else cmdLine += " MON OFF\r";
-			break;
-		}
 		// BT state notification
 		case BCNOT_BT_STATE: {
 			cmdLine = "SEND " + String(BLE_conn_id);
@@ -638,9 +636,15 @@ bool sendCmdOut(int msg) {
 			else cmdLine += " BT IDLE\r";
 			break;
 		}
-		// VOL level notification
-		case BCNOT_VOL_LEVEL: {
-			cmdLine = "SEND " + String(BLE_conn_id) + " VOL " + String(vol_value) + "\r";
+		// FILEPATH notification
+		case BCNOT_FILEPATH: {
+			cmdLine = "SEND " + String(BLE_conn_id) + " FP " + rec_path + "\r";
+			// MONPORT.printf("Sending: %s\n", cmdLine.c_str());
+			break;
+		}
+		// Inquiry sequence done -> send notification
+		case BCNOT_INQ_DONE: {
+			cmdLine = "SEND " + String(BLE_conn_id) + " INQ DONE\r";
 			break;
 		}
 		// Starting inquiry sequences -> send notification
@@ -660,9 +664,19 @@ bool sendCmdOut(int msg) {
 			cmdLine = "";
 			break;
 		}
-		// Inquiry sequence done -> send notification
-		case BCNOT_INQ_DONE: {
-			cmdLine = "SEND " + String(BLE_conn_id) + " INQ DONE\r";
+		// MON state notification
+		case BCNOT_MON_STATE: {
+			cmdLine = "SEND " + String(BLE_conn_id);
+			if(working_state.mon_state == MONSTATE_ON) cmdLine += " MON ON\r";
+			else cmdLine += " MON OFF\r";
+			break;
+		}
+		// REC state notification
+		case BCNOT_REC_STATE: {
+			cmdLine = "SEND " + String(BLE_conn_id);
+			if(working_state.rec_state == RECSTATE_ON) cmdLine += " REC ON\r";
+			else if((working_state.rec_state == RECSTATE_WAIT) || (working_state.rec_state == RECSTATE_IDLE)) cmdLine += " REC WAIT\r";
+			else cmdLine += " REC OFF\r";
 			break;
 		}
 		// RWIN values notification
@@ -673,15 +687,14 @@ bool sendCmdOut(int msg) {
 			cmdLine = "SEND " + String(BLE_conn_id) + " RWIN " + String(l) + " " + String(p) + " " + String(o) + "\r";
 			break;
 		}
-		// FILEPATH notification !!CURRENTLY MAX NOTIFICATION SIZE = 20 chars -> change to at least 26
-		case BCNOT_FILEPATH: {
-			cmdLine = "SEND " + String(BLE_conn_id) + " FP " + rec_path + "\r";
-			// MONPORT.printf("Sending: %s\n", cmdLine.c_str());
+		// VOL level notification
+		case BCNOT_VOL_LEVEL: {
+			cmdLine = "SEND " + String(BLE_conn_id) + " VOL " + String(vol_value) + "\r";
 			break;
 		}
 		// ERROR: BT disconnected
-		case BCERR_BT_DIS: {
-			cmdLine = "SEND " + String(BLE_conn_id) + " ERROR NO BT!\r";
+		case BCERR_VOL_BT_DIS: {
+			cmdLine = "SEND " + String(BLE_conn_id) + " VOL ERR NO BT DEVICE!\r";
 			break;
 		}
 		// No recognised command -> send negative confirmation

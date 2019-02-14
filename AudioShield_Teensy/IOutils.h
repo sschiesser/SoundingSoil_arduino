@@ -10,17 +10,17 @@
 #define GPS_SWITCH_PIN				3
 // Volume controle pin#
 #define AUDIO_VOLUME_PIN			A1
-// Buttons pin#
-#define BUTTON_RECORD_PIN			2 //24
-#define BUTTON_MONITOR_PIN		16 //25
-#define BUTTON_BLUETOOTH_PIN	21 //29
+// Buttons pin#										//v1.0 vals		v1.3 vals
+#define BUTTON_RECORD_PIN			2		//2						2
+#define BUTTON_MONITOR_PIN		16	//4						16
+#define BUTTON_BLUETOOTH_PIN	21	//21					21
 // Buttons debounce time
 #define BUTTON_BOUNCE_TIME_MS	20
 // LEDs pin#
-#define LED_RECORD_PIN				26
-#define LED_MONITOR_PIN				27
-#define LED_BLUETOOTH_PIN			28//34
-#define LED_PEAK_PIN					34//28
+#define LED_RECORD_PIN				26	//26					26
+#define LED_MONITOR_PIN				27	//27					27
+#define LED_BLUETOOTH_PIN			28	//34					28
+#define LED_PEAK_PIN					34	//28					34
 // LEDs#
 #define LED_MAX_NUMBER				4
 // LED ON/OFF states

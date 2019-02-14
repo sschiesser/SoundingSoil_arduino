@@ -138,7 +138,7 @@ WORK:
 		}
 			
 		case RECSTATE_RESTART: {
-			prepareRecording(false);
+			prepareRecording(true);
 			working_state.rec_state = RECSTATE_ON;
 			startRecording(next_record.path);
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
@@ -151,10 +151,6 @@ WORK:
 		case RECSTATE_REQ_WAIT: {
 			stopRecording(next_record.path);
 			pauseRecording();
-			// if(working_state.ble_state == BLESTATE_CONNECTED) {
-				// sendCmdOut(BCNOT_REC_STATE);
-				// sendCmdOut(BCNOT_FILEPATH);
-			// }
 			break;
 		}
 		
