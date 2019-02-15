@@ -86,7 +86,7 @@ enum btState {
   BTSTATE_REQ_CONN,						// 3
 	BTSTATE_CONNECTED,					// 4
   BTSTATE_PLAY,								// 5
-	BTSTATE_REQ_DISC							// 6
+	BTSTATE_REQ_DISC						// 6
 };
 extern enum btState 					bt_state;
 // low energy (BLE)
