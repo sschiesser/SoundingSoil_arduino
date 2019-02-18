@@ -45,6 +45,7 @@ AudioConnection          patchCord16(monMixer, 0, i2sMon, 1);
 AudioControlSGTL5000     sgtl5000;       //xy=382,39
 // GUItool: end automatically generated code
 const int                     audioInput = AUDIO_INPUT_LINEIN;
+// const int                     audioInput = AUDIO_INPUT_MIC;
 String 												rec_path = "--";
 int														vol_ctrl;
 float													vol_value;
@@ -312,7 +313,7 @@ void initAudio(void) {
 	biquad9.setNotch(0, 2298, 10);
 	biquad9.setNotch(1, 2298, 10);
 	biquad10.setNotch(0, 2630, 10);
-	// biquad10.setNotch(1, 13000, 3);
+	biquad10.setNotch(1, 13000, 3);
   monMixer.gain(MIXER_CH_REC, 0);
   monMixer.gain(MIXER_CH_SDC, 0); 
 }

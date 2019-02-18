@@ -21,6 +21,10 @@
 #define SDCARD_CS_PIN					10
 #define SDCARD_MOSI_PIN				7
 #define SDCARD_SCK_PIN				14
+// TESTING WITH CS0: 10 (9), MOSI0: 28, SCK0: 27!!
+// #define SDCARD_CS_PIN					10
+// #define SDCARD_MOSI_PIN				28
+// #define SDCARD_SCK_PIN				27
 
 extern struct waveHd					wave_header;
 extern File 									frec;

@@ -29,7 +29,7 @@
  *	14: 0.29 Volts p-p
  *	15: 0.24 Volts p-p
  */
-#define SGTL5000_INLEVEL_DEF	0
+#define SGTL5000_INLEVEL_DEF	15
 /* SGTL5000 line-out levels
  *	13: 3.16 Volts p-p
  *	14: 2.98 Volts p-p
@@ -51,7 +51,7 @@
  *	30: 1.22 Volts p-p
  *	31: 1.16 Volts p-p
  */
-#define GSTL5000_OUTLEVEL_DEF	13
+#define GSTL5000_OUTLEVEL_DEF	29
 
 #define ABS_VOL_MAX_VAL				120.0
 
