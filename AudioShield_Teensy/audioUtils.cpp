@@ -10,40 +10,45 @@
 // Audio connections definition
 
 // GUItool: begin automatically generated code
-AudioPlaySdWav           playWav;        //xy=65,450.00000381469727
-AudioInputI2S            i2sRec;         //xy=67,33
-AudioFilterBiquad        biquad1;        //xy=98,66
-AudioFilterBiquad        biquad2;        //xy=123,98
-AudioFilterBiquad        biquad3;        //xy=146,131
-AudioFilterBiquad        biquad4;        //xy=168,164
-AudioFilterBiquad        biquad5;        //xy=193,196
-AudioFilterBiquad        biquad6;        //xy=210.00000381469727,229.00000381469727
-AudioFilterBiquad        biquad7;        //xy=235.00000381469727,262.00000381469727
-AudioFilterBiquad        biquad8;        //xy=258,295.00000381469727
-AudioFilterBiquad        biquad9;        //xy=280,328.00000381469727
-AudioFilterBiquad        biquad10;       //xy=305,361.00000381469727
-AudioMixer4              monMixer;       //xy=440.00000381469727,438.00000381469727
-AudioAnalyzePeak         peak;           //xy=686,113
-AudioRecordQueue         queueSdc;       //xy=692,37
-AudioOutputI2S           i2sMon;         //xy=872.0000114440918,468.00000381469727
+AudioPlaySdWav           playWav;        //xy=131.6666717529297,453
+AudioInputI2S            i2sRec;         //xy=133.6666717529297,36
+// AudioFilterBiquad        biquad1;        //xy=164.6666717529297,69
+// AudioFilterBiquad        biquad2;        //xy=189.6666717529297,101
+// AudioFilterBiquad        biquad3;        //xy=212.6666717529297,134
+// AudioFilterBiquad        biquad4;        //xy=234.6666717529297,167
+// AudioFilterBiquad        biquad5;        //xy=259.6666717529297,199
+// AudioFilterBiquad        biquad6;        //xy=276.6666717529297,232
+// AudioFilterBiquad        biquad7;        //xy=301.6666717529297,265
+// AudioFilterBiquad        biquad8;        //xy=324.6666717529297,298
+// AudioFilterBiquad        biquad9;        //xy=346.6666717529297,331
+// AudioFilterBiquad        biquad10;       //xy=371.6666717529297,364
+AudioMixer4              monMixer;       //xy=566.6666564941406,455.0000114440918
+AudioMixer4              recMixer;         //xy=570.3334274291992,346.0000114440918
+AudioAnalyzePeak         peak;           //xy=752.6666717529297,116
+AudioRecordQueue         queueSdc;       //xy=758.6666717529297,40
+AudioOutputUSB           usbRec;           //xy=757.6666679382324,352.0000457763672
+AudioOutputI2S           i2sMon;         //xy=766.6666717529297,459.00001335144043
 AudioConnection          patchCord1(playWav, 0, monMixer, 1);
-AudioConnection          patchCord2(i2sRec, 0, biquad1, 0);
-AudioConnection          patchCord3(biquad1, biquad2);
-AudioConnection          patchCord4(biquad2, biquad3);
-AudioConnection          patchCord5(biquad3, biquad4);
-AudioConnection          patchCord6(biquad4, biquad5);
-AudioConnection          patchCord7(biquad5, biquad6);
-AudioConnection          patchCord8(biquad6, biquad7);
-AudioConnection          patchCord9(biquad7, biquad8);
-AudioConnection          patchCord10(biquad8, biquad9);
-AudioConnection          patchCord11(biquad9, biquad10);
-AudioConnection          patchCord12(biquad10, 0, monMixer, 0);
-AudioConnection          patchCord13(biquad10, peak);
-AudioConnection          patchCord14(biquad10, queueSdc);
-AudioConnection          patchCord15(monMixer, 0, i2sMon, 0);
-AudioConnection          patchCord16(monMixer, 0, i2sMon, 1);
-AudioControlSGTL5000     sgtl5000;       //xy=382,39
+AudioConnection          patchCord2(i2sRec, 0, monMixer, 0);
+// AudioConnection          patchCord3(biquad1, biquad2);
+// AudioConnection          patchCord4(biquad2, biquad3);
+// AudioConnection          patchCord5(biquad3, biquad4);
+// AudioConnection          patchCord6(biquad4, biquad5);
+// AudioConnection          patchCord7(biquad5, biquad6);
+// AudioConnection          patchCord8(biquad6, biquad7);
+// AudioConnection          patchCord9(biquad7, biquad8);
+// AudioConnection          patchCord10(biquad8, biquad9);
+// AudioConnection          patchCord11(biquad9, biquad10);
+// AudioConnection          patchCord12(biquad10, 0, monMixer, 0);
+AudioConnection          patchCord13(i2sRec, peak);
+AudioConnection          patchCord14(i2sRec, queueSdc);
+AudioConnection          patchCord15(i2sRec, 0, recMixer, 0);
+AudioConnection          patchCord16(monMixer, 0, i2sMon, 0);
+AudioConnection          patchCord17(monMixer, 0, i2sMon, 1);
+AudioConnection          patchCord18(recMixer, 0, usbRec, 0);
+AudioControlSGTL5000     sgtl5000; 
 // GUItool: end automatically generated code
+
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 // const int                     audioInput = AUDIO_INPUT_MIC;
 String 												rec_path = "--";
@@ -111,7 +116,7 @@ void setRecInfos(struct recInfo* rec, String path) {
  *
  */
 void startRecording(String path) {
-  frec = SD.open(path, FILE_WRITE);
+  frec = SD.open(path.c_str(), FILE_WRITE);
   if(frec) {
     queueSdc.begin();
     tot_rec_bytes = 0;
@@ -228,6 +233,7 @@ void finishRecording(void) {
  */
 void startMonitoring(void) {
 	monMixer.gain(MIXER_CH_REC, 1);
+	recMixer.gain(0, 1);
 	// sgtl5000.lineOutLevel(GSTL5000_OUTLEVEL_DEF);
 	setHpGain();
 }
@@ -238,6 +244,7 @@ void startMonitoring(void) {
  */
 void stopMonitoring(void) {
 	monMixer.gain(MIXER_CH_REC, 0);
+	recMixer.gain(0, 0);
 }
 
 /* setHpGain(void)
@@ -292,28 +299,29 @@ void initAudio(void) {
   sgtl5000.volume(SGTL5000_VOLUME_DEF);
 	sgtl5000.lineInLevel(SGTL5000_INLEVEL_DEF);
 	sgtl5000.lineOutLevel(GSTL5000_OUTLEVEL_DEF);
-	biquad1.setNotch(0, 172, 2);
-	biquad1.setNotch(1, 172, 2);
-	biquad1.setNotch(2, 172, 2);
-	biquad1.setNotch(3, 172, 2);
-	biquad2.setNotch(0, 344, 10);
-	biquad2.setNotch(1, 344, 10);
-	biquad3.setNotch(0, 688, 10);
-	biquad3.setNotch(1, 688, 10);
-	biquad4.setNotch(0, 1127, 10);
-	biquad4.setNotch(1, 1127, 10);
-	biquad5.setNotch(0, 1376, 10);
-	biquad5.setNotch(1, 1376, 10);
-	biquad6.setNotch(0, 1629, 10);
-	biquad6.setNotch(1, 1629, 10);
-	biquad7.setNotch(0, 1819, 10);
-	biquad7.setNotch(1, 1819, 10);
-	biquad8.setNotch(0, 2032, 10);
-	biquad8.setNotch(1, 2032, 10);
-	biquad9.setNotch(0, 2298, 10);
-	biquad9.setNotch(1, 2298, 10);
-	biquad10.setNotch(0, 2630, 10);
-	biquad10.setNotch(1, 13000, 3);
+	// biquad1.setNotch(0, 172, 2);
+	// biquad1.setNotch(1, 172, 2);
+	// biquad1.setNotch(2, 172, 2);
+	// biquad1.setNotch(3, 172, 2);
+	// biquad2.setNotch(0, 344, 10);
+	// biquad2.setNotch(1, 344, 10);
+	// biquad3.setNotch(0, 688, 10);
+	// biquad3.setNotch(1, 688, 10);
+	// biquad4.setNotch(0, 1127, 10);
+	// biquad4.setNotch(1, 1127, 10);
+	// biquad5.setNotch(0, 1376, 10);
+	// biquad5.setNotch(1, 1376, 10);
+	// biquad6.setNotch(0, 1629, 10);
+	// biquad6.setNotch(1, 1629, 10);
+	// biquad7.setNotch(0, 1819, 10);
+	// biquad7.setNotch(1, 1819, 10);
+	// biquad8.setNotch(0, 2032, 10);
+	// biquad8.setNotch(1, 2032, 10);
+	// biquad9.setNotch(0, 2298, 10);
+	// biquad9.setNotch(1, 2298, 10);
+	// biquad10.setNotch(0, 2630, 10);
+	// biquad10.setNotch(1, 13000, 3);
   monMixer.gain(MIXER_CH_REC, 0);
-  monMixer.gain(MIXER_CH_SDC, 0); 
+  monMixer.gain(MIXER_CH_SDC, 0);
+	recMixer.gain(0, 0);
 }

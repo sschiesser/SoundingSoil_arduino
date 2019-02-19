@@ -39,6 +39,7 @@ unsigned long tot_rec_bytes = 0;
  */
 void initSDcard(void) {
   SPI.setMOSI(SDCARD_MOSI_PIN);
+	SPI.setMISO(SDCARD_MISO_PIN);
   SPI.setSCK(SDCARD_SCK_PIN);
   if(!(SD.begin(SDCARD_CS_PIN))) {
     while(1) {
@@ -85,13 +86,13 @@ String createSDpath(void) {
 	}
 	sprintf(buf, "/%s/%s", dir_name.c_str(), file_name.c_str());
 	path.concat(buf);	
-	if(SD.exists(dir_name)) {
-		if(SD.exists(path)) {
-			SD.remove(path);
+	if(SD.exists(dir_name.c_str())) {
+		if(SD.exists(path.c_str())) {
+			SD.remove(path.c_str());
 		}
 	}
 	else {
-		SD.mkdir(dir_name);
+		SD.mkdir(dir_name.c_str());
 	}
 	
 	// String temppath = "il etait une fois un petit canard vert...";
@@ -136,7 +137,7 @@ void writeWaveHeader(String path, unsigned long dlen) {
   wave_header.dlength = dlen;
   wave_header.flength = dlen + 36;
   
-  fh = SD.open(path, O_WRITE);
+  fh = SD.open(path.c_str(), O_WRITE);
   fh.seek(0);
   fh.write((byte*)&wave_header, 44);
   fh.close();
