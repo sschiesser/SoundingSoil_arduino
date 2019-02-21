@@ -29,7 +29,7 @@ AudioRecordQueue         queueSdc;       //xy=758.6666717529297,40
 AudioOutputUSB           usbRec;           //xy=757.6666679382324,352.0000457763672
 AudioOutputI2S           i2sMon;         //xy=766.6666717529297,459.00001335144043
 AudioConnection          patchCord1(playWav, 0, monMixer, 1);
-AudioConnection          patchCord2(i2sRec, 0, monMixer, 0);
+// AudioConnection          patchCord2(i2sRec, 0, biquad1, 0);
 // AudioConnection          patchCord3(biquad1, biquad2);
 // AudioConnection          patchCord4(biquad2, biquad3);
 // AudioConnection          patchCord5(biquad3, biquad4);
@@ -39,7 +39,7 @@ AudioConnection          patchCord2(i2sRec, 0, monMixer, 0);
 // AudioConnection          patchCord9(biquad7, biquad8);
 // AudioConnection          patchCord10(biquad8, biquad9);
 // AudioConnection          patchCord11(biquad9, biquad10);
-// AudioConnection          patchCord12(biquad10, 0, monMixer, 0);
+AudioConnection          patchCord12(i2sRec, 0, monMixer, 0);
 AudioConnection          patchCord13(i2sRec, peak);
 AudioConnection          patchCord14(i2sRec, queueSdc);
 AudioConnection          patchCord15(i2sRec, 0, recMixer, 0);
@@ -136,20 +136,20 @@ void startRecording(String path) {
  */
 void continueRecording(void) {
   if(queueSdc.available() >= 2) {
-    byte buffer[512];
+    byte buffer[REC_WRITE_BUF_SIZE];
     // Fetch 2 blocks from the audio library and copy
     // into a 512 byte buffer.  The Arduino SD library
     // is most efficient when full 512 byte sector size
     // writes are used.
-    memcpy(buffer, queueSdc.readBuffer(), 256);
+    memcpy(buffer, queueSdc.readBuffer(), REC_READ_BUF_SIZE);
     queueSdc.freeBuffer();
-    memcpy(buffer+256, queueSdc.readBuffer(), 256);
+    memcpy(buffer+REC_READ_BUF_SIZE, queueSdc.readBuffer(), REC_READ_BUF_SIZE);
     queueSdc.freeBuffer();
-//    elapsedMicros usec = 0;
-    frec.write(buffer, 512);
-    tot_rec_bytes += 512;
-//    MONPORT.print("SD write, us=");
-//    MONPORT.println(usec);
+		// elapsedMicros usec = 0;
+    frec.write(buffer, REC_WRITE_BUF_SIZE);
+    tot_rec_bytes += REC_WRITE_BUF_SIZE;
+		// MONPORT.print("SD write, us=");
+		// MONPORT.println(usec);
   }
 }
 
@@ -165,9 +165,9 @@ void stopRecording(String path) {
   queueSdc.end();
   if(working_state.rec_state) {
     while(queueSdc.available() > 0) {
-      frec.write((byte*)queueSdc.readBuffer(), 256);
+      frec.write((byte*)queueSdc.readBuffer(), REC_READ_BUF_SIZE);
       queueSdc.freeBuffer();
-      tot_rec_bytes += 256;
+      tot_rec_bytes += REC_READ_BUF_SIZE;
     }
     frec.close();
 
@@ -299,6 +299,7 @@ void initAudio(void) {
   sgtl5000.volume(SGTL5000_VOLUME_DEF);
 	sgtl5000.lineInLevel(SGTL5000_INLEVEL_DEF);
 	sgtl5000.lineOutLevel(GSTL5000_OUTLEVEL_DEF);
+	sgtl5000.adcHighPassFilterDisable();
 	// biquad1.setNotch(0, 172, 2);
 	// biquad1.setNotch(1, 172, 2);
 	// biquad1.setNotch(2, 172, 2);
@@ -319,7 +320,6 @@ void initAudio(void) {
 	// biquad8.setNotch(1, 2032, 10);
 	// biquad9.setNotch(0, 2298, 10);
 	// biquad9.setNotch(1, 2298, 10);
-	// biquad10.setNotch(0, 2630, 10);
 	// biquad10.setNotch(1, 13000, 3);
   monMixer.gain(MIXER_CH_REC, 0);
   monMixer.gain(MIXER_CH_SDC, 0);

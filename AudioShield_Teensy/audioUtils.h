@@ -6,6 +6,9 @@
 
 #include "main.h"
 
+#define REC_READ_BUF_SIZE				256
+#define REC_WRITE_BUF_SIZE			(2 * REC_READ_BUF_SIZE)
+
 // Audio mixer channels
 #define MIXER_CH_REC          0
 #define MIXER_CH_SDC          1

@@ -8,6 +8,8 @@
 
 // GPS serial port
 #define GPSPORT								Serial1
+// #define GPS_TX_PIN						26
+// #define GPS_RX_PIN						27
 
 extern TinyGPS								gps;
 extern float									cur_lat, cur_long;							

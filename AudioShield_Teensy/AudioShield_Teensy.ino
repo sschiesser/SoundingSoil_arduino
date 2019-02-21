@@ -27,6 +27,8 @@ void setup() {
   // Initialize serial ports:
   MONPORT.begin(115200);			// Serial monitor port
   BLUEPORT.begin(9600);				// BC127 communication port
+	// GPSPORT.setRx(GPS_RX_PIN);
+	// GPSPORT.setTx(GPS_TX_PIN);
   GPSPORT.begin(9600);				// GPS port
 
 	initLEDButtons();
