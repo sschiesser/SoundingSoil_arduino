@@ -51,6 +51,7 @@ void setup() {
 }
 
 void loop() {
+static unsigned long loopCnt = 0;
 goto WORK;
 SLEEP:
 	int who;
@@ -204,7 +205,7 @@ WORK:
 		}
 		
 		case MONSTATE_ON: {
-			setHpGain();
+			if((loopCnt++ % 100) == 0) setHpGain();
 			detectPeaks();
 			break;
 		}
