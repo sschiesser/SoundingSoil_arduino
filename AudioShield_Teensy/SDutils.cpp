@@ -25,8 +25,10 @@ struct waveHd {
 };
 struct waveHd									wave_header;
 
-// SD card file handle
+// SD card RECORD file handle
 File frec;
+// SD card METADATA file handle
+File fmeta;
 
 // Total amount of recorded bytes
 unsigned long tot_rec_bytes = 0;
@@ -56,11 +58,11 @@ void initSDcard(void) {
   }
 }
 
-/* createSDpath(bool)
+/* createSDpath(void)
  * -----------------
  * Create the folder/file path of the new recording
  * out of retrieved GPS or sent remote values.
- * IN:	- time set (bool)
+ * IN:	- none
  * OUT:	- complete recording path (String)
  */
 String createSDpath(void) {
@@ -74,32 +76,65 @@ String createSDpath(void) {
 		breakTime(now(), tm);
 		sprintf(buf, "%02d%02d%02d", (tm.Year-30), tm.Month, tm.Day);
 		dir_name.concat(buf);
-		sprintf(buf, "%02d%02d%02d.wav", tm.Hour, tm.Minute, tm.Second);
+		sprintf(buf, "%02d%02d%02d", tm.Hour, tm.Minute, tm.Second);
 		file_name.concat(buf);
 	}
 	else {
 		breakTime(next_record.ts, tm);
 		sprintf(buf, "u%02d%02d%02d", (tm.Year-30), tm.Month, tm.Day);
 		dir_name.concat(buf);
-		sprintf(buf, "u%02d%02d%02d.wav", tm.Hour, tm.Minute, tm.Second);
+		sprintf(buf, "%02d%02d%02d", tm.Hour, tm.Minute, tm.Second);
 		file_name.concat(buf);
 	}
 	sprintf(buf, "/%s/%s", dir_name.c_str(), file_name.c_str());
 	path.concat(buf);	
 	if(SD.exists(dir_name.c_str())) {
-		if(SD.exists(path.c_str())) {
-			SD.remove(path.c_str());
+		next_record.rpath = path;
+		next_record.mpath = path;
+		next_record.rpath.concat(".wav");
+		next_record.mpath.concat(".txt");
+		MONPORT.printf("Created names: %s, %s\n", next_record.rpath.c_str(), next_record.mpath.c_str());
+		if(SD.exists(next_record.rpath.c_str())) {
+			SD.remove(next_record.rpath.c_str());
+		}
+		if(SD.exists(next_record.mpath.c_str())) {
+			SD.remove(next_record.mpath.c_str());
 		}
 	}
 	else {
 		SD.mkdir(dir_name.c_str());
 	}
-	
-	// String temppath = "il etait une fois un petit canard vert...";
-	// return temppath;
 	return path;
 }
 
+/* createMetadata(String)
+ * ----------------------
+ * Create metadata corresponding to the current recording.
+ * Currently saved values: record path, start time, duration, 
+ * latitude, longitude
+ * IN:	- path (String)
+ * OUT:	- none
+ */
+void createMetadata(struct recInfo* rec) {
+	fmeta = SD.open(rec->mpath.c_str(), FILE_WRITE);
+	if(fmeta) {
+		long mdata_dur = rec->dur.Hour * SECS_PER_HOUR;
+		mdata_dur += rec->dur.Minute * SECS_PER_MIN;
+		mdata_dur += rec->dur.Second;
+		String line1 = "Audio file:\t" + rec->rpath + ";\n";
+		String line2 = "Timestamp:\t" + String(rec->ts) + ";\n";
+		String line3 = "Duration:\t\t" + String(mdata_dur) + ";\n";
+		String line4 = "Coordinates:\t" + String(rec->gps_lat) + ", " + String(rec->gps_long) + ";\n";
+		String text = line1 + line2 + line3 + line4;
+		// String text = rec->rpath + "," + rec->ts + "," + mdata_dur + "," + rec->gps_lat + "," + rec->gps_long + "\n";
+		fmeta.print(text.c_str());
+		fmeta.close();
+	}
+	else {
+		MONPORT.println("File open error!");
+	}
+}
+ 
 /* initWaveHeader(void)
  * --------------------
  * Write all default values, that won't be changed

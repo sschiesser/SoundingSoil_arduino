@@ -51,10 +51,10 @@ AudioControlSGTL5000     sgtl5000;
 
 const int                     audioInput = AUDIO_INPUT_LINEIN;
 // const int                     audioInput = AUDIO_INPUT_MIC;
-String 												rec_path = "--";
+String 												sd_path = "--";
 int														vol_ctrl;
 float													vol_value;
-elapsedMillis									peak_interval;
+elapsedMillis									peak_interval_ms;
 
 /* prepareRecording(bool)
  * ----------------------
@@ -66,6 +66,7 @@ elapsedMillis									peak_interval;
  */
 void prepareRecording(bool sync) {
 	bool gps_fix = true;
+	tmElements_t tm;
 	
 	startLED(&leds[LED_RECORD], LED_MODE_ON);
 	if(sync) {
@@ -82,10 +83,11 @@ void prepareRecording(bool sync) {
 			startLED(&leds[LED_RECORD], LED_MODE_ON);
 		}
 		next_record.ts = now();
-		MONPORT.printf("Next record: %ld\n", next_record.ts);
+		breakTime(next_record.ts, tm);
+		MONPORT.printf("Next record @ %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
 	}
-	rec_path = createSDpath();
-	setRecInfos(&next_record, rec_path);
+	sd_path = createSDpath();
+	setRecInfos(&next_record, sd_path);
 	unsigned long dur = next_record.dur.Second + 
 										(next_record.dur.Minute * SECS_PER_MIN) + 
 										(next_record.dur.Hour * SECS_PER_HOUR);
@@ -96,16 +98,21 @@ void prepareRecording(bool sync) {
  * -------------------------------------
  * Set the information related to the pointed recording.
  * IN:	- pointer to a record struct (struct recInfos*)
- *			- recording path name (String)
+ *			- root path name (String)
  * OUT:	- none
  */
-void setRecInfos(struct recInfo* rec, String path) {
+void setRecInfos(struct recInfo* rec, String root_path) {
 	rec->dur.Second = rec_window.length.Second;
 	rec->dur.Minute = rec_window.length.Minute;
 	rec->dur.Hour = rec_window.length.Hour;
-	rec->path.remove(0);
-	rec->path.concat(path.c_str());
+	rec->rpath.remove(0);
+	rec->rpath.concat(root_path.c_str());
+	rec->rpath.concat(".wav");
+	rec->mpath.remove(0);
+	rec->mpath.concat(root_path.c_str());
+	rec->mpath.concat(".txt");
 	rec->t_set = (bool)rec->ts;
+	createMetadata(rec);
 }
 
 /* startRecording(String)
@@ -185,7 +192,7 @@ void pauseRecording(void) {
 	last_record = next_record;
 	next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
 									(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
-	rec_path = "--";
+	sd_path = "--";
 	// MONPORT.printf("Next record: %ld\n", next_record.ts);
 	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);
@@ -204,7 +211,10 @@ void resetRecInfo(struct recInfo* rec) {
 	rec->dur.Minute = 0;
 	rec->dur.Second = 0;
 	rec->t_set = false;
-	rec->path.remove(0);
+	rec->rpath.remove(0);
+	rec->mpath.remove(0);
+	rec->gps_lat = 0;
+	rec->gps_long = 0;
 	rec->cnt = 0;
 }
 
@@ -218,7 +228,7 @@ void resetRecInfo(struct recInfo* rec) {
 void finishRecording(void) {
 	resetRecInfo(&last_record);
 	resetRecInfo(&next_record);
-	rec_path = "--";
+	sd_path = "--";
 	if(time_source == TSOURCE_GPS) time_source = TSOURCE_TEENSY;
 	startLED(&leds[LED_RECORD], LED_MODE_WARNING_SHORT);
 	// Wait until the notification is finished before sleeping or doing whatever.
@@ -269,9 +279,9 @@ void setHpGain(void) {
  * OUT:	- none
  */
 void detectPeaks(void) {
-	if(peak_interval > 24) {
+	if(peak_interval_ms > 24) {
 		if(peak.available()) {
-			peak_interval = 0;
+			peak_interval_ms = 0;
 			if(peak.read() >= 1.0) {
 				startLED(&leds[LED_PEAK], LED_MODE_ON);
 			}
@@ -300,27 +310,6 @@ void initAudio(void) {
 	sgtl5000.lineInLevel(SGTL5000_INLEVEL_DEF);
 	sgtl5000.lineOutLevel(GSTL5000_OUTLEVEL_DEF);
 	sgtl5000.adcHighPassFilterDisable();
-	// biquad1.setNotch(0, 172, 2);
-	// biquad1.setNotch(1, 172, 2);
-	// biquad1.setNotch(2, 172, 2);
-	// biquad1.setNotch(3, 172, 2);
-	// biquad2.setNotch(0, 344, 10);
-	// biquad2.setNotch(1, 344, 10);
-	// biquad3.setNotch(0, 688, 10);
-	// biquad3.setNotch(1, 688, 10);
-	// biquad4.setNotch(0, 1127, 10);
-	// biquad4.setNotch(1, 1127, 10);
-	// biquad5.setNotch(0, 1376, 10);
-	// biquad5.setNotch(1, 1376, 10);
-	// biquad6.setNotch(0, 1629, 10);
-	// biquad6.setNotch(1, 1629, 10);
-	// biquad7.setNotch(0, 1819, 10);
-	// biquad7.setNotch(1, 1819, 10);
-	// biquad8.setNotch(0, 2032, 10);
-	// biquad8.setNotch(1, 2032, 10);
-	// biquad9.setNotch(0, 2298, 10);
-	// biquad9.setNotch(1, 2298, 10);
-	// biquad10.setNotch(1, 13000, 3);
   monMixer.gain(MIXER_CH_REC, 0);
   monMixer.gain(MIXER_CH_SDC, 0);
 	recMixer.gain(0, 0);

@@ -115,7 +115,10 @@ struct recInfo {
 	time_t ts;
 	tmElements_t dur;
 	bool t_set;
-	String path;
+	String rpath;
+	String mpath;
+	float gps_lat;
+	float gps_long;
 	unsigned int cnt;
 };
 extern struct recInfo					last_record;

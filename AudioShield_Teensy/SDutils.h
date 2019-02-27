@@ -35,6 +35,7 @@
 
 extern struct waveHd					wave_header;
 extern File 									frec;
+extern File										fmeta;
 extern unsigned long 					tot_rec_bytes;
 
 
@@ -44,6 +45,7 @@ extern unsigned long 					tot_rec_bytes;
  * ====================== */
 void initSDcard(void);
 String createSDpath(void);
+void createMetadata(struct recInfo* rec);
 void initWaveHeader(void);
 void writeWaveHeader(String path, unsigned long dlen);
 

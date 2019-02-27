@@ -26,10 +26,12 @@ time_t getTeensy3Time() {
  * OUT:	- none
  */
 void setTimeSource(void) {
+	tmElements_t tm;
 	setSyncProvider(getTeensy3Time);
-	MONPORT.printf("Time at startup: %ld\n", now());
+	breakTime(now(), tm);
 	if(now() < MIN_TIME_DEC) time_source = TSOURCE_NONE;
 	else time_source = TSOURCE_TEENSY;
+	MONPORT.printf("Date/time at startup: %02d.%02d.%02d, %02dh%02dm%02ds\nTime source: %d\n", tm.Day, tm.Month, (tm.Year-30), tm.Hour, tm.Minute, tm.Second, time_source);
 }
 
 

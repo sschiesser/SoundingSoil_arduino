@@ -62,16 +62,15 @@ bool gpsGetData(void) {
 		// gps.f_get_position(&flat, &flon, &age);
 		gps.f_get_position(&cur_lat, &cur_long, &age);
 		if((age == TinyGPS::GPS_INVALID_AGE) || (age > 10000)) {
-			// MONPORT.print(". ");
+			MONPORT.print(". ");
 			retries++;
 		}
 		else {
 			fix_found = true;
 		}
-	} while((!fix_found) && (retries < 3));
-	MONPORT.printf("Fix found? %d", fix_found);
-	if(fix_found) MONPORT.printf(" fLat: %f, fLong: %f\n", cur_lat, cur_long);
-	else MONPORT.println("");
+	} while((!fix_found) && (retries < GPS_RETRIES_MAX));
+	MONPORT.printf("Fix found? %d.", fix_found);
+	MONPORT.printf(" fLat: %f, fLong: %f\n", cur_lat, cur_long);
 	return fix_found;
 }
 

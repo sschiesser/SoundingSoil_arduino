@@ -133,7 +133,7 @@ WORK:
 			next_record.cnt = 0;
 			prepareRecording(true);
 			working_state.rec_state = RECSTATE_ON;
-			startRecording(next_record.path);
+			startRecording(next_record.rpath);
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_REC_STATE);
 				sendCmdOut(BCNOT_FILEPATH);
@@ -144,7 +144,7 @@ WORK:
 		case RECSTATE_RESTART: {
 			prepareRecording(true);
 			working_state.rec_state = RECSTATE_ON;
-			startRecording(next_record.path);
+			startRecording(next_record.rpath);
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_REC_STATE);
 				sendCmdOut(BCNOT_FILEPATH);
@@ -153,7 +153,7 @@ WORK:
 		}
 		
 		case RECSTATE_REQ_WAIT: {
-			stopRecording(next_record.path);
+			stopRecording(next_record.rpath);
 			pauseRecording();
 			break;
 		}
@@ -168,7 +168,7 @@ WORK:
 			Alarm.free(alarm_wait_id);
 			Alarm.free(alarm_rec_id);
 
-			stopRecording(next_record.path);
+			stopRecording(next_record.rpath);
 			finishRecording();
 			stopLED(&leds[LED_PEAK]);
 			working_state.rec_state = RECSTATE_OFF;
@@ -205,7 +205,7 @@ WORK:
 		}
 		
 		case MONSTATE_ON: {
-			if((loopCnt++ % 100) == 0) setHpGain();
+			if((loopCnt++ % 25) == 0) setHpGain();
 			detectPeaks();
 			break;
 		}
@@ -404,8 +404,13 @@ WORK:
 		}
 			
 		case RECSTATE_OFF:
-			if(ready_to_sleep) goto WORK;//goto SLEEP;
-			else goto WORK;
+			if(ready_to_sleep) {
+				// goto SLEEP;
+				goto WORK;
+			}
+			else {
+				goto WORK;
+			}
 			break;
 		
 		default:
