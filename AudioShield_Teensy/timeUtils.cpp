@@ -19,7 +19,9 @@ SnoozeDigital 								button_wakeup; 	// Wakeup pins on Teensy 3.6:
 																							// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
 SnoozeAlarm										snooze_rec;
 SnoozeAlarm										snooze_led;
+
 SnoozeBlock 									snooze_config(button_wakeup);
+SnoozeBlock										snooze_cpu;
 
 
 /* getTeensy3Time(void)

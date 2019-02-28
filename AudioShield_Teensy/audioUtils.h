@@ -61,7 +61,8 @@
 #define PEAK_INTERVAL_MS			25
 
 extern String 								rec_path;
-extern elapsedMillis	hpgain_interval;
+extern elapsedMillis					hpgain_interval;
+extern elapsedMillis					peak_interval;
 extern int										vol_ctrl;
 extern float									vol_value;
 

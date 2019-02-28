@@ -56,7 +56,9 @@ SLEEP:
 	// switch off i2s clock before sleeping
 	SIM_SCGC6 &= ~SIM_SCGC6_I2S;
 	Alarm.delay(100);
-	who = Snooze.hibernate(snooze_config); // returns module that woke up processor
+	REDUCED_CPU_BLOCK(snooze_cpu) {
+		who = Snooze.hibernate(snooze_config); // returns module that woke up processor
+	}
 	setTimeSource(); // Re-adjust time, since Snooze doesn't keep it
 	if(who == WAKESOURCE_RTC) {
 		// Snooze wake-up -> remove alarm and re-start recording
@@ -225,12 +227,14 @@ WORK:
 		}
 		
 		case MONSTATE_ON: {
-			// MONPORT.printf("hpgain: %d\n", hpgain_interval);
-			// if(hpgain_interval > HPGAIN_INTERVAL_MS) {
+			if(hpgain_interval > HPGAIN_INTERVAL_MS) {
 				setHpGain();
-				// hpgain_interval = 0;
-			// }
-			detectPeaks();
+				hpgain_interval = 0;
+			}
+			if(peak_interval > PEAK_INTERVAL_MS) {
+				detectPeaks();
+				peak_interval = 0;
+			}
 			break;
 		}
 		

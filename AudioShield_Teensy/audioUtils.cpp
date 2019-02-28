@@ -206,7 +206,8 @@ void finishRecording(void) {
  */
 void startMonitoring(void) {
 	monMixer.gain(MIXER_CH_REC, 1);
-	// hpgain_interval = 0;
+	hpgain_interval = 0;
+	peak_interval = 0;
 	setHpGain();
 }
 
@@ -228,7 +229,7 @@ void setHpGain(void) {
 	float gain;
 	vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
 	gain = (float)vol_ctrl * 0.8 / 1023.0;
-	MONPORT.printf("gain = %1.2f\n", gain);
+	// MONPORT.printf("gain = %1.2f\n", gain);
 	sgtl5000.volume(gain);
 }
 
@@ -240,15 +241,12 @@ void setHpGain(void) {
  * OUT:	- none
  */
 void detectPeaks(void) {
-	if(peak_interval > 24) {
-		if(peak.available()) {
-			peak_interval = 0;
-			if(peak.read() >= 1.0) {
-				startLED(&leds[LED_PEAK], LED_MODE_ON);
-			}
-			else {
-				stopLED(&leds[LED_PEAK]);
-			}
+	if(peak.available()) {
+		if(peak.read() >= 1.0) {
+			startLED(&leds[LED_PEAK], LED_MODE_ON);
+		}
+		else {
+			stopLED(&leds[LED_PEAK]);
 		}
 	}
 }
