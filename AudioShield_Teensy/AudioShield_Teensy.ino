@@ -7,7 +7,7 @@
 */
 #include "main.h"
 
-#define ALWAYS_ON_MODE				1
+#define ALWAYS_ON_MODE				0
 
 // install driver into SnoozeBlock
 // SnoozeBlock 									snooze_config(button_wakeup);
@@ -70,7 +70,7 @@ SLEEP:
 		while (timeout < (BUTTON_BOUNCE_TIME_MS+1)) cur_bt.update();
 		button_call = (enum bCalls)who;
 	}
-	if not sleeping anymore, re-enable i2s clock
+	// if not sleeping anymore, re-enable i2s clock
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
 	Alarm.delay(100);
 #endif
