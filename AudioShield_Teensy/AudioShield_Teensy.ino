@@ -9,11 +9,6 @@
 
 #define ALWAYS_ON_MODE				0
 
-// Load drivers
-SnoozeDigital 								button_wakeup; 	// Wakeup pins on Teensy 3.6:
-																							// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
-SnoozeAlarm										snooze_rec;
-SnoozeAlarm										snooze_led;
 // install driver into SnoozeBlock
 SnoozeBlock 									snooze_config(button_wakeup);
 
@@ -76,12 +71,6 @@ SLEEP:
 		elapsedMillis timeout = 0;
 		while (timeout < (BUTTON_BOUNCE_TIME_MS+1)) cur_bt.update();
 		button_call = (enum bCalls)who;
-		// button wake-up during REC IDLE mode -> need to set an new alarm & change mode
-		if(working_state.rec_state == RECSTATE_IDLE) {
-			snooze_config -= snooze_rec;
-			setWaitAlarm();
-			working_state.rec_state = RECSTATE_WAIT;
-		}
 	}
 	// if not sleeping anymore, re-enable i2s clock
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
@@ -101,6 +90,29 @@ WORK:
 	if(but_blue.fallingEdge()) button_call = (enum bCalls)BUTTON_BLUETOOTH_PIN;
     
   // centralized button call actions coming from SLEEP or WORK mode
+	if(button_call != BCALL_NONE) {
+		// button wake-up during REC IDLE mode -> need to set an new alarm & change mode
+		if(working_state.rec_state == RECSTATE_IDLE) {
+			snooze_config -= snooze_rec;
+			setWaitAlarm();
+			working_state.rec_state = RECSTATE_WAIT;
+			ready_to_sleep = false;
+		}
+		else if(working_state.rec_state == RECSTATE_WAIT) {
+			Alarm.free(alarm_wait_id);
+			time_t delta = next_record.ts - now();
+			tmElements_t tm1, tm2;
+			breakTime(delta, tm1);
+			breakTime(next_record.ts, tm2);
+			snooze_config += snooze_rec;
+			snooze_rec.setRtcTimer(tm1.Hour, tm1.Minute, tm1.Second);
+			MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
+			MONPORT.printf("Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
+			Alarm.delay(100);
+			working_state.rec_state = RECSTATE_IDLE;
+			ready_to_sleep = true;
+		}
+	}
   if(button_call == BUTTON_RECORD_PIN) {
 		MONPORT.printf("REC! Current state (R/M/BLE/BT): %d/%d/%d/%d\n",
 			working_state.rec_state, working_state.mon_state,
@@ -392,14 +404,14 @@ WORK:
 			breakTime(next_record.ts, tm2);
 			snooze_config += snooze_rec;
 			snooze_rec.setRtcTimer(tm1.Hour, tm1.Minute, tm1.Second);
-			working_state.rec_state = RECSTATE_IDLE;
 			MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
 			MONPORT.printf("Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
 			Alarm.delay(100);
 			working_state.rec_state = RECSTATE_IDLE;
 			ready_to_sleep = true;
 		}
-		else if(working_state.rec_state == RECSTATE_OFF) {
+		else if((working_state.rec_state == RECSTATE_OFF) ||
+			(working_state.rec_state == RECSTATE_IDLE)) {
 			ready_to_sleep = true;
 		}
 		else {
@@ -411,7 +423,6 @@ WORK:
 			tmElements_t tm;
 			breakTime(next_record.ts, tm);
 			alarm_wait_id = Alarm.alarmOnce(tm.Hour, tm.Minute, tm.Second, alarmNextRec);
-			working_state.rec_state = RECSTATE_WAIT;
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_REC_STATE);
 				sendCmdOut(BCNOT_FILEPATH);

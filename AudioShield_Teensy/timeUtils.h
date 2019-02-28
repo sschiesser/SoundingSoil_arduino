@@ -13,6 +13,11 @@ extern int										alarm_rec_id;
 extern int										alarm_wait_id;
 extern int										alarm_adv_id;
 
+extern SnoozeDigital 					button_wakeup; 	// Wakeup pins on Teensy 3.6:
+																							// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
+extern SnoozeAlarm						snooze_rec;
+extern SnoozeAlarm						snooze_led;
+
 // Time sources
 enum tSources {
 	TSOURCE_NONE,
