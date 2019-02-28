@@ -7,6 +7,8 @@
 */
 #include "main.h"
 
+#define ALWAYS_ON_MODE				0
+
 // Load drivers
 SnoozeDigital 								button_wakeup; 	// Wakeup pins on Teensy 3.6:
 																							// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
@@ -15,13 +17,12 @@ SnoozeAlarm										snooze_led;
 // install driver into SnoozeBlock
 SnoozeBlock 									snooze_config(button_wakeup);
 
-
 volatile struct wState 				working_state;
 struct rWindow								rec_window;
 struct recInfo								last_record;
 struct recInfo								next_record;
 
-bool													ready_to_sleep;
+volatile bool									ready_to_sleep;
 
 void setup() {
   // Initialize serial ports:
@@ -51,8 +52,9 @@ void setup() {
 }
 
 void loop() {
-static unsigned long loopCnt = 0;
+#if(ALWAYS_ON_MODE==1)
 goto WORK;
+#else
 SLEEP:
 	int who;
 	// you need to update before sleeping.
@@ -79,6 +81,7 @@ SLEEP:
 	// if not sleeping anymore, re-enable i2s clock
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
 	Alarm.delay(100);
+#endif
 
 WORK:
 	// needed for TimeAlarms timers
@@ -205,7 +208,11 @@ WORK:
 		}
 		
 		case MONSTATE_ON: {
-			if((loopCnt++ % 100) == 0) setHpGain();
+			// MONPORT.printf("hpgain: %d\n", hpgain_interval);
+			// if(hpgain_interval > HPGAIN_INTERVAL_MS) {
+				setHpGain();
+				// hpgain_interval = 0;
+			// }
 			detectPeaks();
 			break;
 		}
@@ -353,13 +360,19 @@ WORK:
 		MONPORT.printf("Sent to BLUEPORT: %s\n", manInput.c_str());
   }
 
+#if(ALWAYS_ON_MODE==1)
+	goto WORK;
+#else
 	// Stay awake or go to sleep?...
 	// ...first check all other working states
 	if( (working_state.mon_state == MONSTATE_OFF) &&
 			(working_state.ble_state == BLESTATE_OFF) &&
 			(working_state.bt_state == BTSTATE_OFF) ) {
-		if(working_state.rec_state == RECSTATE_WAIT) working_state.rec_state = RECSTATE_REQ_WAIT;
-		ready_to_sleep = true;
+		if(working_state.rec_state == RECSTATE_WAIT) {
+			working_state.rec_state = RECSTATE_REQ_WAIT;
+			MONPORT.println("Ready to sleep");
+			ready_to_sleep = true;
+		}
 	}
 	else {
 		ready_to_sleep = false;
@@ -388,8 +401,6 @@ WORK:
 					sendCmdOut(BCNOT_FILEPATH);
 					delay(100);
 				}
-				// goto SLEEP;
-				goto WORK;
 			}
 			else {
 				alarm_wait_id = Alarm.alarmOnce(tm2.Hour, tm2.Minute, tm2.Second, alarmNextRec);
@@ -398,20 +409,25 @@ WORK:
 					sendCmdOut(BCNOT_REC_STATE);
 					sendCmdOut(BCNOT_FILEPATH);
 				}
-				goto WORK;
 			}
 			break;
 		}
-			
-		case RECSTATE_OFF:
-			if(ready_to_sleep) goto WORK;//goto SLEEP;
-			else goto WORK;
-			break;
 		
 		default:
-			goto WORK;
 			break;
 	}
+	
+	if(ready_to_sleep) 
+	{
+		// MONPORT.println("SLEEP");
+		goto SLEEP;
+	}
+	else {
+		// MONPORT.println("WORK");
+		goto WORK;
+	}
+	
+#endif
 }
 	
 

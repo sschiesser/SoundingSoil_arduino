@@ -57,8 +57,11 @@
 #define GSTL5000_OUTLEVEL_DEF	29
 
 #define ABS_VOL_MAX_VAL				120.0
+#define HPGAIN_INTERVAL_MS		25
+#define PEAK_INTERVAL_MS			25
 
 extern String 								rec_path;
+extern elapsedMillis	hpgain_interval;
 extern int										vol_ctrl;
 extern float									vol_value;
 
