@@ -55,13 +55,12 @@ SLEEP:
 	but_mon.update();
 	but_blue.update();
 	// switch off i2s clock before sleeping
-	SIM_SCGC6 &= ~SIM_SCGC6_I2S;
-	Alarm.delay(100);
+	// SIM_SCGC6 &= ~SIM_SCGC6_I2S;
+	// Alarm.delay(100);
 	who = Snooze.hibernate(snooze_config); // returns module that woke up processor
 	setTimeSource(); // Re-adjust time, since Snooze doesn't keep it
 	if(who == WAKESOURCE_RTC) {
 		// Snooze wake-up -> remove alarm and re-start recording
-		// snooze_config -= snooze_rec;
 		removeIdleSnooze();
 		working_state.rec_state = RECSTATE_REQ_RESTART;
 	}
@@ -73,8 +72,8 @@ SLEEP:
 		button_call = (enum bCalls)who;
 	}
 	// if not sleeping anymore, re-enable i2s clock
-	SIM_SCGC6 |= SIM_SCGC6_I2S;
-	Alarm.delay(100);
+	// SIM_SCGC6 |= SIM_SCGC6_I2S;
+	// Alarm.delay(100);
 #endif
 
 WORK:
@@ -89,6 +88,8 @@ WORK:
 	if(but_blue.fallingEdge()) button_call = (enum bCalls)BUTTON_BLUETOOTH_PIN;
     
   // Centralized button actions from WORK or SLEEP mode...
+#if(ALWAYS_ON_MODE==1)
+#else
 	// ...dealing with IDLE and WAIT modes
 	if((button_call == BUTTON_MONITOR_PIN) || 
 		(button_call == BUTTON_BLUETOOTH_PIN)) {
@@ -107,6 +108,8 @@ WORK:
 			ready_to_sleep = true;
 		}
 	}
+#endif // ALWAYS_ON_MODE
+
   // ...standard button actions
 	if(button_call == BUTTON_RECORD_PIN) {
 		MONPORT.printf("REC! Current state (R/M/BLE/BT): %d/%d/%d/%d\n",
@@ -379,30 +382,25 @@ WORK:
   }
 
 #if(ALWAYS_ON_MODE==1)
+	if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
+		setWaitAlarm();
+		working_state.rec_state = RECSTATE_WAIT;
+	}
 	goto WORK;
 #else
 	// Sleeping or not sleeping... logical decision chain
 	// 1. MON/BLE/BT off
 	// 		1.1. if REC == REQ_PAUSE -> prepare the snooze alarm & SLEEP (IDLE mode)
-	//		1.2. if REC == OFF -> SLEEP
+	//		1.2. if REC == OFF or REC == IDLE -> SLEEP
 	//		1.3. else -> WORK
 	// 2. else
-	//		2.1. if REC == REQ_WAIT -> prepare the time alarm & WORK (WAIT mode)
+	//		2.1. if REC == REQ_PAUSE -> prepare the time alarm & WORK (WAIT mode)
 	//		2.2. else -> WORK
 	if( (working_state.mon_state == MONSTATE_OFF) &&
 			(working_state.ble_state == BLESTATE_OFF) &&
 			(working_state.bt_state == BTSTATE_OFF) ) {
 		if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
 			setIdleSnooze();
-			// time_t delta = next_record.ts - now();
-			// tmElements_t tm1, tm2;
-			// breakTime(delta, tm1);
-			// breakTime(next_record.ts, tm2);
-			// snooze_config += snooze_rec;
-			// snooze_rec.setRtcTimer(tm1.Hour, tm1.Minute, tm1.Second);
-			// MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
-			// MONPORT.printf("Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
-			// Alarm.delay(100);
 			working_state.rec_state = RECSTATE_IDLE;
 			ready_to_sleep = true;
 		}
@@ -417,9 +415,6 @@ WORK:
 	else {
 		if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
 			setWaitAlarm();
-			// tmElements_t tm;
-			// breakTime(next_record.ts, tm);
-			// alarm_wait_id = Alarm.alarmOnce(tm.Hour, tm.Minute, tm.Second, alarmNextRec);
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_REC_STATE);
 				sendCmdOut(BCNOT_FILEPATH);
