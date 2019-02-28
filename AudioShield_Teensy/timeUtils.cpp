@@ -19,6 +19,7 @@ SnoozeDigital 								button_wakeup; 	// Wakeup pins on Teensy 3.6:
 																							// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
 SnoozeAlarm										snooze_rec;
 SnoozeAlarm										snooze_led;
+SnoozeBlock 									snooze_config(button_wakeup);
 
 
 /* getTeensy3Time(void)
@@ -94,23 +95,23 @@ void setWaitAlarm(void) {
 }
 
 void setIdleSnooze(void) {
-	// time_t delta = next_record.ts - now();
-	// tmElements_t tm1, tm2;
-	// breakTime(delta, tm1);
-	// breakTime(next_record.ts, tm2);
-	// snooze_config += snooze_rec;
-	// snooze_rec.setRtcTimer(tm1.Hour, tm1.Minute, tm1.Second);
-	// MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
-	// MONPORT.printf("Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
-	// Alarm.delay(100);
+	time_t delta = next_record.ts - now();
+	tmElements_t tm1, tm2;
+	breakTime(delta, tm1);
+	breakTime(next_record.ts, tm2);
+	snooze_config += snooze_rec;
+	snooze_rec.setRtcTimer(tm1.Hour, tm1.Minute, tm1.Second);
+	MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
+	MONPORT.printf("Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
+	Alarm.delay(100);
 }
 
 void removeWaitAlarm(void) {
 	Alarm.free(alarm_wait_id);
-	MONPORT.printf("Alarm #%d removed.\n", alarm_wait_id);
 }
 
 void removeIdleSnooze(void) {
+	snooze_config -= snooze_rec;
 }
 
 /* alarmAdvTimeout(void)
@@ -153,7 +154,7 @@ void timerRecDone(void) {
  * OUT:	- none
  */
 void alarmNextRec(void) {
-	Alarm.free(alarm_wait_id);
+	removeWaitAlarm();
 	MONPORT.printf("Starting recording#%d\n", (next_record.cnt+1));
 	working_state.rec_state = RECSTATE_REQ_RESTART;
 }
