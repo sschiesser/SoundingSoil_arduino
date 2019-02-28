@@ -97,7 +97,9 @@ WORK:
     
   // centralized button call actions coming from SLEEP or WORK mode
   if(button_call == BUTTON_RECORD_PIN) {
-    MONPORT.print("Record button pressed: rec_state = "); MONPORT.println(working_state.rec_state);
+		MONPORT.printf("REC! Current state (R/M/BLE/BT): %d/%d/%d/%d\n",
+			working_state.rec_state, working_state.mon_state,
+			working_state.ble_state, working_state.bt_state);
     if(working_state.rec_state == RECSTATE_OFF) {
 			working_state.rec_state = RECSTATE_REQ_ON;
     }
@@ -110,7 +112,9 @@ WORK:
 		button_call = (enum bCalls)BCALL_NONE;
   }
   if(button_call == BUTTON_MONITOR_PIN) {
-    MONPORT.print("Monitor button pressed: mon_state = "); MONPORT.println(working_state.mon_state);
+		MONPORT.printf("MON! Current state (R/M/BLE/BT): %d/%d/%d/%d\n",
+			working_state.rec_state, working_state.mon_state,
+			working_state.ble_state, working_state.bt_state);
 		if(working_state.mon_state == MONSTATE_OFF) {
 			working_state.mon_state = MONSTATE_REQ_ON;
 		}
@@ -120,7 +124,9 @@ WORK:
 		button_call = (enum bCalls)BCALL_NONE;
 	}
   if(button_call == BUTTON_BLUETOOTH_PIN) {
-    MONPORT.print("Bluetooth button pressed: ble_state = "); MONPORT.println(working_state.ble_state);
+		MONPORT.printf("BLUE! Current state (R/M/BLE/BT): %d/%d/%d/%d\n",
+			working_state.rec_state, working_state.mon_state,
+			working_state.ble_state, working_state.bt_state);
 		if(working_state.ble_state == BLESTATE_OFF) {
 			working_state.ble_state = BLESTATE_REQ_ADV;
 		}
@@ -370,8 +376,13 @@ WORK:
 			(working_state.bt_state == BTSTATE_OFF) ) {
 		if(working_state.rec_state == RECSTATE_WAIT) {
 			working_state.rec_state = RECSTATE_REQ_WAIT;
-			MONPORT.println("Ready to sleep");
 			ready_to_sleep = true;
+		}
+		else if(working_state.rec_state == RECSTATE_OFF) {
+			ready_to_sleep = true;
+		}
+		else {
+			ready_to_sleep = false;
 		}
 	}
 	else {
