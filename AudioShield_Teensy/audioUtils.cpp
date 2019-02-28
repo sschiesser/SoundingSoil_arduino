@@ -59,7 +59,6 @@ void prepareRecording(bool sync) {
 			startLED(&leds[LED_RECORD], LED_MODE_ON);
 		}
 		next_record.ts = now();
-		MONPORT.printf("Next record: %ld\n", next_record.ts);
 	}
 	rec_path = createSDpath();
 	setRecInfos(&next_record, rec_path);

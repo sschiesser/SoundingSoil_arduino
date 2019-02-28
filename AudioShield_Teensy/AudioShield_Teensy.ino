@@ -418,8 +418,7 @@ WORK:
 	// Final decision
 	if(ready_to_sleep) goto SLEEP;
 	else goto WORK;
-	
-#endif
+#endif // ALWAYS_ON_MODE
 }
 	
 

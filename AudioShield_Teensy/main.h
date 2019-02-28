@@ -39,10 +39,10 @@
 #define WAKESOURCE_RTC				35
 
 // Default recording window values
-#define RWIN_LEN_DEF_SEC			10 // }
+#define RWIN_LEN_DEF_SEC			3 // }
 #define RWIN_LEN_DEF_MIN			0 // } Zero values -> continuous recording
 #define RWIN_LEN_DEF_HOUR			0 // }
-#define RWIN_PER_DEF_SEC			20
+#define RWIN_PER_DEF_SEC			8
 #define RWIN_PER_DEF_MIN			0
 #define RWIN_PER_DEF_HOUR			0
 #define RWIN_OCC_DEF					5 // Zero value -> infinite repetitions

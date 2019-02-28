@@ -45,12 +45,10 @@ void gpsPowerOff(void) {
  * OUT:	- valid fix received (bool)
  */
 bool gpsGetData(void) {
-	// float flat, flon;
 	unsigned long age;
 	byte retries = 0;
 	bool fix_found = false;
 
-	// MONPORT.print("Getting GPS data ");
 	do {
 #if(GPS_STATIC==1)
 		for (int i=0; i<4; ++i) {
@@ -59,7 +57,6 @@ bool gpsGetData(void) {
 #else
 		gpsEncodeData(1000);
 #endif	
-		// gps.f_get_position(&flat, &flon, &age);
 		gps.f_get_position(&cur_lat, &cur_long, &age);
 		if((age == TinyGPS::GPS_INVALID_AGE) || (age > 10000)) {
 			// MONPORT.print(". ");
@@ -69,9 +66,9 @@ bool gpsGetData(void) {
 			fix_found = true;
 		}
 	} while((!fix_found) && (retries < 3));
-	MONPORT.printf("Fix found? %d", fix_found);
-	if(fix_found) MONPORT.printf(" fLat: %f, fLong: %f\n", cur_lat, cur_long);
-	else MONPORT.println("");
+	// MONPORT.printf("Fix found? %d", fix_found);
+	// if(fix_found) MONPORT.printf(" fLat: %f, fLong: %f\n", cur_lat, cur_long);
+	// else MONPORT.println("");
 	return fix_found;
 }
 

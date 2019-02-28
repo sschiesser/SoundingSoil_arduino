@@ -26,8 +26,10 @@ time_t getTeensy3Time() {
  * OUT:	- none
  */
 void setTimeSource(void) {
+	tmElements_t tm;
 	setSyncProvider(getTeensy3Time);
-	MONPORT.printf("Time at startup: %ld\n", now());
+	breakTime(now(), tm);
+	MONPORT.printf("Time at startup: %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
 	if(now() < MIN_TIME_DEC) time_source = TSOURCE_NONE;
 	else time_source = TSOURCE_TEENSY;
 }
@@ -88,13 +90,14 @@ void alarmAdvTimeout(void) {
  */
 void timerRecDone(void) {
 	Alarm.free(alarm_rec_id);
+	MONPORT.printf("Recording#%d done.", (next_record.cnt+1));
 	
 	if((rec_window.occurences == 0) || (next_record.cnt < (rec_window.occurences-1))) {
-		MONPORT.printf("Recording done... counting: %d\n", next_record.cnt);
+		MONPORT.println("");
 		working_state.rec_state = RECSTATE_REQ_PAUSE;
 	}
 	else {
-		MONPORT.println("Recording set finished!");
+		MONPORT.println(" Finished!");
 		working_state.rec_state = RECSTATE_REQ_OFF;
 	}
 }
