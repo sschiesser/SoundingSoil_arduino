@@ -70,7 +70,6 @@ void bc127BlueOff(void) {
  * OUT:	- none
  */
 void bc127Reset(void) {
-	// sendCmdOut(BCCMD_RESET);
 	Alarm.delay(10);
 	digitalWrite(BC127_RST_PIN, LOW);
 	Alarm.delay(30);
@@ -892,6 +891,7 @@ bool sendCmdOut(int msg) {
 	}
 	// Send the prepared command line to UART
 	BLUEPORT.print(cmdLine);
+	Alarm.delay(50);
   // Send positive confirmation
   return true;
 }

@@ -10,28 +10,27 @@
 // Audio connections definition
 
 // GUItool: begin automatically generated code
-AudioPlaySdWav           playWav;        //xy=131.6666717529297,453
-AudioInputI2S            i2sRec;         //xy=133.6666717529297,36
-AudioMixer4              monMixer;       //xy=566.6666564941406,455.0000114440918
-AudioAnalyzePeak         peak;           //xy=752.6666717529297,116
-AudioRecordQueue         queueSdc;       //xy=758.6666717529297,40
-AudioOutputI2S           i2sMon;         //xy=766.6666717529297,459.00001335144043
-AudioConnection          patchCord1(playWav, 0, monMixer, 1);
-AudioConnection          patchCord12(i2sRec, 0, monMixer, 0);
-AudioConnection          patchCord13(i2sRec, peak);
-AudioConnection          patchCord14(i2sRec, queueSdc);
-AudioConnection          patchCord16(monMixer, 0, i2sMon, 0);
-AudioConnection          patchCord17(monMixer, 0, i2sMon, 1);
-AudioControlSGTL5000     sgtl5000; 
+AudioInputI2S									i2sRec;         //xy=76,36
+AudioPlaySdWav								playWav;        //xy=78,114
+AudioMixer4										monMixer;       //xy=260,114
+AudioAnalyzePeak							peak;           //xy=445,65
+AudioOutputI2S								i2sMon;         //xy=447,118
+AudioRecordQueue							queueSdc;       //xy=456,30
+AudioConnection								patchCord1(i2sRec, 0, monMixer, 0);
+AudioConnection								patchCord2(i2sRec, 0, peak, 0);
+AudioConnection								patchCord3(i2sRec, 0, queueSdc, 0);
+AudioConnection								patchCord4(playWav, 0, monMixer, 1);
+AudioConnection								patchCord5(monMixer, 0, i2sMon, 0);
+AudioConnection								patchCord6(monMixer, 0, i2sMon, 1);
+AudioControlSGTL5000					sgtl5000;       //xy=251,186
 // GUItool: end automatically generated code
 
 const int                     audioInput = AUDIO_INPUT_LINEIN;
-// const int                     audioInput = AUDIO_INPUT_MIC;
 String 												rec_path = "--";
 int														vol_ctrl;
 float													vol_value;
-elapsedMillis				peak_interval;
-elapsedMillis				hpgain_interval;
+elapsedMillis									peak_interval;
+elapsedMillis									hpgain_interval;
 
 /* prepareRecording(bool)
  * ----------------------
@@ -207,7 +206,7 @@ void finishRecording(void) {
  */
 void startMonitoring(void) {
 	monMixer.gain(MIXER_CH_REC, 1);
-	hpgain_interval = 0;
+	// hpgain_interval = 0;
 	setHpGain();
 }
 
@@ -229,6 +228,7 @@ void setHpGain(void) {
 	float gain;
 	vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
 	gain = (float)vol_ctrl * 0.8 / 1023.0;
+	MONPORT.printf("gain = %1.2f\n", gain);
 	sgtl5000.volume(gain);
 }
 

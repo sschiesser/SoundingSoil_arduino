@@ -7,7 +7,7 @@
 */
 #include "main.h"
 
-#define ALWAYS_ON_MODE				0
+#define ALWAYS_ON_MODE				1
 
 // install driver into SnoozeBlock
 // SnoozeBlock 									snooze_config(button_wakeup);
@@ -18,6 +18,7 @@ struct recInfo								last_record;
 struct recInfo								next_record;
 
 volatile bool									ready_to_sleep;
+
 
 void setup() {
   // Initialize serial ports:
@@ -34,14 +35,12 @@ void setup() {
 	digitalWrite(GPS_SWITCH_PIN, LOW);
 	pinMode(AUDIO_VOLUME_PIN, INPUT);
 
-	Alarm.delay(500);
 	initAudio();
 	initSDcard();
 	initWaveHeader();
 	setDefaultValues();
-	setTimeSource();
 	initBc127();
-	Alarm.delay(500);
+	setTimeSource();
 }
 
 void loop() {
@@ -55,8 +54,8 @@ SLEEP:
 	but_mon.update();
 	but_blue.update();
 	// switch off i2s clock before sleeping
-	// SIM_SCGC6 &= ~SIM_SCGC6_I2S;
-	// Alarm.delay(100);
+	SIM_SCGC6 &= ~SIM_SCGC6_I2S;
+	Alarm.delay(100);
 	who = Snooze.hibernate(snooze_config); // returns module that woke up processor
 	setTimeSource(); // Re-adjust time, since Snooze doesn't keep it
 	if(who == WAKESOURCE_RTC) {
@@ -71,9 +70,9 @@ SLEEP:
 		while (timeout < (BUTTON_BOUNCE_TIME_MS+1)) cur_bt.update();
 		button_call = (enum bCalls)who;
 	}
-	// if not sleeping anymore, re-enable i2s clock
-	// SIM_SCGC6 |= SIM_SCGC6_I2S;
-	// Alarm.delay(100);
+	if not sleeping anymore, re-enable i2s clock
+	SIM_SCGC6 |= SIM_SCGC6_I2S;
+	Alarm.delay(100);
 #endif
 
 WORK:
@@ -217,13 +216,10 @@ WORK:
 			working_state.mon_state = MONSTATE_ON;
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
 				sendCmdOut(BCCMD_MON_START);
-				Alarm.delay(50);
 				sendCmdOut(BCCMD_VOL_A2DP);
-				Alarm.delay(50);
 			}
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_MON_STATE);
-				Alarm.delay(50);
 			}
 			break;
 		}
@@ -244,11 +240,9 @@ WORK:
 			stopLED(&leds[LED_PEAK]);
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
 				sendCmdOut(BCCMD_MON_STOP);
-				Alarm.delay(50);
 			}
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_MON_STATE);
-				Alarm.delay(50);
 			}
 			working_state.mon_state = MONSTATE_OFF;
 			break;
@@ -342,9 +336,7 @@ WORK:
 		case BTSTATE_REQ_DISC: {
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCCMD_DEV_DISCONNECT1);
-				Alarm.delay(100);
 				sendCmdOut(BCCMD_DEV_DISCONNECT2);
-				Alarm.delay(100);
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_SLOW);
 				sendCmdOut(BCNOT_BT_STATE);
 			}
