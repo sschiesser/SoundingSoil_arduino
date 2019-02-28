@@ -28,8 +28,6 @@ void setup() {
   // Initialize serial ports:
   MONPORT.begin(115200);			// Serial monitor port
   BLUEPORT.begin(9600);				// BC127 communication port
-	// GPSPORT.setRx(GPS_RX_PIN);
-	// GPSPORT.setTx(GPS_TX_PIN);
   GPSPORT.begin(9600);				// GPS port
 
 	initLEDButtons();
@@ -66,6 +64,7 @@ SLEEP:
 	Alarm.delay(100);
 	// returns module that woke up processor from hibernation
 	who = Snooze.hibernate(snooze_config);
+	setTimeSource();
 	if(who == WAKESOURCE_RTC) {
 		// if alarm wake-up (from 'snooze') -> remove alarm, adjust time and re-start recording
 		snooze_config -= snooze_rec;
@@ -77,6 +76,12 @@ SLEEP:
 		elapsedMillis timeout = 0;
 		while (timeout < (BUTTON_BOUNCE_TIME_MS+1)) cur_bt.update();
 		button_call = (enum bCalls)who;
+		// button wake-up during REC IDLE mode -> need to set an new alarm & change mode
+		if(working_state.rec_state == RECSTATE_IDLE) {
+			snooze_config -= snooze_rec;
+			setWaitAlarm();
+			working_state.rec_state = RECSTATE_WAIT;
+		}
 	}
 	// if not sleeping anymore, re-enable i2s clock
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
@@ -382,12 +387,14 @@ WORK:
 			(working_state.bt_state == BTSTATE_OFF) ) {
 		if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
 			time_t delta = next_record.ts - now();
-			tmElements_t tm;
-			breakTime(delta, tm);
+			tmElements_t tm1, tm2;
+			breakTime(delta, tm1);
+			breakTime(next_record.ts, tm2);
 			snooze_config += snooze_rec;
-			snooze_rec.setRtcTimer(tm.Hour, tm.Minute, tm.Second);
+			snooze_rec.setRtcTimer(tm1.Hour, tm1.Minute, tm1.Second);
 			working_state.rec_state = RECSTATE_IDLE;
-			MONPORT.printf("Waking up in %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
+			MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
+			MONPORT.printf("Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
 			Alarm.delay(100);
 			working_state.rec_state = RECSTATE_IDLE;
 			ready_to_sleep = true;
@@ -409,7 +416,7 @@ WORK:
 				sendCmdOut(BCNOT_REC_STATE);
 				sendCmdOut(BCNOT_FILEPATH);
 			}
-			MONPORT.printf("Recording again at %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
+			MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
 			working_state.rec_state = RECSTATE_WAIT;
 		}
 		ready_to_sleep = false;

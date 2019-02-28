@@ -9,7 +9,7 @@
 // Max amount of BT devices to list on inquiry
 #define DEVLIST_MAXLEN				6
 // Time offset to adjust from GPS UTC
-#define TIME_OFFSET						1 // Central European Time
+#define GPS_TIME_OFFSET				1 // Central European Time
 // BC127 serial port
 #define BLUEPORT							Serial4
 // BC127 reset pin

@@ -15,9 +15,17 @@ int														alarm_rec_id;
 int														alarm_wait_id;
 int														alarm_adv_id;
 
+/* getTeensy3Time(void)
+ * --------------------
+ * Function needed for 'setSyncProvider()'.
+ * IN:	- none
+ * OUT:	- current Teensy time (time_t)
+ */
 time_t getTeensy3Time() {
 	return Teensy3Clock.get();
 }
+
+
 /* setTimeSource(void)
  * -------------------
  * Test if the time value stored in Teensy3Clock
@@ -52,7 +60,7 @@ void setCurTime(time_t cur_time, enum tSources source) {
 		case TSOURCE_GPS:
 			gps.crack_datetime(&year, &month, &day, &hour, &minute, &second, NULL, &fix_age);
 			setTime(hour, minute, second, day, month, year);
-			adjustTime(TIME_OFFSET * SECS_PER_HOUR);
+			adjustTime(GPS_TIME_OFFSET * SECS_PER_HOUR);
 			Teensy3Clock.set(now());
 			time_source = TSOURCE_TEENSY;
 			break;
@@ -69,6 +77,26 @@ void setCurTime(time_t cur_time, enum tSources source) {
 	// MONPORT.printf("Time adjusted from source#%d. Current time: %ld\n", source, now());
 }
 
+/* setNextAlarm(void)
+ * ------------------
+ */
+void setWaitAlarm(void) {
+	tmElements_t tm;
+	breakTime(next_record.ts, tm);
+	alarm_wait_id = Alarm.alarmOnce(tm.Hour, tm.Minute, tm.Second, alarmNextRec);
+	MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
+}
+
+void setIdleSnooze(void) {
+}
+
+void removeWaitAlarm(void) {
+	Alarm.free(alarm_wait_id);
+	MONPORT.printf("Alarm #%d removed.\n", alarm_wait_id);
+}
+
+void removeIdleSnooze(void) {
+}
 
 /* alarmAdvTimeout(void)
  * ---------------------
@@ -111,6 +139,6 @@ void timerRecDone(void) {
  */
 void alarmNextRec(void) {
 	Alarm.free(alarm_wait_id);
-	// MONPORT.println("Next REC called");
+	MONPORT.printf("Starting recording#%d\n", (next_record.cnt+1));
 	working_state.rec_state = RECSTATE_REQ_RESTART;
 }

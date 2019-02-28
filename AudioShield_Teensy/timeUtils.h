@@ -28,6 +28,10 @@ extern enum tSources					time_source;
  * ====================== */
 void setTimeSource(void);
 void setCurTime(time_t cur_time, enum tSources source);
+void setWaitAlarm(void);
+void setIdleSnooze(void);
+void removeWaitAlarm(void);
+void removeIdleSnooze(void);
 void alarmAdvTimeout(void);
 void timerRecDone(void);
 void alarmNextRec(void);
