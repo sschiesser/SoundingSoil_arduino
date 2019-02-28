@@ -80,8 +80,8 @@ void setRecInfos(struct recInfo* rec, String path) {
 	rec->dur.Second = rec_window.length.Second;
 	rec->dur.Minute = rec_window.length.Minute;
 	rec->dur.Hour = rec_window.length.Hour;
-	rec->path.remove(0);
-	rec->path.concat(path.c_str());
+	rec->rpath.remove(0);
+	rec->rpath.concat(path.c_str());
 	rec->t_set = (bool)rec->ts;
 }
 
@@ -138,7 +138,6 @@ void continueRecording(void) {
  * OUT:	- none
  */
 void stopRecording(String path) {
-  // MONPORT.println("Stop recording");
   queueSdc.end();
   if(working_state.rec_state) {
     while(queueSdc.available() > 0) {
@@ -163,7 +162,6 @@ void pauseRecording(void) {
 	next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
 									(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
 	rec_path = "--";
-	// MONPORT.printf("Next record: %ld\n", next_record.ts);
 	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);
 }
@@ -181,7 +179,7 @@ void resetRecInfo(struct recInfo* rec) {
 	rec->dur.Minute = 0;
 	rec->dur.Second = 0;
 	rec->t_set = false;
-	rec->path.remove(0);
+	rec->rpath.remove(0);
 	rec->cnt = 0;
 }
 

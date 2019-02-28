@@ -69,7 +69,7 @@ SLEEP:
 	if(who == WAKESOURCE_RTC) {
 		// if alarm wake-up (from 'snooze') -> remove alarm, adjust time and re-start recording
 		snooze_config -= snooze_rec;
-		working_state.rec_state = RECSTATE_RESTART;
+		working_state.rec_state = RECSTATE_REQ_RESTART;
 	}
 	else {
 		// if button wake-up -> debounce first and notify which button was pressed
@@ -142,7 +142,7 @@ WORK:
 			next_record.cnt = 0;
 			prepareRecording(true);
 			working_state.rec_state = RECSTATE_ON;
-			startRecording(next_record.path);
+			startRecording(next_record.rpath);
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_REC_STATE);
 				sendCmdOut(BCNOT_FILEPATH);
@@ -150,10 +150,10 @@ WORK:
 			break;
 		}
 			
-		case RECSTATE_RESTART: {
+		case RECSTATE_REQ_RESTART: {
 			prepareRecording(true);
 			working_state.rec_state = RECSTATE_ON;
-			startRecording(next_record.path);
+			startRecording(next_record.rpath);
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_REC_STATE);
 				sendCmdOut(BCNOT_FILEPATH);
@@ -161,8 +161,8 @@ WORK:
 			break;
 		}
 		
-		case RECSTATE_REQ_WAIT: {
-			stopRecording(next_record.path);
+		case RECSTATE_REQ_PAUSE: {
+			stopRecording(next_record.rpath);
 			pauseRecording();
 			break;
 		}
@@ -177,7 +177,7 @@ WORK:
 			Alarm.free(alarm_wait_id);
 			Alarm.free(alarm_rec_id);
 
-			stopRecording(next_record.path);
+			stopRecording(next_record.rpath);
 			finishRecording();
 			stopLED(&leds[LED_PEAK]);
 			working_state.rec_state = RECSTATE_OFF;
@@ -369,13 +369,27 @@ WORK:
 #if(ALWAYS_ON_MODE==1)
 	goto WORK;
 #else
-	// Stay awake or go to sleep?...
-	// ...first check all other working states
+	// Sleeping or not sleeping... logical decision chain
+	// 1. MON/BLE/BT off
+	// 		1.1. if REC == REQ_PAUSE -> prepare the snooze alarm & SLEEP (IDLE mode)
+	//		1.2. if REC == OFF -> SLEEP
+	//		1.3. else -> WORK
+	// 2. else
+	//		2.1. if REC == REQ_WAIT -> prepare the time alarm & WORK (WAIT mode)
+	//		2.2. else -> WORK
 	if( (working_state.mon_state == MONSTATE_OFF) &&
 			(working_state.ble_state == BLESTATE_OFF) &&
 			(working_state.bt_state == BTSTATE_OFF) ) {
-		if(working_state.rec_state == RECSTATE_WAIT) {
-			working_state.rec_state = RECSTATE_REQ_WAIT;
+		if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
+			time_t delta = next_record.ts - now();
+			tmElements_t tm;
+			breakTime(delta, tm);
+			snooze_config += snooze_rec;
+			snooze_rec.setRtcTimer(tm.Hour, tm.Minute, tm.Second);
+			working_state.rec_state = RECSTATE_IDLE;
+			MONPORT.printf("Waking up in %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
+			Alarm.delay(100);
+			working_state.rec_state = RECSTATE_IDLE;
 			ready_to_sleep = true;
 		}
 		else if(working_state.rec_state == RECSTATE_OFF) {
@@ -386,57 +400,24 @@ WORK:
 		}
 	}
 	else {
+		if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
+			tmElements_t tm;
+			breakTime(next_record.ts, tm);
+			alarm_wait_id = Alarm.alarmOnce(tm.Hour, tm.Minute, tm.Second, alarmNextRec);
+			working_state.rec_state = RECSTATE_WAIT;
+			if(working_state.ble_state == BLESTATE_CONNECTED) {
+				sendCmdOut(BCNOT_REC_STATE);
+				sendCmdOut(BCNOT_FILEPATH);
+			}
+			MONPORT.printf("Recording again at %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
+			working_state.rec_state = RECSTATE_WAIT;
+		}
 		ready_to_sleep = false;
 	}
 	
-	// ...then decide which alarm to set (SLEEP -> snooze, WORK -> timeAlarms)
-	time_t delta;
-	tmElements_t tm1, tm2, tm3;
-	switch(working_state.rec_state) {
-		case RECSTATE_REQ_WAIT: {
-			delta = next_record.ts - now();
-			breakTime(now(), tm1);
-			breakTime(next_record.ts, tm2);
-			breakTime(delta, tm3);
-			MONPORT.printf("Current time: %02d.%02d.%02d, %02dh%02dm%02ds\n", 
-										tm1.Day, tm1.Month, (tm1.Year-30), tm1.Hour, tm1.Minute, tm1.Second);
-			MONPORT.printf("Delta: %02dh%02dm%02ds\n", 
-										tm3.Hour, tm3.Minute, tm3.Second);
-			if(ready_to_sleep) {
-				MONPORT.println("Setting up Snooze alarm");
-				snooze_config += snooze_rec;
-				snooze_rec.setRtcTimer(tm3.Hour, tm3.Minute, tm3.Second);
-				working_state.rec_state = RECSTATE_IDLE;
-				if(working_state.ble_state == BLESTATE_CONNECTED) {
-					sendCmdOut(BCNOT_REC_STATE);
-					sendCmdOut(BCNOT_FILEPATH);
-					delay(100);
-				}
-			}
-			else {
-				alarm_wait_id = Alarm.alarmOnce(tm2.Hour, tm2.Minute, tm2.Second, alarmNextRec);
-				working_state.rec_state = RECSTATE_WAIT;
-				if(working_state.ble_state == BLESTATE_CONNECTED) {
-					sendCmdOut(BCNOT_REC_STATE);
-					sendCmdOut(BCNOT_FILEPATH);
-				}
-			}
-			break;
-		}
-		
-		default:
-			break;
-	}
-	
-	if(ready_to_sleep) 
-	{
-		// MONPORT.println("SLEEP");
-		goto SLEEP;
-	}
-	else {
-		// MONPORT.println("WORK");
-		goto WORK;
-	}
+	// Final decision
+	if(ready_to_sleep) goto SLEEP;
+	else goto WORK;
 	
 #endif
 }

@@ -91,7 +91,7 @@ void timerRecDone(void) {
 	
 	if((rec_window.occurences == 0) || (next_record.cnt < (rec_window.occurences-1))) {
 		MONPORT.printf("Recording done... counting: %d\n", next_record.cnt);
-		working_state.rec_state = RECSTATE_REQ_WAIT;
+		working_state.rec_state = RECSTATE_REQ_PAUSE;
 	}
 	else {
 		MONPORT.println("Recording set finished!");
@@ -109,5 +109,5 @@ void timerRecDone(void) {
 void alarmNextRec(void) {
 	Alarm.free(alarm_wait_id);
 	// MONPORT.println("Next REC called");
-	working_state.rec_state = RECSTATE_RESTART;
+	working_state.rec_state = RECSTATE_REQ_RESTART;
 }
