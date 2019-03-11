@@ -13,24 +13,24 @@
 // SnoozeBlock 									snooze_config(button_wakeup);
 
 volatile struct wState 				working_state;
-struct rWindow								rec_window;
-struct recInfo								last_record;
-struct recInfo								next_record;
+struct rWindow						rec_window;
+struct recInfo						last_record;
+struct recInfo						next_record;
 
-volatile bool									ready_to_sleep;
+volatile bool						ready_to_sleep;
 
 
 void setup() {
-  // Initialize serial ports:
-  MONPORT.begin(115200);			// Serial monitor port
-  BLUEPORT.begin(9600);				// BC127 communication port
-  GPSPORT.begin(9600);				// GPS port
+	// Initialize serial ports:
+	MONPORT.begin(115200);			// Serial monitor port
+	BLUEPORT.begin(9600);				// BC127 communication port
+	GPSPORT.begin(9600);				// GPS port
 
 	initLEDButtons();
 	button_wakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
 	button_wakeup.pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP, FALLING);
-  button_wakeup.pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP, FALLING);
-	
+	button_wakeup.pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP, FALLING);
+
 	pinMode(GPS_SWITCH_PIN, OUTPUT);
 	digitalWrite(GPS_SWITCH_PIN, LOW);
 	pinMode(AUDIO_VOLUME_PIN, INPUT);
@@ -80,20 +80,19 @@ SLEEP:
 WORK:
 	Alarm.delay(0); // needed for TimeAlarms timers
 	but_rec.update(); //
-	but_mon.update(); // needed for button bounces	
+	but_mon.update(); // needed for button bounces
 	but_blue.update(); //
-	
+
 	// Button edge detection -> notification
 	if(but_rec.fallingEdge()) button_call = (enum bCalls)BUTTON_RECORD_PIN;
 	if(but_mon.fallingEdge()) button_call = (enum bCalls)BUTTON_MONITOR_PIN;
 	if(but_blue.fallingEdge()) button_call = (enum bCalls)BUTTON_BLUETOOTH_PIN;
-    
+
   // Centralized button actions from WORK or SLEEP mode...
 #if(ALWAYS_ON_MODE==1)
 #else
 	// ...dealing with IDLE and WAIT modes
-	if((button_call == BUTTON_MONITOR_PIN) || 
-		(button_call == BUTTON_BLUETOOTH_PIN)) {
+	if((button_call == BUTTON_MONITOR_PIN) || (button_call == BUTTON_BLUETOOTH_PIN)) {
 		// button interruption during REC IDLE mode -> need to set an new alarm & change to WAIT mode
 		if(working_state.rec_state == RECSTATE_IDLE) {
 			removeIdleSnooze();
@@ -110,49 +109,42 @@ WORK:
 		}
 	}
 #endif // ALWAYS_ON_MODE
-
-  // ...standard button actions
+    // ...standard button actions
 	if(button_call == BUTTON_RECORD_PIN) {
-		MONPORT.printf("REC! Current state (R/M/BLE/BT): %d/%d/%d/%d\n",
-			working_state.rec_state, working_state.mon_state,
-			working_state.ble_state, working_state.bt_state);
-    if(working_state.rec_state == RECSTATE_OFF) {
-			working_state.rec_state = RECSTATE_REQ_ON;
+		MONPORT.printf("REC! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
+        if(working_state.rec_state == RECSTATE_OFF) {
+            working_state.rec_state = RECSTATE_REQ_ON;
+        }
+        else {
+            snooze_config -= snooze_rec;
+            // Alarm.free(alarm_wait_id);
+            // Alarm.free(alarm_rec_id);
+            working_state.rec_state = RECSTATE_REQ_OFF;
+        }
+        button_call = (enum bCalls)BCALL_NONE;
     }
-    else {
-			snooze_config -= snooze_rec;
-			// Alarm.free(alarm_wait_id);
-			// Alarm.free(alarm_rec_id);
-			working_state.rec_state = RECSTATE_REQ_OFF;
-    }
-		button_call = (enum bCalls)BCALL_NONE;
-  }
-  if(button_call == BUTTON_MONITOR_PIN) {
-		MONPORT.printf("MON! Current state (R/M/BLE/BT): %d/%d/%d/%d\n",
-			working_state.rec_state, working_state.mon_state,
-			working_state.ble_state, working_state.bt_state);
-		if(working_state.mon_state == MONSTATE_OFF) {
-			working_state.mon_state = MONSTATE_REQ_ON;
-		}
-		else {
-			working_state.mon_state = MONSTATE_REQ_OFF;
-		}
-		button_call = (enum bCalls)BCALL_NONE;
+	if(button_call == BUTTON_MONITOR_PIN) {
+	MONPORT.printf("MON! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
+	if(working_state.mon_state == MONSTATE_OFF) {
+					working_state.mon_state = MONSTATE_REQ_ON;
 	}
-  if(button_call == BUTTON_BLUETOOTH_PIN) {
-		MONPORT.printf("BLUE! Current state (R/M/BLE/BT): %d/%d/%d/%d\n",
-			working_state.rec_state, working_state.mon_state,
-			working_state.ble_state, working_state.bt_state);
-		if(working_state.ble_state == BLESTATE_OFF) {
-			working_state.ble_state = BLESTATE_REQ_ADV;
-		}
-		else {
-			working_state.ble_state = BLESTATE_REQ_OFF;
-		}
-		button_call = (enum bCalls)BCALL_NONE;
-  }
+	else {
+		working_state.mon_state = MONSTATE_REQ_OFF;
+	}
+	button_call = (enum bCalls)BCALL_NONE;
+}
+	if(button_call == BUTTON_BLUETOOTH_PIN) {
+		MONPORT.printf("BLUE! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
+	if(working_state.ble_state == BLESTATE_OFF) {
+		working_state.ble_state = BLESTATE_REQ_ADV;
+	}
+	else {
+		working_state.ble_state = BLESTATE_REQ_OFF;
+	}
+	button_call = (enum bCalls)BCALL_NONE;
+	}
 
-  // REC state actions
+	// REC state actions
 	switch(working_state.rec_state) {
 		case RECSTATE_REQ_ON: {
 			next_record.cnt = 0;
@@ -165,7 +157,7 @@ WORK:
 			}
 			break;
 		}
-			
+
 		case RECSTATE_REQ_RESTART: {
 			prepareRecording(true);
 			working_state.rec_state = RECSTATE_ON;
@@ -176,19 +168,19 @@ WORK:
 			}
 			break;
 		}
-		
+
 		case RECSTATE_REQ_PAUSE: {
 			stopRecording(next_record.rpath);
 			pauseRecording();
 			break;
 		}
-		
+
 		case RECSTATE_ON: {
 			continueRecording();
 			detectPeaks();
 			break;
 		}
-		
+
 		case RECSTATE_REQ_OFF: {
 			Alarm.free(alarm_wait_id);
 			Alarm.free(alarm_rec_id);
@@ -203,16 +195,14 @@ WORK:
 			}
 			break;
 		}
-		
+
 		default:
 			break;
 	}
-  // MON state actions
+    // MON state actions
 	switch(working_state.mon_state) {
 		case MONSTATE_REQ_ON: {
-			MONPORT.printf("MON req... states: BT %d, BLE %d, REC %d, MON %d\n",
-				working_state.bt_state, working_state.ble_state,
-				working_state.rec_state, working_state.mon_state);
+			MONPORT.printf("MON req... states: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
 			startLED(&leds[LED_MONITOR], LED_MODE_ON);
 			startMonitoring();
 			working_state.mon_state = MONSTATE_ON;
@@ -225,7 +215,7 @@ WORK:
 			}
 			break;
 		}
-		
+
 		case MONSTATE_ON: {
 			if(hpgain_interval > HPGAIN_INTERVAL_MS) {
 				setHpGain();
@@ -237,7 +227,7 @@ WORK:
 			}
 			break;
 		}
-		
+
 		case MONSTATE_REQ_OFF: {
 			stopMonitoring();
 			stopLED(&leds[LED_MONITOR]);
@@ -251,11 +241,11 @@ WORK:
 			working_state.mon_state = MONSTATE_OFF;
 			break;
 		}
-		
+
 		default:
 			break;
 	}
-  // BLE state actions
+    // BLE state actions
 	switch(working_state.ble_state) {
 		case BLESTATE_REQ_ADV: {
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
@@ -273,7 +263,7 @@ WORK:
 			working_state.ble_state = BLESTATE_ADV;
 			break;
 		}
-		
+
 		case BLESTATE_REQ_CONN: {
 			Alarm.free(alarm_adv_id);
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
@@ -285,14 +275,14 @@ WORK:
 			working_state.ble_state = BLESTATE_CONNECTED;
 			break;
 		}
-		
+
 		case BLESTATE_CONNECTED: {
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
 			}
 			break;
 		}
-		
+
 		case BLESTATE_REQ_DIS: {
 			BLE_conn_id = 0;
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
@@ -303,7 +293,7 @@ WORK:
 			}
 			break;
 		}
-		
+
 		case BLESTATE_REQ_OFF: {
 			Alarm.free(alarm_adv_id);
 			bc127AdvStop();
@@ -318,11 +308,11 @@ WORK:
 			working_state.ble_state = BLESTATE_OFF;
 			break;
 		}
-		
+
 		default:
 		break;
 	}
-  // BT state actions
+    // BT state actions
 	switch(working_state.bt_state) {
 		case BTSTATE_REQ_CONN: {
 			// Alarm.free(alarm_adv_id);
@@ -336,7 +326,7 @@ WORK:
 			sendCmdOut(BCNOT_BT_STATE);
 			break;
 		}
-		
+
 		case BTSTATE_REQ_DISC: {
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCCMD_DEV_DISCONNECT1);
@@ -354,28 +344,28 @@ WORK:
 			BT_conn_id2 = 0;
 			BT_peer_address = "";
 			BT_peer_name = "auto";
-			
+
 			break;
 		}
-		
+
 		default:
 			break;
 	}
-	
-	// Serial messaging
-  if (BLUEPORT.available()) {
-    String inMsg = BLUEPORT.readStringUntil('\r');
-    int outMsg = parseSerialIn(inMsg);
-    if(!sendCmdOut(outMsg)) {
-      MONPORT.println("Sending command error!!");
+
+    // Serial messaging
+    if (BLUEPORT.available()) {
+        String inMsg = BLUEPORT.readStringUntil('\r');
+        int outMsg = parseSerialIn(inMsg);
+        if(!sendCmdOut(outMsg)) {
+            MONPORT.println("Sending command error!!");
+        }
     }
-  }	
-  if (MONPORT.available()) {
-    String manInput = MONPORT.readStringUntil('\n');
-    int len = manInput.length() - 1;
-    BLUEPORT.print(manInput.substring(0, len)+'\r');
+    if (MONPORT.available()) {
+        String manInput = MONPORT.readStringUntil('\n');
+        int len = manInput.length() - 1;
+        BLUEPORT.print(manInput.substring(0, len)+'\r');
 		MONPORT.printf("Sent to BLUEPORT: %s\n", manInput.c_str());
-  }
+    }
 
 #if(ALWAYS_ON_MODE==1)
 	if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
@@ -392,16 +382,13 @@ WORK:
 	// 2. else
 	//		2.1. if REC == REQ_PAUSE -> prepare the time alarm & WORK (WAIT mode)
 	//		2.2. else -> WORK
-	if( (working_state.mon_state == MONSTATE_OFF) &&
-			(working_state.ble_state == BLESTATE_OFF) &&
-			(working_state.bt_state == BTSTATE_OFF) ) {
+	if( (working_state.mon_state == MONSTATE_OFF) && (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
 		if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
 			setIdleSnooze();
 			working_state.rec_state = RECSTATE_IDLE;
 			ready_to_sleep = true;
 		}
-		else if((working_state.rec_state == RECSTATE_OFF) ||
-			(working_state.rec_state == RECSTATE_IDLE)) {
+		else if((working_state.rec_state == RECSTATE_OFF) || (working_state.rec_state == RECSTATE_IDLE)) {
 			ready_to_sleep = true;
 		}
 		else {
@@ -419,13 +406,14 @@ WORK:
 		}
 		ready_to_sleep = false;
 	}
-	
+
 	// Final decision
 	if(ready_to_sleep) goto SLEEP;
 	else goto WORK;
+    
 #endif // ALWAYS_ON_MODE
 }
-	
+
 
 /* setDefaultValues(void)
  * ----------------------
@@ -456,6 +444,3 @@ void setDefaultValues(void) {
 	BT_peer_address = "";
 	BT_peer_name = "auto";
 }
-
-
-
