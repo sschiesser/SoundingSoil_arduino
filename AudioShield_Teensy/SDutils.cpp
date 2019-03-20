@@ -1,10 +1,10 @@
 /*
  * SD utils
- * 
+ *
  * Miscellaneous functions to handle with the SD card.
- * 
+ *
  */
- 
+
 #include "SDutils.h"
 
 // Wave header for PCM sound file
@@ -39,7 +39,7 @@ unsigned long tot_rec_bytes = 0;
  */
 void initSDcard(void) {
   SPI.setMOSI(SDCARD_MOSI_PIN);
-	// SPI.setMISO(SDCARD_MISO_PIN);
+	SPI.setMISO(SDCARD_MISO_PIN);
   SPI.setSCK(SDCARD_SCK_PIN);
   if(!(SD.begin(SDCARD_CS_PIN))) {
     while(1) {
@@ -69,7 +69,7 @@ String createSDpath(void) {
 	String path = "";
 	tmElements_t tm;
 	char buf[24];
-	
+
 	if(time_source != TSOURCE_NONE) {
 		breakTime(now(), tm);
 		sprintf(buf, "%02d%02d%02d", (tm.Year-30), tm.Month, tm.Day);
@@ -85,7 +85,7 @@ String createSDpath(void) {
 		file_name.concat(buf);
 	}
 	sprintf(buf, "/%s/%s", dir_name.c_str(), file_name.c_str());
-	path.concat(buf);	
+	path.concat(buf);
 	if(SD.exists(dir_name.c_str())) {
 		if(SD.exists(path.c_str())) {
 			SD.remove(path.c_str());
@@ -94,7 +94,7 @@ String createSDpath(void) {
 	else {
 		SD.mkdir(dir_name.c_str());
 	}
-	
+
 	// String temppath = "il etait une fois un petit canard vert...";
 	// return temppath;
 	return path;
@@ -136,7 +136,7 @@ void writeWaveHeader(String path, unsigned long dlen) {
 	File fh;
   wave_header.dlength = dlen;
   wave_header.flength = dlen + 36;
-  
+
   fh = SD.open(path.c_str(), O_WRITE);
   fh.seek(0);
   fh.write((byte*)&wave_header, 44);

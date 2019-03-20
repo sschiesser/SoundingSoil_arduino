@@ -1,9 +1,9 @@
 /*
  * Audio utilities
- * 
+ *
  * Miscellaneous functions related to the
  * audio processes (recording, monitoring, etc.)
- * 
+ *
  */
 #include "audioUtils.h"
 
@@ -42,7 +42,7 @@ elapsedMillis									hpgain_interval;
  */
 void prepareRecording(bool sync) {
 	bool gps_fix = true;
-	
+
 	startLED(&leds[LED_RECORD], LED_MODE_ON);
 	if(sync) {
 		gpsPowerOn();
@@ -61,10 +61,8 @@ void prepareRecording(bool sync) {
 	}
 	rec_path = createSDpath();
 	setRecInfos(&next_record, rec_path);
-	unsigned long dur = next_record.dur.Second + 
-										(next_record.dur.Minute * SECS_PER_MIN) + 
-										(next_record.dur.Hour * SECS_PER_HOUR);
-	alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);	
+	unsigned long dur = next_record.dur.Second + (next_record.dur.Minute * SECS_PER_MIN) + (next_record.dur.Hour * SECS_PER_HOUR);
+	alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
 }
 
 /* setRecInfos(struct recInfos*, String)

@@ -1,32 +1,34 @@
 /*
  * BC127
- * 
+ *
  * Miscellaneous functions to communicate with BC127.
- * 
+ *
  */
 
 #include "BC127.h"
 
 // BT device informations for connection
 struct btDev {
-  String address;
-	String name;
-  String capabilities;
-  unsigned int strength;
+    String address;
+    String name;
+    String capabilities;
+    unsigned int strength;
 };
 struct btDev dev_list[DEVLIST_MAXLEN];
 
 // Amount of found BT devices on inquiry
-unsigned int									found_dev;
+unsigned int                                        found_dev;
 // Address of the connected BT device
-String 												BT_peer_address;
+String                                              BT_peer_address;
 // Name of the connected BT device
-String												BT_peer_name;
+String										        BT_peer_name;
 // ID's (A2DP&AVRCP) of the established BT connection
-int														BT_conn_id1;
-int														BT_conn_id2;
+int													BT_conn_id1;
+int													BT_conn_id2;
 // ID of the established BLE connection
-int														BLE_conn_id;
+int													BLE_conn_id;
+// Flag indicating that the BC127 device is ready
+bool                                                BC127_ready = false;
 
 /* initBc127(void)
  * ---------------
@@ -38,9 +40,14 @@ void initBc127(void) {
 	pinMode(BC127_RST_PIN, OUTPUT);
 	digitalWrite(BC127_RST_PIN, HIGH);
 	bc127Reset();
-	// Alarm.delay(2000);
-	// bc127BlueOff();
-	// Alarm.delay(2000);
+    BC127_ready = false;
+    while(!BC127_ready) {
+		if (BLUEPORT.available()) {
+        	String inMsg = BLUEPORT.readStringUntil('\r');
+            parseSerialIn(inMsg);
+    	}
+	};
+	bc127BlueOff();
 }
 
 /* bc127BlueOn(void)
@@ -111,109 +118,109 @@ int parseSerialIn(String input) {
   // - RECV BLE  --> commands received from phone over BLE
   // - other     --> 3+ words inputs like "INQUIRY xxxx 240404 -54dB"
   // ================================================================
-	String notif, param1, param2, param3, param4, param5, param6, param7, param8, param9, trash;
+  String notif, param1, param2, param3, param4, param5, param6, param7, param8, param9, trash;
   unsigned int nb_params = 0;
   int slice1 = input.indexOf(" ");
   int slice2 = input.indexOf(" ", slice1+1);
-	int slice3 = input.indexOf(" ", slice2+1);
-	int slice4 = input.indexOf(" ", slice3+1);
-	int slice5 = input.indexOf(" ", slice4+1);
-	int slice6 = input.indexOf(" ", slice5+1);
-	int slice7 = input.indexOf(" ", slice6+1);
-	int slice8 = input.indexOf(" ", slice7+1);
-	int slice9 = input.indexOf(" ", slice8+1);
-	int slice10 = input.indexOf(" ", slice9+1);
-	MONPORT.printf("From BC127: %s\n", input.c_str());
-	// no space found -> notification without parameter
-	if(slice1 == -1) {
-		notif = input;
-		nb_params = 0;
-	}
+  int slice3 = input.indexOf(" ", slice2+1);
+  int slice4 = input.indexOf(" ", slice3+1);
+  int slice5 = input.indexOf(" ", slice4+1);
+  int slice6 = input.indexOf(" ", slice5+1);
+  int slice7 = input.indexOf(" ", slice6+1);
+  int slice8 = input.indexOf(" ", slice7+1);
+  int slice9 = input.indexOf(" ", slice8+1);
+  int slice10 = input.indexOf(" ", slice9+1);
+  MONPORT.printf("From BC127: %s\n", input.c_str());
+  // no space found -> notification without parameter
+  if(slice1 == -1) {
+      notif = input;
+      nb_params = 0;
+  }
   // 1+ parameter
   else {
-    notif = input.substring(0, slice1);
-		if(slice2 == -1) {
-			param1 = input.substring(slice1 + 1);
-			nb_params = 1;
-		}
-		// 2+ parameters
-		else {
-			param1 = input.substring(slice1 + 1, slice2);
-			if(slice3 == -1) {
-				param2 = input.substring(slice2 + 1);
-				nb_params = 2;
-			}
-			// 3+ parameters
-			else {
-				param2 = input.substring(slice2 + 1, slice3);
-				if(slice4 == -1) {
-					param3 = input.substring(slice3 + 1);
-					nb_params = 3;
-				}
-				// 4+ parameters
-				else {
-					param3 = input.substring(slice3 + 1, slice4);
-					if(slice5 == -1) {
-						param4 = input.substring(slice4 + 1);
-						nb_params = 4;
-					}
-					// 5+ parameters
-					else {
-						param4 = input.substring(slice4 + 1, slice5);
-						if(slice6 == -1) {
-							param5 = input.substring(slice5 + 1);
-							nb_params = 5;
-						}
-						// 6+ parameters
-						else {
-							param5 = input.substring(slice5 + 1, slice6);
-							if(slice7 == -1) {
-								param6 = input.substring(slice6 + 1);
-								nb_params = 6;
-							}
-							// 7+ parameters
-							else {
-								param6 = input.substring(slice6 + 1, slice7);
-								if(slice8 == -1) {
-									trash = input.substring(slice7 + 1);
-									nb_params = 7;
-								}
-								// 8+ paramters
-								else {
-									param7 = input.substring(slice7 + 1, slice8);
-									if(slice8 == -1) {
-										trash = input.substring(slice8 + 1);
-										nb_params = 8;
-									}
-									// 9+ parameters
-									else {
-										param8 = input.substring(slice8 + 1, slice9);
-										if(slice9 == -1) {
-											trash = input.substring(slice9 + 1);
-											nb_params = 9;
-										}
-										// 10+ parameters
-										else {
-											param9 = input.substring(slice9 + 1, slice10);
-											if(slice10 == -1) {
-												trash = input.substring(slice10 + 1);
-												nb_params = 10;
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	// MONPORT.printf("#params: %d\n", nb_params);
+      notif = input.substring(0, slice1);
+      if(slice2 == -1) {
+          param1 = input.substring(slice1 + 1);
+          nb_params = 1;
+      }
+      // 2+ parameters
+      else {
+          param1 = input.substring(slice1 + 1, slice2);
+          if(slice3 == -1) {
+              param2 = input.substring(slice2 + 1);
+              nb_params = 2;
+          }
+          // 3+ parameters
+          else {
+              param2 = input.substring(slice2 + 1, slice3);
+              if(slice4 == -1) {
+                  param3 = input.substring(slice3 + 1);
+                  nb_params = 3;
+              }
+              // 4+ parameters
+              else {
+                  param3 = input.substring(slice3 + 1, slice4);
+                  if(slice5 == -1) {
+                      param4 = input.substring(slice4 + 1);
+                      nb_params = 4;
+                  }
+                  // 5+ parameters
+                  else {
+                      param4 = input.substring(slice4 + 1, slice5);
+                      if(slice6 == -1) {
+                          param5 = input.substring(slice5 + 1);
+                          nb_params = 5;
+                      }
+                      // 6+ parameters
+                      else {
+                          param5 = input.substring(slice5 + 1, slice6);
+                          if(slice7 == -1) {
+                              param6 = input.substring(slice6 + 1);
+                              nb_params = 6;
+                          }
+                          // 7+ parameters
+                          else {
+                              param6 = input.substring(slice6 + 1, slice7);
+                              if(slice8 == -1) {
+                                  trash = input.substring(slice7 + 1);
+                                  nb_params = 7;
+                              }
+                              // 8+ paramters
+                              else {
+                                  param7 = input.substring(slice7 + 1, slice8);
+                                  if(slice8 == -1) {
+                                      trash = input.substring(slice8 + 1);
+                                      nb_params = 8;
+                                  }
+                                  // 9+ parameters
+                                  else {
+                                      param8 = input.substring(slice8 + 1, slice9);
+                                      if(slice9 == -1) {
+                                          trash = input.substring(slice9 + 1);
+                                          nb_params = 9;
+                                      }
+                                      // 10+ parameters
+                                      else {
+                                          param9 = input.substring(slice9 + 1, slice10);
+                                          if(slice10 == -1) {
+                                              trash = input.substring(slice10 + 1);
+                                              nb_params = 10;
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  }
+  // MONPORT.printf("#params: %d\n", nb_params);
 
-	// MONPORT.printf("%d parameters found:\n- notif = %s\n", nb_params, notif.c_str());
-	
-	switch(nb_params) {
+  // MONPORT.printf("%d parameters found:\n- notif = %s\n", nb_params, notif.c_str());
+
+  switch(nb_params) {
 		// PENDING
 		// INQU_OK
 		// PAIR_PENDING
@@ -228,13 +235,14 @@ int parseSerialIn(String input) {
 			else if(notif.equalsIgnoreCase("PAIR_PENDING")) {
 			}
 			else if(notif.equalsIgnoreCase("READY")) {
+                BC127_ready = true;
 			}
 			else {
 				// MONPORT.println(notif);
 			}
 			break;
 		}
-		
+
 		// A2DP_STEAM_START [link_ID]
 		// A2DP_STEAM_SUSPEND [link_ID]
 		// AVRCP_PLAY [link_ID]
@@ -277,7 +285,7 @@ int parseSerialIn(String input) {
 			}
 			break;
 		}
-			
+
 		// ABS_VOL [link_ID](value)
 		// BLE_READ [link_ID] handle
 		// CLOSE_ERROR [link_ID] (profile)
@@ -298,14 +306,20 @@ int parseSerialIn(String input) {
 			else if(notif.equalsIgnoreCase("LINK_LOSS")) {
 			}
 			else if(notif.equalsIgnoreCase("NAME")) {
-				BT_peer_name = param2;
-				return BCNOT_BT_STATE;
+                if(param2.substring(0,1).equalsIgnoreCase("\"")) {
+                    int strlen = param2.length();
+                    BT_peer_name = param2.substring(1, (strlen-1));
+                }
+                else {
+                    BT_peer_name = param2;
+                }
+                if(working_state.ble_state == BLESTATE_CONNECTED) return BCNOT_BT_STATE;
 			}
 			else if(notif.equalsIgnoreCase("OPEN_ERROR")) {
 			}
 			break;
 		}
-		
+
 		// AT [link_ID] (length) (data)
 		// CLOSE_OK [link_ID] (profile) (Bluetooth address)
 		// NAME [addr] (remote) (name)
@@ -318,7 +332,7 @@ int parseSerialIn(String input) {
 			if(notif.equalsIgnoreCase("AT")) {
 			}
 			else if(notif.equalsIgnoreCase("CLOSE_OK")) {
-				if(param1.toInt() == BT_conn_id1) {	
+				if(param1.toInt() == BT_conn_id1) {
 					if(working_state.bt_state != BTSTATE_OFF) working_state.bt_state = BTSTATE_REQ_DISC;
 				}
 				else if(param1.toInt() == BLE_conn_id) {
@@ -327,7 +341,7 @@ int parseSerialIn(String input) {
 			}
 			else if(notif.equalsIgnoreCase("NAME")) {
 				BT_peer_name = param2 + " " + param3;
-				return BCNOT_BT_STATE;
+                if(working_state.ble_state == BLESTATE_CONNECTED) return BCNOT_BT_STATE;
 			}
 			else if(notif.equalsIgnoreCase("OPEN_OK")) {
 				if(param2.equalsIgnoreCase("A2DP")) {
@@ -336,6 +350,7 @@ int parseSerialIn(String input) {
 					MONPORT.printf("A2DP connection opened. Conn ID: %d, peer address = %s\n",
 						BT_conn_id1, BT_peer_address.c_str());
 					working_state.bt_state = BTSTATE_REQ_CONN;
+                    return BCCMD_BT_NAME;
 				}
 				else if(param2.equalsIgnoreCase("AVRCP")) {
 					BT_conn_id2 = param1.toInt();
@@ -368,7 +383,7 @@ int parseSerialIn(String input) {
 			}
 			break;
 		}
-		
+
 		// BLE_CHAR [link_ID] type uuid handle
 		// BLE_INDICATION [link_ID] handle size data
 		// BLE_NOTIFICATION [link_ID] handle size data
@@ -496,7 +511,7 @@ int parseSerialIn(String input) {
 			}
 			break;
 		}
-		
+
 		// INQUIRY(BTADDR) ("NAME SURNAME") (COD) (RSSI)
 		// LINK [link_ID] (STATE) (PROFILE) (BTADDR) (INFO)
 		// RECV [link_ID] (size) (report data) <-- (report data) with 3 parameters
@@ -529,7 +544,7 @@ int parseSerialIn(String input) {
 			}
 			break;
 		}
-		
+
 		// LINK [link_ID] (state) (profile) (btaddr) (info1) (info2)
 		// RECV [link_ID] (size) (report data) <-- (report data) with 4 parameters
 		case 6: {
@@ -576,7 +591,7 @@ int parseSerialIn(String input) {
 			}
 			break;
 		}
-		
+
 		// LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3)
 		case 7: {
 			if(notif.equalsIgnoreCase("LINK")) {
@@ -599,7 +614,7 @@ int parseSerialIn(String input) {
 			}
 			break;
 		}
-		
+
 		// LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3) (info4)
 		case 8: {
 			if(notif.equalsIgnoreCase("LINK")) {
@@ -622,7 +637,7 @@ int parseSerialIn(String input) {
 			}
 			break;
 		}
-		
+
 		// LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3) (info4) (info5)
 		case 9: {
 			if(notif.equalsIgnoreCase("LINK")) {
@@ -645,12 +660,12 @@ int parseSerialIn(String input) {
 			}
 			break;
 		}
-		
+
 		default:
 			// MONPORT.println(input.c_str());
 			break;
 	}
-	
+
   return BCCMD__NOTHING;
 }
 
@@ -661,18 +676,18 @@ int parseSerialIn(String input) {
  * OUT:	- command confirmation (bool)
  */
 bool sendCmdOut(int msg) {
-  String devString = "";
-  String cmdLine = "";
-	unsigned int l, p, o;
-  
-  switch(msg) {
-		/* --------
-		 * COMMANDS
-		 * -------- */
-    case BCCMD__NOTHING:
-			break;
-    // Start advertising on BLE
-    case BCCMD_ADV_ON: {
+    String devString = "";
+    String cmdLine = "";
+    unsigned int l, p, o;
+
+    switch(msg) {
+        /* --------
+        * COMMANDS
+        * -------- */
+        case BCCMD__NOTHING:
+        break;
+        // Start advertising on BLE
+        case BCCMD_ADV_ON: {
 			cmdLine = "ADVERTISING ON\r";
 			break;
 		}
@@ -699,7 +714,7 @@ bool sendCmdOut(int msg) {
 			break;
 		}
 		// Open A2DP connection with 'BT_peer_address'
-    case BCCMD_DEV_CONNECT: {
+        case BCCMD_DEV_CONNECT: {
 			if(searchDevlist(BT_peer_address)) {
 				MONPORT.printf("Opening BT connection @%s (%s)\n", BT_peer_address.c_str(), BT_peer_name.c_str());
 				cmdLine = "OPEN " + BT_peer_address + " A2DP\r";
@@ -710,16 +725,16 @@ bool sendCmdOut(int msg) {
 			break;
 		}
 		// Close connection with BT device
-		case BCCMD_DEV_DISCONNECT1: {
+        case BCCMD_DEV_DISCONNECT1: {
 			cmdLine = "CLOSE " + String(BT_conn_id1) + "\r";
 			break;
 		}
-		case BCCMD_DEV_DISCONNECT2: {
+        case BCCMD_DEV_DISCONNECT2: {
 			cmdLine = "CLOSE " + String(BT_conn_id2) + "\r";
 			break;
 		}
-    // Start inquiry on BT for 10 s, first clear the device list
-    case BCCMD_INQUIRY: {
+        // Start inquiry on BT for 10 s, first clear the device list
+        case BCCMD_INQUIRY: {
 			// MONPORT.println("Start inquiry");
 			for(int i = 0; i < DEVLIST_MAXLEN; i++) {
 				dev_list[i].address = "";
@@ -741,7 +756,7 @@ bool sendCmdOut(int msg) {
 			break;
 		}
 		// Start monitoring -> AVRCP play
-    case BCCMD_MON_START: {
+        case BCCMD_MON_START: {
 			// working_state.mon_state = MONSTATE_REQ_ON;
 			// if(working_state.bt_state == BTSTATE_CONNECTED) {
 				cmdLine = "MUSIC " + String(BT_conn_id1) + " PLAY\r";
@@ -749,7 +764,7 @@ bool sendCmdOut(int msg) {
 			break;
 		}
 		// Stop monitoring -> AVRCP pause
-    case BCCMD_MON_STOP: {
+        case BCCMD_MON_STOP: {
 			working_state.mon_state = MONSTATE_REQ_OFF;
 			if(working_state.bt_state == BTSTATE_CONNECTED) {
 				cmdLine = "MUSIC " + String(BT_conn_id1) + " STOP\r";
@@ -757,17 +772,17 @@ bool sendCmdOut(int msg) {
 			break;
 		}
 		// Start recording
-    case BCCMD_REC_START: {
+        case BCCMD_REC_START: {
 			working_state.rec_state = RECSTATE_REQ_ON;
 			break;
 		}
 		// Stop recording
-    case BCCMD_REC_STOP: {
+        case BCCMD_REC_STOP: {
 			working_state.rec_state = RECSTATE_REQ_OFF;
 			break;
 		}
 		// Reset
-    case BCCMD_RESET: {
+        case BCCMD_RESET: {
 			MONPORT.println("Resetting BC127...");
 			cmdLine = "RESET\r";
 			break;
@@ -783,12 +798,12 @@ bool sendCmdOut(int msg) {
 			break;
 		}
 		// Volume up -> AVRCP volume up
-    case BCCMD_VOL_UP: {
+        case BCCMD_VOL_UP: {
 			cmdLine = "VOLUME " + String(BT_conn_id1) + " UP\r";
 			break;
 		}
 		// Volume down -> AVRCP volume down
-    case BCCMD_VOL_DOWN: {
+        case BCCMD_VOL_DOWN: {
 			cmdLine = "VOLUME " + String(BT_conn_id1) + " DOWN\r";
 			break;
 		}
@@ -796,11 +811,11 @@ bool sendCmdOut(int msg) {
 		 * NOTIFICATIONS
 		 * ------------- */
 		// BT state notification
-		case BCNOT_BT_STATE: {
+        case BCNOT_BT_STATE: {
 			cmdLine = "SEND " + String(BLE_conn_id);
 			if(working_state.bt_state == BTSTATE_CONNECTED) cmdLine += (" BT " + BT_peer_name + "\r");
 			else if(working_state.bt_state == BTSTATE_INQUIRY) cmdLine += " BT INQ\r";
-			else cmdLine += " BT IDLE\r";
+			else cmdLine += " BT disconnected\r";
 			break;
 		}
 		// FILEPATH notification
@@ -932,7 +947,7 @@ void populateDevlist(String addr, String name, String caps, unsigned int stren) 
     dev_list[lastPos].strength = stren;
     found_dev += 1;
   }
-  
+
   // MONPORT.println("Device list:");
   // for(unsigned int i = 0; i < found_dev; i++) {
     // MONPORT.print(i); MONPORT.print(": ");
@@ -945,7 +960,7 @@ void populateDevlist(String addr, String name, String caps, unsigned int stren) 
 
 /* searchDevlist(String)
  * ---------------------
- * Search for the requested address into the previously 
+ * Search for the requested address into the previously
  * filled device list, in order to open a A2DP connection.
  * IN:	- device address (String)
  * OUT:	- device found (bool)

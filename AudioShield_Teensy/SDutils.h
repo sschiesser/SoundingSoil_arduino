@@ -24,14 +24,14 @@
 // #define SDCARD_MOSI_PIN				7
 // #define SDCARD_SCK_PIN				14
 // -> Teensy built-in
-#define SDCARD_CS_PIN					BUILTIN_SDCARD
-#define SDCARD_MOSI_PIN				11
-#define SDCARD_SCK_PIN				13
+// #define SDCARD_CS_PIN					BUILTIN_SDCARD
+// #define SDCARD_MOSI_PIN				11
+// #define SDCARD_SCK_PIN				13
 // -> Custom SDcard adapter
-// #define SDCARD_CS_PIN					10
-// #define SDCARD_MOSI_PIN				28
-// #define SDCARD_MISO_PIN				39
-// #define SDCARD_SCK_PIN				27
+#define SDCARD_CS_PIN					10
+#define SDCARD_MOSI_PIN				28
+#define SDCARD_MISO_PIN				39
+#define SDCARD_SCK_PIN				27
 
 extern struct waveHd					wave_header;
 extern File 									frec;

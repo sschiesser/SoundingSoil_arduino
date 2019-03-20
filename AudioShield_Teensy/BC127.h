@@ -22,6 +22,7 @@ extern String									BT_peer_name;
 extern int										BT_conn_id1;
 extern int										BT_conn_id2;
 extern int										BLE_conn_id;
+extern bool                                     BC127_ready;
 
 // Serial command messages
 enum serialMsg {

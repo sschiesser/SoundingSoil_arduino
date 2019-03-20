@@ -7,22 +7,22 @@
 */
 #include "main.h"
 
-#define ALWAYS_ON_MODE				0
+#define ALWAYS_ON_MODE				1
 
 // install driver into SnoozeBlock
 // SnoozeBlock 									snooze_config(button_wakeup);
 
-volatile struct wState 				working_state;
-struct rWindow						rec_window;
-struct recInfo						last_record;
-struct recInfo						next_record;
+volatile struct wState 							working_state;
+struct rWindow									rec_window;
+struct recInfo									last_record;
+struct recInfo									next_record;
 
-volatile bool						ready_to_sleep;
+volatile bool									ready_to_sleep;
 
 
 void setup() {
 	// Initialize serial ports:
-	MONPORT.begin(115200);			// Serial monitor port
+	MONPORT.begin(115200);				// Serial monitor port
 	BLUEPORT.begin(9600);				// BC127 communication port
 	GPSPORT.begin(9600);				// GPS port
 
@@ -206,9 +206,10 @@ WORK:
 			startLED(&leds[LED_MONITOR], LED_MODE_ON);
 			startMonitoring();
 			working_state.mon_state = MONSTATE_ON;
-			if(working_state.bt_state == BTSTATE_CONNECTED) {
+			if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
 				sendCmdOut(BCCMD_MON_START);
 				sendCmdOut(BCCMD_VOL_A2DP);
+				working_state.bt_state = BTSTATE_PLAY;
 			}
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_MON_STATE);
@@ -232,8 +233,9 @@ WORK:
 			stopMonitoring();
 			stopLED(&leds[LED_MONITOR]);
 			stopLED(&leds[LED_PEAK]);
-			if(working_state.bt_state == BTSTATE_CONNECTED) {
+			if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
 				sendCmdOut(BCCMD_MON_STOP);
+				working_state.bt_state = BTSTATE_CONNECTED;
 			}
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_MON_STATE);
@@ -248,7 +250,7 @@ WORK:
     // BLE state actions
 	switch(working_state.ble_state) {
 		case BLESTATE_REQ_ADV: {
-			if(working_state.bt_state == BTSTATE_CONNECTED) {
+			if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
 			}
 			else {
@@ -266,7 +268,7 @@ WORK:
 
 		case BLESTATE_REQ_CONN: {
 			Alarm.free(alarm_adv_id);
-			if(working_state.bt_state == BTSTATE_CONNECTED) {
+			if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
 			}
 			else {
@@ -277,7 +279,7 @@ WORK:
 		}
 
 		case BLESTATE_CONNECTED: {
-			if(working_state.bt_state == BTSTATE_CONNECTED) {
+			if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
 			}
 			break;
@@ -285,7 +287,7 @@ WORK:
 
 		case BLESTATE_REQ_DIS: {
 			BLE_conn_id = 0;
-			if(working_state.bt_state == BTSTATE_CONNECTED) {
+			if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
 				working_state.ble_state = BLESTATE_REQ_ADV;
 			}
 			else {
@@ -319,11 +321,11 @@ WORK:
 			working_state.bt_state = BTSTATE_CONNECTED;
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
+				sendCmdOut(BCNOT_BT_STATE);
 			}
 			else {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
 			}
-			sendCmdOut(BCNOT_BT_STATE);
 			break;
 		}
 
@@ -410,7 +412,7 @@ WORK:
 	// Final decision
 	if(ready_to_sleep) goto SLEEP;
 	else goto WORK;
-    
+
 #endif // ALWAYS_ON_MODE
 }
 
