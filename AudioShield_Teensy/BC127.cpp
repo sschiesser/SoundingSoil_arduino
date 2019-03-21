@@ -466,7 +466,7 @@ int parseSerialIn(String input) {
 						}
 					}
 					else if(param3.equalsIgnoreCase("vol")) {
-						if(working_state.bt_state == BTSTATE_CONNECTED) {
+						if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
 							if(param4.equalsIgnoreCase("+")) {
 								return BCCMD_VOL_UP;
 							}
@@ -794,7 +794,7 @@ bool sendCmdOut(int msg) {
 		}
 		// Volume level request
 		case BCCMD_VOL_A2DP: {
-			cmdLine = "VOLUME " + String(BT_conn_id1) + "\r";
+			cmdLine = "VOLUME " + String(BT_conn_id1) + " 7\r";
 			break;
 		}
 		// Volume up -> AVRCP volume up

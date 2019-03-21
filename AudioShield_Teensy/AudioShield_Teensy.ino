@@ -41,6 +41,10 @@ void setup() {
 	setDefaultValues();
 	initBc127();
 	setTimeSource();
+
+	helloWorld();
+
+	working_state.ble_state = BLESTATE_REQ_ADV;
 }
 
 void loop() {
@@ -172,6 +176,10 @@ WORK:
 		case RECSTATE_REQ_PAUSE: {
 			stopRecording(next_record.rpath);
 			pauseRecording();
+			if(working_state.ble_state == BLESTATE_CONNECTED) {
+				sendCmdOut(BCNOT_REC_STATE);
+				sendCmdOut(BCNOT_FILEPATH);
+			}
 			break;
 		}
 
@@ -445,4 +453,45 @@ void setDefaultValues(void) {
 	BLE_conn_id = 0;
 	BT_peer_address = "";
 	BT_peer_name = "auto";
+}
+
+
+void helloWorld(void) {
+	startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
+	Alarm.delay(400);
+	startLED(&leds[LED_MONITOR], LED_MODE_ON);
+	stopLED(&leds[LED_BLUETOOTH]);
+	Alarm.delay(200);
+	startLED(&leds[LED_RECORD], LED_MODE_ON);
+	stopLED(&leds[LED_MONITOR]);
+	Alarm.delay(200);
+	startLED(&leds[LED_MONITOR], LED_MODE_ON);
+	stopLED(&leds[LED_RECORD]);
+	Alarm.delay(400);
+	startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
+	stopLED(&leds[LED_MONITOR]);
+	Alarm.delay(1200);
+	startLED(&leds[LED_MONITOR], LED_MODE_ON);
+	stopLED(&leds[LED_BLUETOOTH]);
+	Alarm.delay(400);
+	startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
+	startLED(&leds[LED_RECORD], LED_MODE_ON);
+	stopLED(&leds[LED_MONITOR]);
+	Alarm.delay(1200);
+	stopLED(&leds[LED_BLUETOOTH]);
+	stopLED(&leds[LED_RECORD]);
+	// for(int i=0; i < 3; i++) {
+	// 	startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
+	// 	Alarm.delay(300);
+	// 	stopLED(&leds[LED_BLUETOOTH]);
+	// 	startLED(&leds[LED_MONITOR], LED_MODE_ON);
+	// 	Alarm.delay(300);
+	// 	stopLED(&leds[LED_MONITOR]);
+	// 	startLED(&leds[LED_RECORD], LED_MODE_ON);
+	// 	Alarm.delay(300);
+	// 	stopLED(&leds[LED_RECORD]);
+	// 	startLED(&leds[LED_MODE_ON], LED_MODE_ON);
+	// 	Alarm.delay(300);
+	// 	stopLED(&leds[LED_MONITOR]);
+	// }
 }

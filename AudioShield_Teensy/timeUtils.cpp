@@ -1,27 +1,28 @@
 /*
  * time utilities
- * 
+ *
  * Miscellaneous time-related functions
- * 
+ *
  */
 #include "timeUtils.h"
 
 // Time source
-enum tSources									time_source;
+enum tSources												time_source;
 // Last received time from external source
-time_t												received_time = 0;
+time_t														received_time = 0;
 // Ids of the WORK-state timers
-int														alarm_rec_id;
-int														alarm_wait_id;
-int														alarm_adv_id;
+int															alarm_rec_id;
+int															alarm_wait_id;
+int															alarm_adv_id;
 
-SnoozeDigital 								button_wakeup; 	// Wakeup pins on Teensy 3.6:
-																							// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
-SnoozeAlarm										snooze_rec;
-SnoozeAlarm										snooze_led;
+// Wakeup pins on Teensy 3.6:
+// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
+SnoozeDigital 												button_wakeup;
+SnoozeAlarm													snooze_rec;
+SnoozeAlarm													snooze_led;
 
-SnoozeBlock 									snooze_config(button_wakeup);
-SnoozeBlock										snooze_cpu;
+SnoozeBlock 												snooze_config(button_wakeup);
+SnoozeBlock													snooze_cpu;
 
 
 /* getTeensy3Time(void)
@@ -64,7 +65,7 @@ void setCurTime(time_t cur_time, enum tSources source) {
 	int year;
 	byte month, day, hour, minute, second;
 	unsigned long fix_age;
-	
+
 	switch(source) {
 		case TSOURCE_GPS:
 			gps.crack_datetime(&year, &month, &day, &hour, &minute, &second, NULL, &fix_age);
@@ -73,13 +74,13 @@ void setCurTime(time_t cur_time, enum tSources source) {
 			Teensy3Clock.set(now());
 			time_source = TSOURCE_TEENSY;
 			break;
-			
+
 		case TSOURCE_BLE:
 			setTime(cur_time);
 			Teensy3Clock.set(cur_time);
 			time_source = TSOURCE_TEENSY;
 			break;
-		
+
 		default:
 			break;
 	}
@@ -137,7 +138,7 @@ void alarmAdvTimeout(void) {
 void timerRecDone(void) {
 	Alarm.free(alarm_rec_id);
 	MONPORT.printf("Recording#%d done.", (next_record.cnt+1));
-	
+
 	if((rec_window.occurences == 0) || (next_record.cnt < (rec_window.occurences-1))) {
 		MONPORT.println("");
 		working_state.rec_state = RECSTATE_REQ_PAUSE;
@@ -150,7 +151,7 @@ void timerRecDone(void) {
 
 /* alarmNextRec(void)
  * ------------------
- * Callbak of a TimeAlarms alarm triggered when the waiting time 
+ * Callbak of a TimeAlarms alarm triggered when the waiting time
  * between two recordings is elapsed.
  * IN:	- none
  * OUT:	- none

@@ -1,21 +1,21 @@
 /*
  * IO utils
- * 
+ *
  * Miscellaneous IO utilities...
- * 
+ *
  */
 #include "IOutils.h"
 
-Bounce													but_rec = Bounce(BUTTON_RECORD_PIN, BUTTON_BOUNCE_TIME_MS);
-Bounce 													but_mon = Bounce(BUTTON_MONITOR_PIN, BUTTON_BOUNCE_TIME_MS);
-Bounce 													but_blue = Bounce(BUTTON_BLUETOOTH_PIN, BUTTON_BOUNCE_TIME_MS);
+Bounce												but_rec = Bounce(BUTTON_RECORD_PIN, BUTTON_BOUNCE_TIME_MS);
+Bounce 												but_mon = Bounce(BUTTON_MONITOR_PIN, BUTTON_BOUNCE_TIME_MS);
+Bounce 												but_blue = Bounce(BUTTON_BLUETOOTH_PIN, BUTTON_BOUNCE_TIME_MS);
 
 enum bCalls											button_call;
 
 IntervalTimer										led_timers[LED_MAX_NUMBER];
-byte 														led_pins[LED_MAX_NUMBER] = { LED_RECORD_PIN, LED_MONITOR_PIN, LED_BLUETOOTH_PIN, LED_PEAK_PIN };
-struct leds_s 									leds[LED_MAX_NUMBER];
-	
+byte 												led_pins[LED_MAX_NUMBER] = { LED_RECORD_PIN, LED_MONITOR_PIN, LED_BLUETOOTH_PIN, LED_PEAK_PIN };
+struct leds_s 										leds[LED_MAX_NUMBER];
+
 /* initLEDButtons(void)
  * --------------------
  * Assign and initialize all the LED-related elements
@@ -80,17 +80,17 @@ void toggleCb(struct leds_s *ld) {
 		ld->status = LED_OFF;
 		stopLED(ld);
 		break;
-		
+
 		case LED_MODE_ON:
 		// MONPORT.println("LED on: no toggle!");
 		ld->status = LED_ON;
 		break;
-		
+
 		case LED_MODE_WAITING:
 		// MONPORT.println("Waiting mode: regular medium toggle");
 		ld->status = !ld->status;
 		break;
-		
+
 		case LED_MODE_WARNING_SHORT:
 		if(ld->cnt++ > 2) {
 			stopLED(ld);
@@ -99,7 +99,7 @@ void toggleCb(struct leds_s *ld) {
 			ld->status = !ld->status;
 		}
 		break;
-		
+
 		case LED_MODE_WARNING_LONG:
 		// MONPORT.print("Warning mode: "); MONPORT.print(ld->cnt); MONPORT.println(" toggles");
 		if(ld->cnt++ > 12) {
@@ -110,12 +110,12 @@ void toggleCb(struct leds_s *ld) {
 			ld->status = !ld->status;
 		}
 		break;
-		
+
 		case LED_MODE_ERROR:
 		// MONPORT.println("Error mode: regular fast toggle");
 		ld->status = !ld->status;
 		break;
-		
+
 		case LED_MODE_IDLE_FAST:
 		// MONPORT.println("Fast flashing mode: irregular flash toggle");
 		if(ld->status == LED_ON) {
@@ -126,7 +126,7 @@ void toggleCb(struct leds_s *ld) {
 		}
 		ld->status = !ld->status;
 		break;
-		
+
 		case LED_MODE_IDLE_SLOW:
 		// MONPORT.println("Slow flashing mode: irregular flash toggle");
 		if(ld->status == LED_ON) {
@@ -137,7 +137,7 @@ void toggleCb(struct leds_s *ld) {
 		}
 		ld->status = !ld->status;
 		break;
-		
+
 		default:
 		break;
 	}
@@ -182,35 +182,35 @@ void startLED(struct leds_s *ld, enum lMode mode) {
 		case LED_MODE_OFF:
 		stopLED(ld);
 		break;
-		
+
 		case LED_MODE_ON:
 		ld->status = LED_ON;
 		break;
-		
+
 		case LED_MODE_WAITING:
 		ld->timer.begin(ld->toggle, LED_BLINK_MED_MS);
 		// MONPORT.print("Timer started, returning at 0x"); MONPORT.println((unsigned long)ld->toggle, HEX);
 		break;
-		
+
 		case LED_MODE_WARNING_SHORT:
 		ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
 		break;
-		
+
 		case LED_MODE_WARNING_LONG:
 		ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
 		break;
-		
+
 		case LED_MODE_ERROR:
 		break;
-		
+
 		case LED_MODE_IDLE_FAST:
 		ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
 		break;
-		
+
 		case LED_MODE_IDLE_SLOW:
 		ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
 		break;
-		
+
 		default:
 		break;
 	}
