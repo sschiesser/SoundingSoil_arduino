@@ -177,10 +177,10 @@ WORK:
 		case RECSTATE_REQ_PAUSE: {
 			stopRecording(next_record.rpath);
 			pauseRecording();
-			if(working_state.ble_state == BLESTATE_CONNECTED) {
-				sendCmdOut(BCNOT_REC_STATE);
-				sendCmdOut(BCNOT_FILEPATH);
-			}
+			// if(working_state.ble_state == BLESTATE_CONNECTED) {
+			// 	sendCmdOut(BCNOT_REC_STATE);
+			// 	sendCmdOut(BCNOT_FILEPATH);
+			// }
 			break;
 		}
 
@@ -296,6 +296,7 @@ WORK:
 
 		case BLESTATE_REQ_DIS: {
 			BLE_conn_id = 0;
+			MONPORT.println("BLE disconnected");
 			if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
 				working_state.ble_state = BLESTATE_REQ_ADV;
 			}
@@ -306,9 +307,11 @@ WORK:
 		}
 
 		case BLESTATE_REQ_OFF: {
-			Alarm.free(alarm_adv_id);
-			bc127AdvStop();
-			Alarm.delay(100);
+			if(working_state.ble_state == BLESTATE_ADV) {
+				Alarm.free(alarm_adv_id);
+				bc127AdvStop();
+				Alarm.delay(100);
+			}
 			if(working_state.bt_state != BTSTATE_OFF) {
 				startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
 			}
@@ -316,6 +319,7 @@ WORK:
 				bc127BlueOff();
 				stopLED(&leds[LED_BLUETOOTH]);
 			}
+			MONPORT.println("BLE OFF");
 			working_state.ble_state = BLESTATE_OFF;
 			break;
 		}
@@ -409,11 +413,11 @@ WORK:
 	else {
 		if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
 			setWaitAlarm();
+			working_state.rec_state = RECSTATE_WAIT;
 			if(working_state.ble_state == BLESTATE_CONNECTED) {
 				sendCmdOut(BCNOT_REC_STATE);
 				sendCmdOut(BCNOT_FILEPATH);
 			}
-			working_state.rec_state = RECSTATE_WAIT;
 		}
 		ready_to_sleep = false;
 	}
