@@ -23,7 +23,7 @@ void setup(void)
   // To use a slightly lower 32V, 1A range (higher precision on amps):
   //ina219.setCalibration_32V_1A();
   // Or to use a lower 16V, 400mA range (higher precision on volts and amps):
-  //ina219.setCalibration_16V_400mA();
+  ina219.setCalibration_16V_400mA();
 
   Serial.println("Measuring voltage and current with INA219 ...");
 }
@@ -48,7 +48,12 @@ void loop(void)
 //  Serial.print("Current:       "); Serial.print(current_mA); Serial.println(" mA");
 //  Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
 //  Serial.println("");
-  
-  Serial.print(loadvoltage); Serial.print(" V/"); Serial.print(current_mA); Serial.print(" mA/"); Serial.print(power_mW); Serial.println(" mW");
+
+  unsigned int displayCurrent = (unsigned int)((abs(current_mA) / 200.0) * 50);
+  for(int i=0; i < displayCurrent; i++) {
+    Serial.print(" ");
+  }
+  Serial.println(abs(current_mA));
+//  Serial.print(loadvoltage); Serial.print(" V/"); Serial.print(current_mA); Serial.print(" mA/"); Serial.print(power_mW); Serial.println(" mW");
   delay(200);
 }

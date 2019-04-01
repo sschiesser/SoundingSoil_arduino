@@ -45,11 +45,12 @@ void prepareRecording(bool sync) {
 
 	startLED(&leds[LED_RECORD], LED_MODE_ON);
 	if(sync) {
-		gpsPowerOn();
-		Alarm.delay(0);
+		// gpsPowerOn();
+		// gpsEnable(true);
 		startLED(&leds[LED_RECORD], LED_MODE_WAITING);
 		gps_fix = gpsGetData();
-		gpsPowerOff();
+		// gpsPowerOff();
+		// gpsEnable(false);
 		if(!gps_fix) {
 			startLED(&leds[LED_RECORD], LED_MODE_WARNING_LONG);
 		}
@@ -155,8 +156,7 @@ void stopRecording(String path) {
  */
 void pauseRecording(void) {
 	last_record = next_record;
-	next_record.ts = last_record.ts + (rec_window.period.Hour * SECS_PER_HOUR) +
-									(rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second;
+	next_record.ts = last_record.ts + ((rec_window.period.Hour * SECS_PER_HOUR) + (rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second) - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX);
 	rec_path = "--";
 	next_record.cnt++;
 	stopLED(&leds[LED_RECORD]);

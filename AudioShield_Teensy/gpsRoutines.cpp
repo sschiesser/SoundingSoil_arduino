@@ -1,19 +1,19 @@
 /*
  * GPS routines
- * 
+ *
  * Miscellaneous functions to read GPS NMEA tags,
  * find a specific format (RMC), slice the read string
  * and store the information in a specifict struct
- * 
+ *
  */
 #include "gpsRoutines.h"
 
 // GPS instance
 TinyGPS												gps;
 // Latitude & longitude values
-float													cur_lat, cur_long;							
+float													cur_lat, cur_long;
 
-#define GPS_STATIC						1
+#define GPS_STATIC						0
 #if(GPS_STATIC==1)
 	const char str1[] PROGMEM = "$GPRMC,201547.000,A,3014.5527,N,09749.5808,W,0.24,163.05,040109,,*1A";
 	const char str2[] PROGMEM = "$GPGGA,201548.000,3014.5529,N,09749.5808,W,1,07,1.5,225.6,M,-22.5,M,18.8,0000*78";
@@ -22,12 +22,17 @@ float													cur_lat, cur_long;
 	const char *teststrs[4] = {str1, str2, str3, str4};
 #endif
 
+void initGps(void) {
+	pinMode(GPS_WAKEUP_PIN, OUTPUT);
+	digitalWrite(GPS_WAKEUP_PIN, LOW);
+}
+
 /* gpsPowerOn(void)
  * ----------------
  * Switch on GPS module
  */
 void gpsPowerOn(void) {
-	digitalWrite(GPS_SWITCH_PIN, HIGH);
+	digitalWrite(GPS_RST_PIN, HIGH);
 }
 
 /* gpsPowerOff(void)
@@ -35,7 +40,18 @@ void gpsPowerOn(void) {
  * Switch off GPS module
  */
 void gpsPowerOff(void) {
-	digitalWrite(GPS_SWITCH_PIN, LOW);
+	digitalWrite(GPS_RST_PIN, LOW);
+}
+
+void gpsEnable(bool wakeup) {
+	if(wakeup) {
+		digitalWrite(GPS_WAKEUP_PIN, HIGH);
+		Alarm.delay(20);
+	}
+	else {
+		digitalWrite(GPS_WAKEUP_PIN, LOW);
+		Alarm.delay(20);
+	}
 }
 
 /* gpsGetData(void)
@@ -55,20 +71,25 @@ bool gpsGetData(void) {
 			gpsSendString(gps, teststrs[i]);
 		}
 #else
-		gpsEncodeData(1000);
-#endif	
+		gpsEnable(true);
+		gpsEncodeData(GPS_ENCODE_TIME_MS);
+		gpsEnable(false);
+#endif
 		gps.f_get_position(&cur_lat, &cur_long, &age);
 		if((age == TinyGPS::GPS_INVALID_AGE) || (age > 10000)) {
-			// MONPORT.print(". ");
-			retries++;
+			MONPORT.printf("age: %d\n");
 		}
 		else {
 			fix_found = true;
 		}
-	} while((!fix_found) && (retries < 3));
-	// MONPORT.printf("Fix found? %d", fix_found);
-	// if(fix_found) MONPORT.printf(" fLat: %f, fLong: %f\n", cur_lat, cur_long);
-	// else MONPORT.println("");
+		retries++;
+	} while((!fix_found) && (retries < GPS_ENCODE_RETRIES_MAX));
+	MONPORT.printf("Fix found? %d", fix_found);
+	if(fix_found) {
+		MONPORT.printf(" fLat: %f, fLong: %f\n", cur_lat, cur_long);
+		Alarm.delay((GPS_ENCODE_RETRIES_MAX - retries) * 1000);
+	}
+	else MONPORT.println("");
 	return fix_found;
 }
 

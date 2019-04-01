@@ -7,7 +7,7 @@
 */
 #include "main.h"
 
-#define ALWAYS_ON_MODE				1
+#define ALWAYS_ON_MODE				0
 
 // install driver into SnoozeBlock
 // SnoozeBlock 									snooze_config(button_wakeup);
@@ -31,16 +31,16 @@ void setup() {
 	button_wakeup.pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP, FALLING);
 	button_wakeup.pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP, FALLING);
 
-	pinMode(GPS_SWITCH_PIN, OUTPUT);
-	digitalWrite(GPS_SWITCH_PIN, LOW);
 	pinMode(AUDIO_VOLUME_PIN, INPUT);
 
 	initAudio();
 	initSDcard();
+	initGps();
 	initWaveHeader();
-	setDefaultValues();
 	initBc127();
 	setTimeSource();
+
+	setDefaultValues();
 
 	helloWorld();
 
@@ -51,6 +51,7 @@ void loop() {
 #if(ALWAYS_ON_MODE==1)
 goto WORK;
 #else
+goto WORK;
 SLEEP:
 	int who;
 	// you need to update before sleeping.
@@ -59,7 +60,7 @@ SLEEP:
 	but_blue.update();
 	// switch off i2s clock before sleeping
 	SIM_SCGC6 &= ~SIM_SCGC6_I2S;
-	Alarm.delay(100);
+	Alarm.delay(50);
 	REDUCED_CPU_BLOCK(snooze_cpu) {
 		who = Snooze.hibernate(snooze_config); // returns module that woke up processor
 	}
@@ -78,7 +79,7 @@ SLEEP:
 	}
 	// if not sleeping anymore, re-enable i2s clock
 	SIM_SCGC6 |= SIM_SCGC6_I2S;
-	Alarm.delay(100);
+	Alarm.delay(50);
 #endif
 
 WORK:

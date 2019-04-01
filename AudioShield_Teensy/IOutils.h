@@ -6,8 +6,6 @@
 
 #include "main.h"
 
-// GPS switch pin#
-#define GPS_SWITCH_PIN				3
 // Volume controle pin#
 #define AUDIO_VOLUME_PIN			A1
 // Buttons pin#										//v1.0 vals		v1.3 vals		v2.0 vals
@@ -65,7 +63,7 @@ enum lMode {
 // LED state & status struct
 typedef void 									(*addToggle)(void);
 struct leds_s {
-	unsigned int pin; 
+	unsigned int pin;
 	bool status;
 	enum lMode mode;
 	IntervalTimer timer;
