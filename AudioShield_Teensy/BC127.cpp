@@ -820,7 +820,7 @@ bool sendCmdOut(int msg) {
 		}
 		// FILEPATH notification
 		case BCNOT_FILEPATH: {
-			cmdLine = "SEND " + String(BLE_conn_id) + " FP " + rec_path + "\r";
+			cmdLine = "SEND " + String(BLE_conn_id) + " FP " + next_record.rpath + "\r";
 			// MONPORT.printf("Sending: %s\n", cmdLine.c_str());
 			break;
 		}
