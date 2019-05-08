@@ -91,14 +91,15 @@ void setCurTime(time_t cur_time, enum tSources source) {
  * ------------------
  */
 void setWaitAlarm(void) {
-	tmElements_t tm;
-	breakTime(next_record.ts, tm);
+	tmElements_t tm, tm_disp;
+	breakTime((next_record.ts - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX)), tm);
+    breakTime(next_record.ts, tm_disp);
 	alarm_wait_id = Alarm.alarmOnce(tm.Hour, tm.Minute, tm.Second, alarmNextRec);
-	MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
+	MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm_disp.Hour, tm_disp.Minute, tm_disp.Second);
 }
 
 void setIdleSnooze(void) {
-	time_t delta = next_record.ts - now();
+	time_t delta = next_record.ts - now() - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX);
 	tmElements_t tm1, tm2;
 	breakTime(delta, tm1);
 	breakTime(next_record.ts, tm2);
