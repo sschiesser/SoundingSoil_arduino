@@ -439,7 +439,7 @@ int parseSerialIn(String input) {
                 if(param1.toInt() == BLE_conn_id) {
                     // MONPORT.println("Receiving 2-params BLE command");
                     if(param3.equalsIgnoreCase("conn")) {
-                        BT_peer_address = param4;
+                        BT_peer_name = param4;
                         return BCCMD_DEV_CONNECT;
                     }
                     else if(param3.equalsIgnoreCase("time")) {
@@ -736,7 +736,7 @@ bool sendCmdOut(int msg) {
         }
         // Open A2DP connection with 'BT_peer_address'
         case BCCMD_DEV_CONNECT: {
-            if(searchDevlist(BT_peer_address)) {
+            if(searchDevlist(BT_peer_name)) {
                 MONPORT.printf("Opening BT connection @%s (%s)\n", BT_peer_address.c_str(), BT_peer_name.c_str());
                 cmdLine = "OPEN " + BT_peer_address + " A2DP\r";
             }
@@ -860,7 +860,7 @@ bool sendCmdOut(int msg) {
         // Results of the inquiry -> store devices with address & signal strength
         case BCNOT_INQ_STATE: {
             for(unsigned int i = 0; i < found_dev; i++) {
-                devString = dev_list[i].address;
+                devString = dev_list[i].name;
                 devString.concat(" ");
                 devString.concat(dev_list[i].strength);
                 cmdLine = "SEND " + String(BLE_conn_id) + " INQ " + devString + "\r";
@@ -1000,14 +1000,14 @@ void populateDevlist(String addr, String name, String caps, unsigned int stren) 
 * ---------------------
 * Search for the requested address into the previously
 * filled device list, in order to open a A2DP connection.
-* IN:	- device address (String)
+* IN:	- device name (String)
 * OUT:	- device found (bool)
 */
-bool searchDevlist(String addr) {
+bool searchDevlist(String name) {
     for(int i = 0; i < DEVLIST_MAXLEN; i++) {
-        if(dev_list[i].address.equalsIgnoreCase(addr)) {
+        if(dev_list[i].name.equalsIgnoreCase(name)) {
             MONPORT.println("Device found in list!");
-            BT_peer_name = dev_list[i].name;
+            BT_peer_address = dev_list[i].address;
             return true;
         }
     }

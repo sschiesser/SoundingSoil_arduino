@@ -20,13 +20,13 @@
 
 // SDcard pins definition
 // -> Audio shield slot !! USED IN SSSHIELD V1.0 !!!
-#define SDCARD_CS_PIN				10
-#define SDCARD_MOSI_PIN				7
-#define SDCARD_SCK_PIN				14
+// #define SDCARD_CS_PIN				10
+// #define SDCARD_MOSI_PIN				7
+// #define SDCARD_SCK_PIN				14
 // -> Teensy built-in
-// #define SDCARD_CS_PIN			    BUILTIN_SDCARD
-// #define SDCARD_MOSI_PIN				11
-// #define SDCARD_SCK_PIN				13
+#define SDCARD_CS_PIN			    BUILTIN_SDCARD
+#define SDCARD_MOSI_PIN				11
+#define SDCARD_SCK_PIN				13
 // -> Custom SDcard adapter
 // #define SDCARD_CS_PIN				10
 // #define SDCARD_MOSI_PIN				28
