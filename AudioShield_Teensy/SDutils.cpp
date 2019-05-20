@@ -25,8 +25,9 @@ struct waveHd {
 };
 struct waveHd									wave_header;
 
-// SD card file handle
+// SD card file handles
 File frec;
+File fgps;
 
 // Total amount of recorded bytes
 unsigned long tot_rec_bytes = 0;
@@ -125,7 +126,7 @@ void initWaveHeader(void) {
 }
 
 /* writeWaveHeader(path, dlen)
-* ---------------------------------
+* ----------------------------
 * Write data & file length values to the wave header
 * when recording stop has been called
 * IN:	- file path (String)
@@ -140,5 +141,42 @@ void writeWaveHeader(String path, unsigned long dlen) {
     fh = SD.open(path.c_str(), O_WRITE);
     fh.seek(0);
     fh.write((byte*)&wave_header, 44);
+    fh.close();
+}
+
+
+/* createMetadata(*rec, path)
+* ---------------------------
+* Write the metadata file corresponding to the current recording.
+* File content:
+* - recording full path
+* - recording time/date (timestamp)
+* - duration/period
+* - recording number # of total number
+* - GPS latitude (DD)
+* - GPS longitude (DD)
+*/
+void createMetadata(struct recInfo* rec) {
+    tmElements_t tm;
+    File fh;
+    fh = SD.open(rec->mpath.c_str(), FILE_WRITE);
+    MONPORT.printf("Opening: %s\n", rec->mpath.c_str());
+    if(fh) {
+        fh.printf("Recording meta-data (file: %s)\n", rec->mpath.c_str());
+        fh.printf("----------------------------------------------\n");
+        fh.printf("- recording path: %s\n", rec->rpath.c_str());
+        // MONPORT.printf("Recording meta-data (file: %s)\n", rec->mpath.c_str());
+        // MONPORT.printf("----------------------------------------------\n");
+        // MONPORT.printf("- recording path: %s\n", rec->rpath.c_str());
+        breakTime(rec->ts, tm);
+        fh.printf("- recording date/time: %02d.%02d.%d, %d:%02d'%02d\"\n", tm.Day, tm.Month, (tm.Year+1970), tm.Hour, tm.Minute, tm.Second);
+        // MONPORT.printf("- recording date/time: %02d.%02d.%d, %d:%02d'%02d\"\n", tm.Day, tm.Month, (tm.Year+1970), tm.Hour, tm.Minute, tm.Second);
+        fh.printf("- recording duration/period: %d:%02d'%02d\" / %d:%02d'%02d\"\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->per.Hour, rec->per.Minute, rec->per.Second);
+        fh.printf("- recording #%d of %d\n", (rec->cnt+1), rec->rec_tot);
+        fh.printf("- device position (lat, long (DD)): %0.5f, %0.5f\n", rec->gps_lat, rec->gps_long);
+        // MONPORT.printf("- recording duration/period: %d:%02d'%02d\" / %d:%02d'%02d\"\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->per.Hour, rec->per.Minute, rec->per.Second);
+        // MONPORT.printf("- recording #%d of %d\n", (rec->cnt+1), rec->rec_tot);
+        // MONPORT.printf("- position (lat, long (DD)): %0.5f, %0.5f\n", rec->gps_lat, rec->gps_long);
+    }
     fh.close();
 }

@@ -114,12 +114,14 @@ extern volatile struct wState               working_state;
 struct recInfo {
     time_t ts;                              // timestamp
     tmElements_t dur;                       // duration
+    tmElements_t per;                       // period
     bool t_set;                             // time synced?
     String rpath;                           // record path on SD card
     String mpath;                           // metadata path on SD card
     float gps_lat;                          // GPS latitude (signed dd)
     float gps_long;                         // GPS longitude (signed dd)
     unsigned int cnt;                       // record counter
+    unsigned int rec_tot;                   // total number of records
 };
 extern struct recInfo                       last_record;
 extern struct recInfo                       next_record;

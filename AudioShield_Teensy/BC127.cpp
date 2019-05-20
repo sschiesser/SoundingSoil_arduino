@@ -130,6 +130,7 @@ int parseSerialIn(String input) {
     int slice8 = input.indexOf(" ", slice7+1);
     int slice9 = input.indexOf(" ", slice8+1);
     int slice10 = input.indexOf(" ", slice9+1);
+    double tofloat;
     MONPORT.printf("From BC127: %s\n", input.c_str());
     // no space found -> notification without parameter
     if(slice1 == -1) {
@@ -367,14 +368,18 @@ int parseSerialIn(String input) {
                 // BLE commands:
                 // - "inq"
                 // - "disc"
+                // - "latlong"
                 if(param1.toInt() == BLE_conn_id) {
                     // MONPORT.println("Receiving 1-param BLE command");
                     if(param3.equalsIgnoreCase("inq")) {
                         // MONPORT.println("Received BT inquiry command");
                         return BCCMD_INQUIRY;
                     }
-                    if(param3.equalsIgnoreCase("disc")) {
+                    else if(param3.equalsIgnoreCase("disc")) {
                         working_state.bt_state = BTSTATE_REQ_DISC;
+                    }
+                    else if(param3.equalsIgnoreCase("latlong")) {
+                        MONPORT.println("Receiving latlong without values");
                     }
                 }
             }
@@ -561,6 +566,17 @@ int parseSerialIn(String input) {
                     MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_conn_id2);
                     working_state.bt_state = BTSTATE_CONNECTED;
                     // return BCNOT_BT_STATE;
+                }
+            }
+            else if(notif.equalsIgnoreCase("RECV")) {
+                // BLE command/request:
+                // - "latlong {lat long}"
+                if(param1.toInt() == BLE_conn_id) {
+                    if(param3.equalsIgnoreCase("latlong")) {
+                        MONPORT.printf("Receiving latlong with 2 values: %s %s\n", param4.c_str(), param5.c_str());
+                        next_record.gps_lat = atof(param4.c_str());
+                        next_record.gps_long = atof(param5.c_str());
+                    }
                 }
             }
             break;

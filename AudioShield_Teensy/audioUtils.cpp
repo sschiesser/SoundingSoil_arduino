@@ -36,7 +36,7 @@ elapsedMillis								hpgain_interval;
 * ----------------------
 * Fetch a GPS fix (if demanded), set the record timestamp to now(),
 * create the file path according to it, save all record information
-* and start the record timer.
+* (including GPS fix) and start the record timer.
 * IN:	- sync with GPS (bool)
 * OUT:	- none
 */
@@ -74,12 +74,19 @@ void prepareRecording(bool sync) {
 * OUT:	- none
 */
 void setRecInfos(struct recInfo* rec, String path) {
+    unsigned int slen = rec->rpath.length();
     rec->dur.Second = rec_window.length.Second;
     rec->dur.Minute = rec_window.length.Minute;
     rec->dur.Hour = rec_window.length.Hour;
+    rec->per.Second = rec_window.period.Second;
+    rec->per.Minute = rec_window.period.Minute;
+    rec->per.Hour = rec_window.period.Hour;
     rec->rpath.remove(0);
     rec->rpath.concat(path.c_str());
+    rec->mpath = rec->rpath;
+    rec->mpath.replace(".wav", ".txt");
     rec->t_set = (bool)rec->ts;
+    rec->rec_tot = rec_window.occurences;
 }
 
 /* startRecording(String)
@@ -146,6 +153,8 @@ void stopRecording(String path) {
 
         writeWaveHeader(path, tot_rec_bytes);
     }
+    MONPORT.println("Recording stopped, writing metadata");
+    createMetadata(&next_record);
 }
 
 /* pauseRecording(void)
