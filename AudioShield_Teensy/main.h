@@ -98,7 +98,7 @@ enum bleState {
     BLESTATE_ADV,                           // 3 -> advertising to phone/computer
     BLESTATE_REQ_CONN,                      // 4 -> requesting connection to phone/computer
     BLESTATE_CONNECTED,                     // 5 -> connected to phone/computer
-    BLESTATE_REQ_DIS,                       // 6 -> requesting disconnection from phone/computer
+    BLESTATE_REQ_DISC,                       // 6 -> requesting disconnection from phone/computer
     BLESTATE_REQ_OFF                        // 7 -> requesting BLE off (BLUE button pressed)
 };
 extern enum bleState                        ble_state;

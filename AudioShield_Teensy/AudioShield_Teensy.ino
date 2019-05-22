@@ -300,7 +300,7 @@ void loop() {
             break;
         }
 
-        case BLESTATE_REQ_DIS: {
+        case BLESTATE_REQ_DISC: {
             BLE_conn_id = 0;
             MONPORT.println("BLE disconnected");
             if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
@@ -361,8 +361,8 @@ void loop() {
                 working_state.ble_state = BLESTATE_OFF;
             }
             working_state.bt_state = BTSTATE_OFF;
-            BT_conn_id1 = 0;
-            BT_conn_id2 = 0;
+            BT_id_a2dp = 0;
+            BT_id_avrcp = 0;
             BT_peer_address = "";
             BT_peer_name = "auto";
 
@@ -459,8 +459,8 @@ void setDefaultValues(void) {
     rec_window.occurences = RWIN_OCC_DEF;
     last_record.cnt = 0;
     next_record = last_record;
-    BT_conn_id1 = 0;
-    BT_conn_id2 = 0;
+    BT_id_a2dp = 0;
+    BT_id_avrcp = 0;
     BLE_conn_id = 0;
     BT_peer_address = "";
     BT_peer_name = "auto";

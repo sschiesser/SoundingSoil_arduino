@@ -19,8 +19,8 @@ extern struct btDev 					dev_list[DEVLIST_MAXLEN];
 extern unsigned int 					found_dev;
 extern String									BT_peer_address;
 extern String									BT_peer_name;
-extern int										BT_conn_id1;
-extern int										BT_conn_id2;
+extern int										BT_id_a2dp;
+extern int										BT_id_avrcp;
 extern int										BLE_conn_id;
 extern bool                                     BC127_ready;
 
