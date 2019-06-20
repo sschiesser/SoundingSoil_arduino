@@ -986,7 +986,8 @@ bool sendCmdOut(int msg) {
     }
     // Send the prepared command line to UART
     BLUEPORT.print(cmdLine);
-    // Alarm.delay(50);
+    // Wait some time to let the sent line finish
+    Alarm.delay(50);
     // Send positive confirmation
     return true;
 }
