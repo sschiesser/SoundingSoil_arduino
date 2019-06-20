@@ -906,7 +906,11 @@ bool sendCmdOut(int msg) {
         // GPS
         case BCNOT_LATLONG: {
             if(working_state.ble_state == BLESTATE_CONNECTED) {
-                cmdLine = "SEND " + String(BLE_conn_id) + " LATLONG " + String(next_record.gps_lat) + " " + String(next_record.gps_long) + "\r";
+                cmdLine = "SEND " + String(BLE_conn_id) + " LATLONG ";
+                if((next_record.gps_lat != NULL) && (next_record.gps_long != NULL)) {
+                    cmdLine += String(next_record.gps_lat) + " " + String(next_record.gps_long);
+                }
+                cmdLine += "\r";
             }
             break;
         }
