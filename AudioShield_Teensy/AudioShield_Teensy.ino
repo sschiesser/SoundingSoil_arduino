@@ -19,6 +19,7 @@ struct recInfo									next_record;
 
 volatile bool									ready_to_sleep;
 
+enum gpsSource                                  gps_source;
 
 void setup() {
     // Initialize serial ports:
@@ -52,7 +53,7 @@ void loop() {
     goto WORK;
     #else
     goto WORK;
-    SLEEP:
+SLEEP:
     int who;
     // you need to update before sleeping.
     but_rec.update();
@@ -82,7 +83,7 @@ void loop() {
     Alarm.delay(50);
     #endif
 
-    WORK:
+WORK:
     Alarm.delay(0); 							// needed for TimeAlarms timers
     but_rec.update();							// }
     but_mon.update();							// } needed for button bounces
@@ -158,10 +159,12 @@ void loop() {
             working_state.rec_state = RECSTATE_ON;
             startRecording(next_record.rpath);
             if(working_state.ble_state == BLESTATE_CONNECTED) {
-                sendCmdOut(BCNOT_REC_STATE);
-                sendCmdOut(BCNOT_FILEPATH);
                 sendCmdOut(BCNOT_REC_TS);
+                sendCmdOut(BCNOT_LATLONG);
+                sendCmdOut(BCNOT_RWIN_VALS);
+                sendCmdOut(BCNOT_FILEPATH);
                 sendCmdOut(BCNOT_REC_NB);
+                sendCmdOut(BCNOT_REC_STATE);
             }
             break;
         }
@@ -171,10 +174,12 @@ void loop() {
             working_state.rec_state = RECSTATE_ON;
             startRecording(next_record.rpath);
             if(working_state.ble_state == BLESTATE_CONNECTED) {
-                sendCmdOut(BCNOT_REC_STATE);
-                sendCmdOut(BCNOT_FILEPATH);
                 sendCmdOut(BCNOT_REC_TS);
+                sendCmdOut(BCNOT_LATLONG);
+                sendCmdOut(BCNOT_RWIN_VALS);
+                sendCmdOut(BCNOT_FILEPATH);
                 sendCmdOut(BCNOT_REC_NB);
+                sendCmdOut(BCNOT_REC_STATE);
             }
             break;
         }
@@ -458,6 +463,9 @@ void setDefaultValues(void) {
     rec_window.period.Year = RWIN_PER_DEF_YEAR;
     rec_window.occurences = RWIN_OCC_DEF;
     last_record.cnt = 0;
+    last_record.gps_source = GPS_NONE;
+    last_record.gps_lat = NULL;
+    last_record.gps_long = NULL;
     next_record = last_record;
     BT_id_a2dp = 0;
     BT_id_avrcp = 0;
@@ -481,14 +489,14 @@ void helloWorld(void) {
     Alarm.delay(400);
     startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
     stopLED(&leds[LED_MONITOR]);
-    Alarm.delay(1200);
+    Alarm.delay(800);
     startLED(&leds[LED_MONITOR], LED_MODE_ON);
     stopLED(&leds[LED_BLUETOOTH]);
     Alarm.delay(400);
     startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
     startLED(&leds[LED_RECORD], LED_MODE_ON);
     stopLED(&leds[LED_MONITOR]);
-    Alarm.delay(1200);
+    Alarm.delay(800);
     stopLED(&leds[LED_BLUETOOTH]);
     stopLED(&leds[LED_RECORD]);
     // for(int i=0; i < 3; i++) {

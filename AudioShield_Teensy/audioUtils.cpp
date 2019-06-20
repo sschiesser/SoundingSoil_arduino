@@ -52,10 +52,17 @@ void prepareRecording(bool sync) {
         // gpsPowerOff();
         // gpsEnable(false);
         if(!gps_fix) {
-            startLED(&leds[LED_RECORD], LED_MODE_WARNING_LONG);
+            if(next_record.gps_source == GPS_NONE) {
+                startLED(&leds[LED_RECORD], LED_MODE_WARNING_LONG);
+            }
+            else {
+                startLED(&leds[LED_RECORD], LED_MODE_ON);
+            }
         }
         else {
-            setCurTime(0, TSOURCE_GPS);
+            if(next_record.gps_source == GPS_NONE) {
+                setCurTime(0, TSOURCE_GPS);
+            }
             startLED(&leds[LED_RECORD], LED_MODE_ON);
         }
         next_record.ts = now();
@@ -183,9 +190,17 @@ void resetRecInfo(struct recInfo* rec) {
     rec->dur.Hour = 0;
     rec->dur.Minute = 0;
     rec->dur.Second = 0;
+    rec->per.Hour = 0;
+    rec->per.Minute = 0;
+    rec->per.Second = 0;
     rec->t_set = false;
     rec->rpath.remove(0);
+    rec->mpath.remove(0);
+    rec->gps_lat = NULL;
+    rec->gps_long = NULL;
+    rec->gps_source = GPS_NONE;
     rec->cnt = 0;
+    rec->rec_tot = 0;
 }
 
 /* finishRecording(void)
@@ -199,7 +214,8 @@ void finishRecording(void) {
     resetRecInfo(&last_record);
     resetRecInfo(&next_record);
     rec_path = "--";
-    if(time_source == TSOURCE_GPS) time_source = TSOURCE_TEENSY;
+    if((time_source == TSOURCE_GPS) || (time_source == TSOURCE_PHONE)) time_source = TSOURCE_TEENSY;
+    if((gps_source == GPS_RECORDER) || (gps_source == GPS_PHONE)) gps_source = GPS_NONE;
     startLED(&leds[LED_RECORD], LED_MODE_WARNING_SHORT);
     // Wait until the notification is finished before sleeping or doing whatever.
     Alarm.delay(500);

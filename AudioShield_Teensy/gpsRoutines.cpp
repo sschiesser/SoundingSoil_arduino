@@ -9,11 +9,11 @@
 #include "gpsRoutines.h"
 
 // GPS instance
-TinyGPS												gps;
+TinyGPS											gps;
 // Latitude & longitude values
-float													cur_lat, cur_long;
+float											cur_lat, cur_long;
 
-#define GPS_STATIC						0
+#define GPS_STATIC						        0
 #if(GPS_STATIC==1)
 	const char str1[] PROGMEM = "$GPRMC,201547.000,A,3014.5527,N,09749.5808,W,0.24,163.05,040109,,*1A";
 	const char str2[] PROGMEM = "$GPGGA,201548.000,3014.5529,N,09749.5808,W,1,07,1.5,225.6,M,-22.5,M,18.8,0000*78";
@@ -91,7 +91,11 @@ bool gpsGetData(void) {
 		MONPORT.printf(" fLat: %f, fLong: %f\n", next_record.gps_lat, next_record.gps_long);
 		Alarm.delay((GPS_ENCODE_RETRIES_MAX - retries) * 1000);
 	}
-	else MONPORT.println("");
+	else {
+        next_record.gps_lat = NULL;
+        next_record.gps_long = NULL;
+        MONPORT.println("");
+    }
 	return fix_found;
 }
 

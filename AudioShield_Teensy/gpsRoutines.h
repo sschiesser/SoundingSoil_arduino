@@ -22,6 +22,7 @@
 extern TinyGPS                                  gps;
 extern float                                    cur_lat, cur_long;
 
+
 /* ======================
  * FUNCTIONS DECLARATIONS
  * ====================== */

@@ -25,7 +25,7 @@ enum tSources {
 	TSOURCE_NONE,
 	TSOURCE_TEENSY,
 	TSOURCE_GPS,
-	TSOURCE_BLE
+	TSOURCE_PHONE
 };
 extern enum tSources					time_source;
 

@@ -110,18 +110,26 @@ struct wState {
     enum bleState                           ble_state;
 };
 extern volatile struct wState               working_state;
+// GPS sources
+enum gpsSource {
+    GPS_NONE,
+    GPS_PHONE,
+    GPS_RECORDER
+};
+extern enum gpsSource                      gps_source;
 // Record informations
 struct recInfo {
-    time_t ts;                              // timestamp
-    tmElements_t dur;                       // duration
-    tmElements_t per;                       // period
-    bool t_set;                             // time synced?
-    String rpath;                           // record path on SD card
-    String mpath;                           // metadata path on SD card
-    float gps_lat;                          // GPS latitude (signed dd)
-    float gps_long;                         // GPS longitude (signed dd)
-    unsigned int cnt;                       // record counter
-    unsigned int rec_tot;                   // total number of records
+    time_t                                  ts; // timestamp
+    tmElements_t                            dur; // duration
+    tmElements_t                            per; // period
+    bool                                    t_set; // time synced?
+    String                                  rpath; // record path on SD card
+    String                                  mpath; // metadata path on SD card
+    float                                   gps_lat; // GPS latitude (signed dd)
+    float                                   gps_long; // GPS longitude (signed dd)
+    enum gpsSource                          gps_source; // GPS source
+    unsigned int                            cnt; // record counter
+    unsigned int                            rec_tot; // total number of records
 };
 extern struct recInfo                       last_record;
 extern struct recInfo                       next_record;

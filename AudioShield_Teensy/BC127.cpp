@@ -430,17 +430,18 @@ int parseSerialIn(String input) {
             }
             else if(notif.equalsIgnoreCase("RECV")) {
                 // BLE commands/requests:
-                // - "conn {address}"
-                // - "time {ts}"
-                // - "rec {start/stop/?}"
-                // - "rec_next {?}"
-                // - "rec_nb {?}"
-                // - "rec_ts {?}"
-                // - "mon {start/stop/?}"
-                // - "vol {+/-/?}"
                 // - "bt {?}"
-                // - "rwin {?}"
+                // - "conn {address}"
                 // - "filepath {?}"
+                // - "latlong {?}"
+                // - "mon {start/stop/?}"
+                // - "rec {start/stop/?}"
+                // - "rec_nb {?}"
+                // - "rec_next {?}"
+                // - "rec_ts {?}"
+                // - "rwin {?}"
+                // - "time {ts}"
+                // - "vol {+/-/?}"
                 if(param1.toInt() == BLE_conn_id) {
                     // MONPORT.println("Receiving 2-params BLE command");
                     if(param3.equalsIgnoreCase("conn")) {
@@ -450,7 +451,7 @@ int parseSerialIn(String input) {
                     else if(param3.equalsIgnoreCase("time")) {
                         unsigned long rec_time = param4.toInt();
                         if(rec_time > MIN_TIME_DEC) {
-                            setCurTime(rec_time, TSOURCE_BLE);
+                            setCurTime(rec_time, TSOURCE_PHONE);
                             MONPORT.printf("Timestamp received: %ld\n", rec_time);
                         }
                         else {
@@ -530,6 +531,11 @@ int parseSerialIn(String input) {
                             return BCNOT_FILEPATH;
                         }
                     }
+                    else if(param3.equalsIgnoreCase("latlong")) {
+                        if(param4.equalsIgnoreCase("?")) {
+                            return BCNOT_LATLONG;
+                        }
+                    }
                 }
             }
             else {
@@ -538,7 +544,7 @@ int parseSerialIn(String input) {
             break;
         }
 
-        // INQUIRY(BTADDR) ("NAME SURNAME") (COD) (RSSI)
+        // INQUIRY (BTADDR) ("NAME SURNAME") (COD) (RSSI)
         // LINK [link_ID] (STATE) (PROFILE) (BTADDR) (INFO)
         // RECV [link_ID] (size) (report data) <-- (report data) with 3 parameters
         case 5: {
@@ -573,9 +579,17 @@ int parseSerialIn(String input) {
                 // - "latlong {lat long}"
                 if(param1.toInt() == BLE_conn_id) {
                     if(param3.equalsIgnoreCase("latlong")) {
-                        MONPORT.printf("Receiving latlong with 2 values: %s %s\n", param4.c_str(), param5.c_str());
-                        next_record.gps_lat = atof(param4.c_str());
-                        next_record.gps_long = atof(param5.c_str());
+                        if((param4.c_str() == NULL) || (param5.c_str() == NULL)) {
+                            MONPORT.println("Received latlong values not available!");
+                            next_record.gps_source = GPS_NONE;
+                            next_record.gps_lat = NULL;
+                            next_record.gps_long = NULL;
+                        }
+                        else {
+                            next_record.gps_lat = atof(param4.c_str());
+                            next_record.gps_long = atof(param5.c_str());
+                            next_record.gps_source = GPS_PHONE;
+                        }
                     }
                 }
             }
@@ -887,6 +901,13 @@ bool sendCmdOut(int msg) {
                 BLUEPORT.print(cmdLine);
             }
             cmdLine = "";
+            break;
+        }
+        // GPS
+        case BCNOT_LATLONG: {
+            if(working_state.ble_state == BLESTATE_CONNECTED) {
+                cmdLine = "SEND " + String(BLE_conn_id) + " LATLONG " + String(next_record.gps_lat) + " " + String(next_record.gps_long) + "\r";
+            }
             break;
         }
         // MON state notification

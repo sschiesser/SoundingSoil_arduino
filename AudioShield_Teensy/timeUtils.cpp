@@ -47,7 +47,7 @@ void setTimeSource(void) {
 	tmElements_t tm;
 	setSyncProvider(getTeensy3Time);
 	breakTime(now(), tm);
-	MONPORT.printf("Time at startup: %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
+	MONPORT.printf("Date/Time at startup: %02d.%02d.%d, %02dh%02dm%02ds\n", tm.Day, tm.Month, (tm.Year+1970) ,tm.Hour, tm.Minute, tm.Second);
 	if(now() < MIN_TIME_DEC) time_source = TSOURCE_NONE;
 	else time_source = TSOURCE_TEENSY;
 }
@@ -75,7 +75,7 @@ void setCurTime(time_t cur_time, enum tSources source) {
 			time_source = TSOURCE_TEENSY;
 			break;
 
-		case TSOURCE_BLE:
+		case TSOURCE_PHONE:
 			setTime(cur_time);
 			Teensy3Clock.set(cur_time);
 			time_source = TSOURCE_TEENSY;

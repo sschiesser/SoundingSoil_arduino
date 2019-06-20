@@ -52,6 +52,7 @@ enum serialMsg {
     BCNOT_INQ_DONE,
     BCNOT_INQ_START,
     BCNOT_INQ_STATE,
+    BCNOT_LATLONG,
     BCNOT_MON_STATE,
     BCNOT_REC_STATE,
     BCNOT_REC_NEXT,
@@ -66,6 +67,8 @@ enum serialMsg {
     BCERR_VOL_BT_DIS,
     MAX_OUTPUTS
 };
+
+
 
 /* ======================
 * FUNCTIONS DECLARATIONS
