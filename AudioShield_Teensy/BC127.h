@@ -85,4 +85,27 @@ bool sendCmdOut(int msg);
 void populateDevlist(String addr, String name, String caps, unsigned int stren);
 bool searchDevlist(String addr);
 
+String cmdDevConnect(void);
+String cmdInquiry(void);
+String cmdMonPause(void);
+String cmdMonStart(void);
+String cmdMonStop(void);
+
+String notBtState(void);
+String notFilepath(void);
+String notInqDone(void);
+String notInqStart(void);
+String notLatlong(void);
+String notMonState(void);
+String notRecNb(void);
+String notRecNext(void);
+String notRecState(void);
+String notRecTs(void);
+String notRwinOk(void);
+String notRwinVals(void);
+String notVolLevel(void);
+
+String errRwinBadReq(void);
+String errRwinWrongParams(void);
+String errVolBtDis(void);
 #endif /* _BC127_H_ */

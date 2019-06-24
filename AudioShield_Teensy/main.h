@@ -81,13 +81,14 @@ extern enum monState                        mon_state;
 // Bluetooth states...
 // classic (BT)
 enum btState {
-    BTSTATE_OFF,								// 0 -> BT off
-    BTSTATE_IDLE,								// 1
-    BTSTATE_INQUIRY,						// 2 -> BT inquiring for audio devices
-    BTSTATE_REQ_CONN,						// 3 -> requesting connection to audio device
-    BTSTATE_CONNECTED,					// 4 -> connected but not playing
-    BTSTATE_PLAY,								// 5 -> playing (and connected)
-    BTSTATE_REQ_DISC						// 6 -> requesting disconnection from audio device
+    BTSTATE_OFF,                            // 0 -> BT off
+    BTSTATE_IDLE,                           // 1
+    BTSTATE_INQUIRY,                        // 2 -> BT inquiring for audio devices
+    BTSTATE_REQ_CONN,                       // 3 -> requesting connection to audio device
+    BTSTATE_CONNECTED,                      // 4 -> connected but not playing
+    BTSTATE_PLAY,							// 5 -> playing (and connected)
+    BTSTATE_REQ_DISC,                       // 6 -> requesting disconnection from audio device
+    BTSTATE_DISCONNECTED                    // 7 -> BT device disconnected
 };
 extern enum btState                         bt_state;
 // low energy (BLE)
