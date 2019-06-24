@@ -111,7 +111,7 @@ void bc127AdvStop(void) {
 * IN:	- received input (String)
 * OUT:	- message to send back (int)
 */
-int parseSerialIn(String input) {
+enum serialMsg parseSerialIn(String input) {
     MONPORT.printf("From BC127: %s\n", input.c_str());
     unsigned int nb_params = countParams(input);
     double tofloat;
@@ -120,423 +120,88 @@ int parseSerialIn(String input) {
         // INQU_OK
         // READY
         case 0: {
-            if(notif.equalsIgnoreCase("INQU_OK")) {
-                return BCNOT_INQ_DONE;
-            }
-            else if(notif.equalsIgnoreCase("READY")) {
-                BC127_ready = true;
-            }
+            if(notif.equalsIgnoreCase("INQU_OK")) return BCNOT_INQ_DONE;
+            else if(notif.equalsIgnoreCase("READY")) BC127_ready = true;
             break;
         }
 
         // AVRCP_PLAY [link_ID]
         // AVRCP_PAUSE [link_ID]
-        // AVRCP_FORWARD [link_ID]
-        // AVRCP_BACKWARD [link_ID]
         case 1: {
-            if(notif.equalsIgnoreCase("AVRCP_PLAY")) {
-                working_state.mon_state = MONSTATE_REQ_ON;
-            }
-            else if(notif.equalsIgnoreCase("AVRCP_PAUSE")) {
-                working_state.mon_state = MONSTATE_REQ_OFF;
-            }
-            else if(notif.equalsIgnoreCase("AVRCP_FORWARD")) {
-                // return BCCMD_REC_START;
-            }
-            else if(notif.equalsIgnoreCase("AVRCP_BACKWARD")) {
-                // return BCCMD_REC_STOP;
-            }
+            if(notif.equalsIgnoreCase("AVRCP_PLAY")) return msgAvrcpPlay();
+            else if(notif.equalsIgnoreCase("AVRCP_PAUSE")) return msgAvrcpPause();
             break;
         }
 
         // ABS_VOL [link_ID](value)
         // LINK_LOSS [link_ID] (status)
-        // NAME [addr] [remote_name]
+        // NAME [addr] {"name" || name}
         case 2: {
-            if(notif.equalsIgnoreCase("ABS_VOL")) {
-                vol_value = (float)param2.toInt()/ABS_VOL_MAX_VAL;
-                if(working_state.ble_state == BLESTATE_CONNECTED) return BCNOT_VOL_LEVEL;
-            }
-            else if(notif.equalsIgnoreCase("LINK_LOSS")) {
-                MONPORT.printf("link_ID: %s, status: %s\n", param1.c_str(), param2.c_str());
-                if(param1.toInt() == BT_id_a2dp) {
-                    if(param2.toInt() == 1) {
-                        working_state.bt_state = BTSTATE_DISCONNECTED;
-                    }
-                    else if(param2.toInt() == 0) {
-                        working_state.bt_state = BTSTATE_CONNECTED;
-                    }
-                    return BCNOT_BT_STATE;
-                }
-            }
-            else if(notif.equalsIgnoreCase("NAME")) {
-                if(param2.substring(0,1).equalsIgnoreCase("\"")) {
-                    int strlen = param2.length();
-                    BT_peer_name = param2.substring(1, (strlen-1));
-                }
-                else {
-                    BT_peer_name = param2;
-                }
-                if(working_state.ble_state == BLESTATE_CONNECTED) {
-                    return BCNOT_BT_STATE;
-                }
-            }
+            if(notif.equalsIgnoreCase("ABS_VOL")) return msgAbsVol(param1, param2);
+            else if(notif.equalsIgnoreCase("LINK_LOSS")) return msgLinkLoss(param1, param2);
+            else if(notif.equalsIgnoreCase("NAME")) return msgName1(param1, param2);
             break;
         }
 
         // CLOSE_OK [link_ID] (profile) (Bluetooth address)
-        // NAME [addr] (remote) (name)
+        // NAME [addr] {"n1 n2" || n1 n2}
         // OPEN_OK [link_ID] (profile) (Bluetooth address)
         // RECV [link_ID] (size) (report data)
         case 3: {
-            if(notif.equalsIgnoreCase("CLOSE_OK")) {
-                if(param1.toInt() == BT_id_a2dp) {
-                    if(working_state.bt_state != BTSTATE_OFF) working_state.bt_state = BTSTATE_REQ_DISC;
-                }
-                else if(param1.toInt() == BLE_conn_id) {
-                    if(working_state.ble_state != BLESTATE_OFF) working_state.ble_state = BLESTATE_REQ_DISC;
-                }
-            }
-            else if(notif.equalsIgnoreCase("NAME")) {
-                BT_peer_name = param2 + " " + param3;
-                if(working_state.ble_state == BLESTATE_CONNECTED) {
-                    return BCNOT_BT_STATE;
-                }
-            }
-            else if(notif.equalsIgnoreCase("OPEN_OK")) {
-                if(param2.equalsIgnoreCase("A2DP")) {
-                    BT_id_a2dp = param1.toInt();
-                    BT_peer_address = param3;
-                    MONPORT.printf("A2DP connection opened. Conn ID: %d, peer address = %s\n",
-                    BT_id_a2dp, BT_peer_address.c_str());
-                    working_state.bt_state = BTSTATE_REQ_CONN;
-                    return BCCMD_BT_NAME;
-                }
-                else if(param2.equalsIgnoreCase("AVRCP")) {
-                    BT_id_avrcp = param1.toInt();
-                    BT_peer_address = param3;
-                    MONPORT.printf("AVRCP connection opened. Conn ID: %d, peer address (check) = %s\n", BT_id_avrcp, BT_peer_address.c_str());
-                }
-                else if(param2.equalsIgnoreCase("BLE")) {
-                    BLE_conn_id = param1.toInt();
-                    // MONPORT.printf("BLE connection opened. Conn ID: %d\n", BLE_conn_id);
-                    working_state.ble_state = BLESTATE_REQ_CONN;
-                }
-            }
-            else if(notif.equalsIgnoreCase("RECV")) {
-                // BLE commands:
-                // - "inq"
-                // - "disc"
-                // - "latlong"
-                if(param1.toInt() == BLE_conn_id) {
-                    // MONPORT.println("Receiving 1-param BLE command");
-                    if(param3.equalsIgnoreCase("inq")) {
-                        // MONPORT.println("Received BT inquiry command");
-                        return BCCMD_INQUIRY;
-                    }
-                    else if(param3.equalsIgnoreCase("disc")) {
-                        working_state.bt_state = BTSTATE_REQ_DISC;
-                    }
-                    else if(param3.equalsIgnoreCase("latlong")) {
-                        MONPORT.println("Receiving latlong without values");
-                    }
-                }
-            }
+            if(notif.equalsIgnoreCase("CLOSE_OK")) return msgCloseOk(param1, param2, param3);
+            else if(notif.equalsIgnoreCase("NAME")) return msgName2(param1, param2, param3);
+            else if(notif.equalsIgnoreCase("OPEN_OK")) return msgOpenOk(param1, param2, param3);
+            else if(notif.equalsIgnoreCase("RECV")) return msgRecv1(param1, param2, param3);
             break;
         }
 
         // INQUIRY(BTADDR) (NAME) (COD) (RSSI)
+        // NAME [addr] {"n1 n2 n3" || n1 n2 n3}
         // STATE (connected) (connectable) (discoverable) (ble)
         // RECV [link_ID] (size) (report data) <-- (report data) with 2 parameters
         case 4: {
-            if(notif.equalsIgnoreCase("STATE")) {
-                if(!param1.substring(param1.length()-2, param1.length()-1).toInt()) {
-                    return BCNOT_BT_STATE;
-                }
-            }
-            else if(notif.equalsIgnoreCase("INQUIRY")) {
-                String addr = param1;
-                String name = param2.substring(1, (param2.length()-1));
-                String caps = param3;
-                unsigned int stren = param4.substring(1, 3).toInt();
-                populateDevlist(addr, name, caps, stren);
-                return BCNOT_INQ_STATE;
-            }
-            else if(notif.equalsIgnoreCase("RECV")) {
-                // BLE commands/requests:
-                // - "bt {?}"
-                // - "conn {address}"
-                // - "filepath {?}"
-                // - "latlong {?}"
-                // - "mon {start/stop/?}"
-                // - "rec {start/stop/?}"
-                // - "rec_nb {?}"
-                // - "rec_next {?}"
-                // - "rec_ts {?}"
-                // - "rwin {?}"
-                // - "time {ts}"
-                // - "vol {+/-/?}"
-                if(param1.toInt() == BLE_conn_id) {
-                    // MONPORT.println("Receiving 2-params BLE command");
-                    if(param3.equalsIgnoreCase("conn")) {
-                        BT_peer_name = param4;
-                        return BCCMD_DEV_CONNECT;
-                    }
-                    else if(param3.equalsIgnoreCase("time")) {
-                        unsigned long rec_time = param4.toInt();
-                        if(rec_time > MIN_TIME_DEC) {
-                            setCurTime(rec_time, TSOURCE_PHONE);
-                            MONPORT.printf("Timestamp received: %ld\n", rec_time);
-                        }
-                        else {
-                            MONPORT.println("Received time not correct!");
-                        }
-                    }
-                    else if(param3.equalsIgnoreCase("rec")) {
-                        if(param4.equalsIgnoreCase("start")) return BCCMD_REC_START;
-                        else if(param4.equalsIgnoreCase("stop")) return BCCMD_REC_STOP;
-                        else if(param4.equalsIgnoreCase("?")) return BCNOT_REC_STATE;
-                        else {
-                            // MONPORT.println("BLE rec command not listed");
-                        }
-                    }
-                    else if(param3.equalsIgnoreCase("rec_next")) {
-                        if(param4.equalsIgnoreCase("?")) return BCNOT_REC_NEXT;
-                        else {
-                            MONPORT.println("BLE rec_next command not listed");
-                        }
-                    }
-                    else if(param3.equalsIgnoreCase("rec_nb")) {
-                        if(param4.equalsIgnoreCase("?")) return BCNOT_REC_NB;
-                        else {
-                            MONPORT.println("BLE rec_nb command not listed");
-                        }
-                    }
-                    else if(param3.equalsIgnoreCase("rec_ts")) {
-                        if(param4.equalsIgnoreCase("?")) return BCNOT_REC_TS;
-                        else {
-                            MONPORT.println("BLE rec_ts command not listed");
-                        }
-                    }
-                    else if(param3.equalsIgnoreCase("mon")) {
-                        if(param4.equalsIgnoreCase("start")) working_state.mon_state = MONSTATE_REQ_ON;
-                        else if(param4.equalsIgnoreCase("stop")) working_state.mon_state = MONSTATE_REQ_OFF;
-                        else if(param4.equalsIgnoreCase("?")) return BCNOT_MON_STATE;
-                        else {
-                            // MONPORT.println("BLE mon command not listed");
-                        }
-                    }
-                    else if(param3.equalsIgnoreCase("vol")) {
-                        if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
-                            if(param4.equalsIgnoreCase("+")) {
-                                return BCCMD_VOL_UP;
-                            }
-                            else if(param4.equalsIgnoreCase("-")) {
-                                return BCCMD_VOL_DOWN;
-                            }
-                            else if(param4.equalsIgnoreCase("?")) {
-                                return BCNOT_VOL_LEVEL;
-                            }
-                            else {
-                                // MONPORT.println("BLE vol command not listed");
-                            }
-                        }
-                        else {
-                            return BCERR_VOL_BT_DIS;
-                        }
-                    }
-                    else if(param3.equalsIgnoreCase("bt")) {
-                        if(param4.equalsIgnoreCase("?")) {
-                            // return BCNOT_BT_STATE;
-                            return BCCMD_STATUS;
-                        }
-                    }
-                    else if(param3.equalsIgnoreCase("rwin")) {
-                        if(param4.equalsIgnoreCase("?")) {
-                            return BCNOT_RWIN_VALS;
-                        }
-                        else {
-                            return BCERR_RWIN_BAD_REQ;
-                            // MONPORT.println("RWIN request not listed");
-                        }
-                    }
-                    else if(param3.equalsIgnoreCase("filepath")) {
-                        if(param4.equalsIgnoreCase("?")) {
-                            return BCNOT_FILEPATH;
-                        }
-                    }
-                    else if(param3.equalsIgnoreCase("latlong")) {
-                        if(param4.equalsIgnoreCase("?")) {
-                            return BCNOT_LATLONG;
-                        }
-                    }
-                }
-            }
+            if(notif.equalsIgnoreCase("INQUIRY")) return msgInquiry1(param1, param2, param3, param4);
+            else if(notif.equalsIgnoreCase("NAME")) return msgName3(param1, param2, param3, param4);
+            else if(notif.equalsIgnoreCase("STATE")) return msgState(param1, param2, param3, param4);
+            else if(notif.equalsIgnoreCase("RECV")) return msgRecv2(param1, param2, param3, param4);
             break;
         }
 
         // INQUIRY (BTADDR) ("NAME SURNAME") (COD) (RSSI)
         // LINK [link_ID] (STATE) (PROFILE) (BTADDR) (INFO)
+        // NAME [addr] {"n1 n2 n3 n4" || n1 n2 n3 n4}
         // RECV [link_ID] (size) (report data) <-- (report data) with 3 parameters
         case 5: {
-            if(notif.equalsIgnoreCase("INQUIRY")) {
-                String addr = param1;
-                String name = param2 + " " + param3;
-                String caps = param4;
-                unsigned int stren = param5.substring(1, 3).toInt();
-                populateDevlist(addr, name, caps, stren);
-                return BCNOT_INQ_STATE;
-            }
-            else if(notif.equalsIgnoreCase("LINK")) {
-                // MONPORT.println("LINK5 received");
-                if(param3.equalsIgnoreCase("A2DP")) {
-                    BT_id_a2dp = param1.toInt();
-                    BT_peer_address = param4;
-                    MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
-                    working_state.bt_state = BTSTATE_CONNECTED;
-                    // return BCNOT_BT_STATE;
-                    return BCCMD_BT_NAME;
-                }
-                else if(param3.equalsIgnoreCase("AVRCP")) {
-                    BT_id_avrcp = param1.toInt();
-                    BT_peer_address = param4;
-                    MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
-                    working_state.bt_state = BTSTATE_CONNECTED;
-                    // return BCNOT_BT_STATE;
-                }
-            }
-            else if(notif.equalsIgnoreCase("RECV")) {
-                // BLE command/request:
-                // - "latlong {lat long}"
-                if(param1.toInt() == BLE_conn_id) {
-                    if(param3.equalsIgnoreCase("latlong")) {
-                        if((param4.c_str() == NULL) || (param5.c_str() == NULL)) {
-                            MONPORT.println("Received latlong values not available!");
-                            next_record.gps_source = GPS_NONE;
-                            next_record.gps_lat = NULL;
-                            next_record.gps_long = NULL;
-                        }
-                        else {
-                            next_record.gps_lat = atof(param4.c_str());
-                            next_record.gps_long = atof(param5.c_str());
-                            next_record.gps_source = GPS_PHONE;
-                        }
-                    }
-                }
-            }
+            if(notif.equalsIgnoreCase("INQUIRY")) return msgInquiry2(param1, param2, param3, param4, param5);
+            else if(notif.equalsIgnoreCase("LINK")) return msgLink1(param1, param2, param3, param4, param5);
+            else if(notif.equalsIgnoreCase("NAME")) return msgName4(param1, param2, param3, param4, param5);
+            else if(notif.equalsIgnoreCase("RECV")) return msgRecv3(param1, param2, param3, param4, param5);
             break;
         }
 
         // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2)
         // RECV [link_ID] (size) (report data) <-- (report data) with 4 parameters
         case 6: {
-            if(notif.equalsIgnoreCase("RECV")) {
-                // BLE commands:
-                // - "rwin {duration} {period} {occurences}"
-                if(param1.toInt() == BLE_conn_id) {
-                    if(param3.equalsIgnoreCase("rwin")) {
-                        unsigned int d, p;
-                        d = param4.toInt();
-                        p = param5.toInt();
-                        if(d < p) {
-                            breakTime(d, rec_window.length);
-                            breakTime(p, rec_window.period);
-                            rec_window.occurences = param6.toInt();
-                            return BCNOT_RWIN_OK;
-                        }
-                        else {
-                            return BCERR_RWIN_WRONG_PARAMS;
-                        }
-                    }
-                }
-            }
-            else if(notif.equalsIgnoreCase("LINK")) {
-                MONPORT.println("LINK6 received");
-                if(param3.equalsIgnoreCase("A2DP")) {
-                    BT_id_a2dp = param1.toInt();
-                    BT_peer_address = param4;
-                    MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
-                    working_state.bt_state = BTSTATE_CONNECTED;
-                    // return BCNOT_BT_STATE;
-                    return BCCMD_BT_NAME;
-                }
-                else if(param3.equalsIgnoreCase("AVRCP")) {
-                    BT_id_avrcp = param1.toInt();
-                    BT_peer_address = param4;
-                    MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
-                    working_state.bt_state = BTSTATE_CONNECTED;
-                    // return BCNOT_BT_STATE;
-                }
-            }
+            if(notif.equalsIgnoreCase("RECV")) return msgRecv4(param1, param2, param3, param4, param5, param6);
+            else if(notif.equalsIgnoreCase("LINK")) return msgLink2(param1, param2, param3, param4, param5, param6);
             break;
         }
 
         // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3)
         case 7: {
-            if(notif.equalsIgnoreCase("LINK")) {
-                MONPORT.println("LINK7 received");
-                if(param3.equalsIgnoreCase("A2DP")) {
-                    BT_id_a2dp = param1.toInt();
-                    BT_peer_address = param4;
-                    MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
-                    working_state.bt_state = BTSTATE_CONNECTED;
-                    // return BCNOT_BT_STATE;
-                    return BCCMD_BT_NAME;
-                }
-                else if(param3.equalsIgnoreCase("AVRCP")) {
-                    BT_id_avrcp = param1.toInt();
-                    BT_peer_address = param4;
-                    MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
-                    working_state.bt_state = BTSTATE_CONNECTED;
-                    // return BCNOT_BT_STATE;
-                }
-            }
+            if(notif.equalsIgnoreCase("LINK")) return msgLink3(param1, param2, param3, param4, param5, param6, param7);
             break;
         }
 
         // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3) (info4)
         case 8: {
-            if(notif.equalsIgnoreCase("LINK")) {
-                MONPORT.println("LINK8 received");
-                if(param3.equalsIgnoreCase("A2DP")) {
-                    BT_id_a2dp = param1.toInt();
-                    BT_peer_address = param4;
-                    MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
-                    working_state.bt_state = BTSTATE_CONNECTED;
-                    // return BCNOT_BT_STATE;
-                    return BCCMD_BT_NAME;
-                }
-                else if(param3.equalsIgnoreCase("AVRCP")) {
-                    BT_id_avrcp = param1.toInt();
-                    BT_peer_address = param4;
-                    MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
-                    working_state.bt_state = BTSTATE_CONNECTED;
-                    // return BCNOT_BT_STATE;
-                }
-            }
+            if(notif.equalsIgnoreCase("LINK")) return msgLink4(param1, param2, param3, param4, param5, param6, param7, param8);
             break;
         }
 
         // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3) (info4) (info5)
         case 9: {
-            if(notif.equalsIgnoreCase("LINK")) {
-                MONPORT.println("LINK9 received");
-                if(param3.equalsIgnoreCase("A2DP")) {
-                    BT_id_a2dp = param1.toInt();
-                    BT_peer_address = param4;
-                    MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
-                    working_state.bt_state = BTSTATE_CONNECTED;
-                    // return BCNOT_BT_STATE;
-                    return BCCMD_BT_NAME;
-                }
-                else if(param3.equalsIgnoreCase("AVRCP")) {
-                    BT_id_avrcp = param1.toInt();
-                    BT_peer_address = param4;
-                    MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
-                    working_state.bt_state = BTSTATE_CONNECTED;
-                    // return BCNOT_BT_STATE;
-                }
-            }
+            if(notif.equalsIgnoreCase("LINK")) return msgLink5(param1, param2, param3, param4, param5, param6, param7, param8, param9);
             break;
         }
 
@@ -874,6 +539,410 @@ unsigned int countParams(String input) {
     }
     // MONPORT.printf("#params: %d\n", nb_params);
 }
+
+enum serialMsg msgAvrcpPlay(void) {
+    working_state.mon_state = MONSTATE_REQ_ON;
+    return BCCMD__NOTHING;
+}
+enum serialMsg msgAvrcpPause(void) {
+    working_state.mon_state = MONSTATE_REQ_OFF;
+    return BCCMD__NOTHING;
+}
+enum serialMsg msgAbsVol(String p1, String p2) {
+    vol_value = (float)p2.toInt()/ABS_VOL_MAX_VAL;
+    if(working_state.ble_state == BLESTATE_CONNECTED) {
+        return BCNOT_VOL_LEVEL;
+    }
+    else {
+        return BCCMD__NOTHING;
+    }
+}
+enum serialMsg msgLinkLoss(String p1, String p2) {
+    MONPORT.printf("link_ID: %s, status: %s\n", p1.c_str(), p2.c_str());
+    if(p1.toInt() == BT_id_a2dp) {
+        if(p2.toInt() == 1) {
+            working_state.bt_state = BTSTATE_DISCONNECTED;
+        }
+        else if(p2.toInt() == 0) {
+            working_state.bt_state = BTSTATE_CONNECTED;
+        }
+        return BCNOT_BT_STATE;
+    }
+    else {
+        return BCCMD__NOTHING;
+    }
+}
+enum serialMsg msgName1(String p1, String p2) {
+    if(p2.substring(0,1).equalsIgnoreCase("\"")) {
+        int strlen = p2.length();
+        BT_peer_name = p2.substring(1, (strlen-1));
+    }
+    else {
+        BT_peer_name = p2;
+    }
+    if(working_state.ble_state == BLESTATE_CONNECTED) {
+        return BCNOT_BT_STATE;
+    }
+    else {
+        return BCCMD__NOTHING;
+    }
+
+}
+enum serialMsg msgCloseOk(String p1, String p2, String p3) {
+    if(param1.toInt() == BT_id_a2dp) {
+        if(working_state.bt_state != BTSTATE_OFF) working_state.bt_state = BTSTATE_REQ_DISC;
+    }
+    else if(param1.toInt() == BLE_conn_id) {
+        if(working_state.ble_state != BLESTATE_OFF) working_state.ble_state = BLESTATE_REQ_DISC;
+    }
+    return BCCMD__NOTHING;
+}
+enum serialMsg msgName2(String p1, String p2, String p3) {
+    if(p2.substring(0,1).equalsIgnoreCase("\"")) {
+        int strlen1 = p2.length();
+        int strlen2 = p3.length();
+        BT_peer_name = p2.substring(1, (strlen1-1)) + " " + p3.substring(0, (strlen2-1));
+    }
+    else {
+        BT_peer_name = p2 + " " + p3;
+    }
+
+    if(working_state.ble_state == BLESTATE_CONNECTED) {
+        return BCNOT_BT_STATE;
+    }
+    else {
+        return BCCMD__NOTHING;
+    }
+}
+enum serialMsg msgOpenOk(String p1, String p2, String p3) {
+    if(param2.equalsIgnoreCase("A2DP")) {
+        BT_id_a2dp = param1.toInt();
+        BT_peer_address = param3;
+        MONPORT.printf("A2DP connection opened. Conn ID: %d, peer address = %s\n",
+        BT_id_a2dp, BT_peer_address.c_str());
+        working_state.bt_state = BTSTATE_REQ_CONN;
+        return BCCMD_BT_NAME;
+    }
+    else if(param2.equalsIgnoreCase("AVRCP")) {
+        BT_id_avrcp = param1.toInt();
+        BT_peer_address = param3;
+        MONPORT.printf("AVRCP connection opened. Conn ID: %d, peer address (check) = %s\n", BT_id_avrcp, BT_peer_address.c_str());
+        return BCCMD__NOTHING;
+    }
+    else if(param2.equalsIgnoreCase("BLE")) {
+        BLE_conn_id = param1.toInt();
+        // MONPORT.printf("BLE connection opened. Conn ID: %d\n", BLE_conn_id);
+        working_state.ble_state = BLESTATE_REQ_CONN;
+        return BCCMD__NOTHING;
+    }
+    else {
+        return BCCMD__NOTHING;
+    }
+}
+enum serialMsg msgRecv1(String p1, String p2, String p3) {
+    // - "inq"
+    // - "disc"
+    // - "latlong"
+    enum serialMsg ret = BCCMD__NOTHING;
+
+    if(param1.toInt() == BLE_conn_id) {
+        if(param3.equalsIgnoreCase("inq")) {
+            ret = BCCMD_INQUIRY;
+        }
+        else if(param3.equalsIgnoreCase("disc")) {
+            working_state.bt_state = BTSTATE_REQ_DISC;
+        }
+        else if(param3.equalsIgnoreCase("latlong")) {
+            MONPORT.println("Receiving latlong without values");
+        }
+    }
+
+    return ret;
+}
+enum serialMsg msgInquiry1(String p1, String p2, String p3, String p4) {
+    String addr = p1;
+    String name = p2.substring(1, (p2.length()-1));
+    String caps = p3;
+    unsigned int stren = p4.substring(1, 3).toInt();
+    populateDevlist(addr, name, caps, stren);
+    return BCNOT_INQ_STATE;
+}
+enum serialMsg msgName3(String p1, String p2, String p3, String p4) {
+    if(p2.substring(0,1).equalsIgnoreCase("\"")) {
+        int strlen1 = p2.length();
+        int strlen2 = p4.length();
+        BT_peer_name = p2.substring(1, (strlen1-1)) + " " + p3 + " " + p4.substring(0, (strlen2-1));
+    }
+    else {
+        BT_peer_name = p2 + " " + p3 + " " + p4;
+    }
+
+    if(working_state.ble_state == BLESTATE_CONNECTED) {
+        return BCNOT_BT_STATE;
+    }
+    else {
+        return BCCMD__NOTHING;
+    }
+}
+enum serialMsg msgState(String p1, String p2, String p3, String p4) {
+    if(!p1.substring(p1.length()-2, p1.length()-1).toInt()) {
+        return BCNOT_BT_STATE;
+    }
+    return BCCMD__NOTHING;
+}
+enum serialMsg msgRecv2(String p1, String p2, String p3, String p4) {
+    // - "bt {?}"
+    // - "conn {address}"
+    // - "filepath {?}"
+    // - "latlong {?}"
+    // - "mon {start/stop/?}"
+    // - "rec {start/stop/?}"
+    // - "rec_nb {?}"
+    // - "rec_next {?}"
+    // - "rec_ts {?}"
+    // - "rwin {?}"
+    // - "time {ts}"
+    // - "vol {+/-/?}"
+    enum serialMsg ret = BCCMD__NOTHING;
+    if(param1.toInt() == BLE_conn_id) {
+        if(p3.equalsIgnoreCase("conn")) {
+            BT_peer_name = p4;
+            return BCCMD_DEV_CONNECT;
+        }
+        else if(p3.equalsIgnoreCase("time")) {
+            unsigned long rec_time = p4.toInt();
+            if(rec_time > MIN_TIME_DEC) {
+                setCurTime(rec_time, TSOURCE_PHONE);
+                MONPORT.printf("Timestamp received: %ld\n", rec_time);
+            }
+            else {
+                MONPORT.println("Received time not correct!");
+            }
+        }
+        else if(p3.equalsIgnoreCase("rec")) {
+            if(p4.equalsIgnoreCase("start")) return BCCMD_REC_START;
+            else if(p4.equalsIgnoreCase("stop")) return BCCMD_REC_STOP;
+            else if(p4.equalsIgnoreCase("?")) return BCNOT_REC_STATE;
+        }
+        else if(p3.equalsIgnoreCase("rec_next")) {
+            if(p4.equalsIgnoreCase("?")) return BCNOT_REC_NEXT;
+            else {
+                MONPORT.println("BLE rec_next command not listed");
+            }
+        }
+        else if(p3.equalsIgnoreCase("rec_nb")) {
+            if(p4.equalsIgnoreCase("?")) return BCNOT_REC_NB;
+            else {
+                MONPORT.println("BLE rec_nb command not listed");
+            }
+        }
+        else if(p3.equalsIgnoreCase("rec_ts")) {
+            if(p4.equalsIgnoreCase("?")) return BCNOT_REC_TS;
+            else {
+                MONPORT.println("BLE rec_ts command not listed");
+            }
+        }
+        else if(p3.equalsIgnoreCase("mon")) {
+            if(p4.equalsIgnoreCase("start")) working_state.mon_state = MONSTATE_REQ_ON;
+            else if(p4.equalsIgnoreCase("stop")) working_state.mon_state = MONSTATE_REQ_OFF;
+            else if(p4.equalsIgnoreCase("?")) return BCNOT_MON_STATE;
+        }
+        else if(p3.equalsIgnoreCase("vol")) {
+            if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
+                if(p4.equalsIgnoreCase("+")) {
+                    return BCCMD_VOL_UP;
+                }
+                else if(p4.equalsIgnoreCase("-")) {
+                    return BCCMD_VOL_DOWN;
+                }
+                else if(p4.equalsIgnoreCase("?")) {
+                    return BCNOT_VOL_LEVEL;
+                }
+            }
+            else {
+                return BCERR_VOL_BT_DIS;
+            }
+        }
+        else if(p3.equalsIgnoreCase("bt")) {
+            if(p4.equalsIgnoreCase("?")) {
+                return BCCMD_STATUS;
+            }
+        }
+        else if(p3.equalsIgnoreCase("rwin")) {
+            if(p4.equalsIgnoreCase("?")) {
+                return BCNOT_RWIN_VALS;
+            }
+            else {
+                return BCERR_RWIN_BAD_REQ;
+            }
+        }
+        else if(p3.equalsIgnoreCase("filepath")) {
+            if(p4.equalsIgnoreCase("?")) {
+                return BCNOT_FILEPATH;
+            }
+        }
+        else if(p3.equalsIgnoreCase("latlong")) {
+            if(p4.equalsIgnoreCase("?")) {
+                return BCNOT_LATLONG;
+            }
+        }
+    }
+    return ret;
+}
+enum serialMsg msgInquiry2(String p1, String p2, String p3, String p4, String p5) {
+    String addr = p1;
+    String name = p2 + " " + p3;
+    String caps = p4;
+    unsigned int stren = p5.substring(1, 3).toInt();
+    populateDevlist(addr, name, caps, stren);
+    return BCNOT_INQ_STATE;
+}
+enum serialMsg msgLink1(String p1, String p2, String p3, String p4, String p5) {
+    if(p3.equalsIgnoreCase("A2DP")) {
+        BT_id_a2dp = p1.toInt();
+        BT_peer_address = p4;
+        MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
+        working_state.bt_state = BTSTATE_CONNECTED;
+        return BCCMD_BT_NAME;
+    }
+    else if(p3.equalsIgnoreCase("AVRCP")) {
+        BT_id_avrcp = p1.toInt();
+        BT_peer_address = p4;
+        MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
+        working_state.bt_state = BTSTATE_CONNECTED;
+    }
+    return BCCMD__NOTHING;
+}
+enum serialMsg msgName4(String p1, String p2, String p3, String p4, String p5) {
+    if(p2.substring(0,1).equalsIgnoreCase("\"")) {
+        int strlen1 = p2.length();
+        int strlen2 = p5.length();
+        BT_peer_name = p2.substring(1, (strlen1-1)) + " " + p3 + " " + p4 + " " + p5.substring(0, (strlen2-1));
+    }
+    else {
+        BT_peer_name = p2 + " " + p3 + " " + p4 + " " + p5;
+    }
+
+    if(working_state.ble_state == BLESTATE_CONNECTED) {
+        return BCNOT_BT_STATE;
+    }
+    else {
+        return BCCMD__NOTHING;
+    }
+}
+enum serialMsg msgRecv3(String p1, String p2, String p3, String p4, String p5) {
+    // - "latlong {lat long}"
+    if(param1.toInt() == BLE_conn_id) {
+        if(param3.equalsIgnoreCase("latlong")) {
+            if((param4.c_str() == NULL) || (param5.c_str() == NULL)) {
+                next_record.gps_source = GPS_NONE;
+                next_record.gps_lat = NULL;
+                next_record.gps_long = NULL;
+            }
+            else {
+                next_record.gps_lat = atof(param4.c_str());
+                next_record.gps_long = atof(param5.c_str());
+                next_record.gps_source = GPS_PHONE;
+            }
+        }
+    }
+    return BCCMD__NOTHING;
+}
+enum serialMsg msgRecv4(String p1, String p2, String p3, String p4, String p5, String p6) {
+    enum serialMsg ret = BCCMD__NOTHING;
+
+    // - "rwin {duration} {period} {occurences}"
+    if(p1.toInt() == BLE_conn_id) {
+        if(p3.equalsIgnoreCase("rwin")) {
+            unsigned int d, p;
+            d = p4.toInt();
+            p = p5.toInt();
+            if(d < p) {
+                breakTime(d, rec_window.length);
+                breakTime(p, rec_window.period);
+                rec_window.occurences = p6.toInt();
+                return BCNOT_RWIN_OK;
+            }
+            else {
+                return BCERR_RWIN_WRONG_PARAMS;
+            }
+        }
+    }
+    return ret;
+}
+enum serialMsg msgLink2(String p1, String p2, String p3, String p4, String p5, String p6) {
+    enum serialMsg ret = BCCMD__NOTHING;
+
+    if(p3.equalsIgnoreCase("A2DP")) {
+        BT_id_a2dp = p1.toInt();
+        BT_peer_address = p4;
+        MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
+        working_state.bt_state = BTSTATE_CONNECTED;
+        return BCCMD_BT_NAME;
+    }
+    else if(p3.equalsIgnoreCase("AVRCP")) {
+        BT_id_avrcp = p1.toInt();
+        BT_peer_address = p4;
+        MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
+        working_state.bt_state = BTSTATE_CONNECTED;
+    }
+    return ret;
+}
+enum serialMsg msgLink3(String p1, String p2, String p3, String p4, String p5, String p6, String p7) {
+    enum serialMsg ret = BCCMD__NOTHING;
+
+    if(p3.equalsIgnoreCase("A2DP")) {
+        BT_id_a2dp = p1.toInt();
+        BT_peer_address = p4;
+        MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
+        working_state.bt_state = BTSTATE_CONNECTED;
+        return BCCMD_BT_NAME;
+    }
+    else if(p3.equalsIgnoreCase("AVRCP")) {
+        BT_id_avrcp = p1.toInt();
+        BT_peer_address = p4;
+        MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
+        working_state.bt_state = BTSTATE_CONNECTED;
+    }
+    return ret;
+}
+enum serialMsg msgLink4(String p1, String p2, String p3, String p4, String p5, String p6, String p7, String p8) {
+    enum serialMsg ret = BCCMD__NOTHING;
+
+    if(p3.equalsIgnoreCase("A2DP")) {
+        BT_id_a2dp = p1.toInt();
+        BT_peer_address = p4;
+        MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
+        working_state.bt_state = BTSTATE_CONNECTED;
+        return BCCMD_BT_NAME;
+    }
+    else if(p3.equalsIgnoreCase("AVRCP")) {
+        BT_id_avrcp = p1.toInt();
+        BT_peer_address = p4;
+        MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
+        working_state.bt_state = BTSTATE_CONNECTED;
+    }
+    return ret;
+}
+enum serialMsg msgLink5(String p1, String p2, String p3, String p4, String p5, String p6, String p7, String p8, String p9) {
+    enum serialMsg ret = BCCMD__NOTHING;
+
+    if(p3.equalsIgnoreCase("A2DP")) {
+        BT_id_a2dp = p1.toInt();
+        BT_peer_address = p4;
+        MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
+        working_state.bt_state = BTSTATE_CONNECTED;
+        return BCCMD_BT_NAME;
+    }
+    else if(p3.equalsIgnoreCase("AVRCP")) {
+        BT_id_avrcp = p1.toInt();
+        BT_peer_address = p4;
+        MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
+        working_state.bt_state = BTSTATE_CONNECTED;
+    }
+    return ret;
+}
+
 
 String cmdDevConnect(void) {
     if(searchDevlist(BT_peer_name)) {

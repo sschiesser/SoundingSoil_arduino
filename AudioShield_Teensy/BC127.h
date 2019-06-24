@@ -80,12 +80,36 @@ void bc127BlueOff(void);
 void bc127AdvStart(void);
 void bc127AdvStop(void);
 void bc127Inquiry(void);
-int parseSerialIn(String input);
+enum serialMsg parseSerialIn(String input);
 bool sendCmdOut(int msg);
 void populateDevlist(String addr, String name, String caps, unsigned int stren);
 bool searchDevlist(String addr);
 
 unsigned int countParams(String input);
+
+
+enum serialMsg msgAvrcpPlay(void);
+enum serialMsg msgAvrcpPause(void);
+enum serialMsg msgAbsVol(String p1, String p2);
+enum serialMsg msgLinkLoss(String p1, String p2);
+enum serialMsg msgName1(String p1, String p2);
+enum serialMsg msgCloseOk(String p1, String p2, String p3);
+enum serialMsg msgName2(String p1, String p2, String p3);
+enum serialMsg msgOpenOk(String p1, String p2, String p3);
+enum serialMsg msgRecv1(String p1, String p2, String p3);
+enum serialMsg msgInquiry1(String p1, String p2, String p3, String p4);
+enum serialMsg msgName3(String p1, String p2, String p3, String p4);
+enum serialMsg msgState(String p1, String p2, String p3, String p4);
+enum serialMsg msgRecv2(String p1, String p2, String p3, String p4);
+enum serialMsg msgInquiry2(String p1, String p2, String p3, String p4, String p5);
+enum serialMsg msgLink1(String p1, String p2, String p3, String p4, String p5);
+enum serialMsg msgName4(String p1, String p2, String p3, String p4, String p5);
+enum serialMsg msgRecv3(String p1, String p2, String p3, String p4, String p5);
+enum serialMsg msgRecv4(String p1, String p2, String p3, String p4, String p5, String p6);
+enum serialMsg msgLink2(String p1, String p2, String p3, String p4, String p5, String p6);
+enum serialMsg msgLink3(String p1, String p2, String p3, String p4, String p5, String p6, String p7);
+enum serialMsg msgLink4(String p1, String p2, String p3, String p4, String p5, String p6, String p7, String p8);
+enum serialMsg msgLink5(String p1, String p2, String p3, String p4, String p5, String p6, String p7, String p8, String p9);
 
 String cmdDevConnect(void);
 String cmdInquiry(void);
