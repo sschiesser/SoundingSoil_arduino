@@ -117,49 +117,25 @@ int parseSerialIn(String input) {
     double tofloat;
 
     switch(nb_params) {
-        // PENDING
         // INQU_OK
-        // PAIR_PENDING
         // READY
         case 0: {
-            if(notif.equalsIgnoreCase("PENDING")) {
-                // return BCNOT_INQ_START;
-            }
-            else if(notif.equalsIgnoreCase("INQU_OK")) {
+            if(notif.equalsIgnoreCase("INQU_OK")) {
                 return BCNOT_INQ_DONE;
-            }
-            else if(notif.equalsIgnoreCase("PAIR_PENDING")) {
             }
             else if(notif.equalsIgnoreCase("READY")) {
                 BC127_ready = true;
             }
-            else {
-                // MONPORT.println(notif);
-            }
             break;
         }
 
-        // A2DP_STEAM_START [link_ID]
-        // A2DP_STEAM_SUSPEND [link_ID]
         // AVRCP_PLAY [link_ID]
-        // AVRCP_STOP [link_ID]
         // AVRCP_PAUSE [link_ID]
         // AVRCP_FORWARD [link_ID]
         // AVRCP_BACKWARD [link_ID]
-        // ERROR 0xXXXX
-        // PAIR_ERROR (Bluetooth address)
-        // PAIR_OK (Bluetooth address)
-        // TIME (timestamp)
         case 1: {
-            // MONPORT.printf("- param1 = %s\n", param1.c_str());
-            if(notif.equalsIgnoreCase("A2DP_STREAM_START")) {
-            }
-            else if(notif.equalsIgnoreCase("A2DP_STREAM_SUSPEND")) {
-            }
-            else if(notif.equalsIgnoreCase("AVRCP_PLAY")) {
+            if(notif.equalsIgnoreCase("AVRCP_PLAY")) {
                 working_state.mon_state = MONSTATE_REQ_ON;
-            }
-            else if(notif.equalsIgnoreCase("AVRCP_STOP")) {
             }
             else if(notif.equalsIgnoreCase("AVRCP_PAUSE")) {
                 working_state.mon_state = MONSTATE_REQ_OFF;
@@ -170,34 +146,16 @@ int parseSerialIn(String input) {
             else if(notif.equalsIgnoreCase("AVRCP_BACKWARD")) {
                 // return BCCMD_REC_STOP;
             }
-            else if(notif.equalsIgnoreCase("ERROR")) {
-            }
-            else if(notif.equalsIgnoreCase("PAIR_ERROR")) {
-            }
-            else if(notif.equalsIgnoreCase("PAIR_OK")) {
-            }
-            else {
-                // MONPORT.printf("%s %s\n", notif, param1);
-            }
             break;
         }
 
         // ABS_VOL [link_ID](value)
-        // BLE_READ [link_ID] handle
-        // CLOSE_ERROR [link_ID] (profile)
         // LINK_LOSS [link_ID] (status)
         // NAME [addr] [remote_name]
-        // OPEN_ERROR [link_ID] (profile)
         case 2: {
-            // MONPORT.printf("- param1 = %s\n", param1.c_str());
-            // MONPORT.printf("- param2 = %s\n", param2.c_str());
             if(notif.equalsIgnoreCase("ABS_VOL")) {
                 vol_value = (float)param2.toInt()/ABS_VOL_MAX_VAL;
                 if(working_state.ble_state == BLESTATE_CONNECTED) return BCNOT_VOL_LEVEL;
-            }
-            else if(notif.equalsIgnoreCase("BLE_READ")) {
-            }
-            else if(notif.equalsIgnoreCase("CLOSE_ERROR")) {
             }
             else if(notif.equalsIgnoreCase("LINK_LOSS")) {
                 MONPORT.printf("link_ID: %s, status: %s\n", param1.c_str(), param2.c_str());
@@ -223,23 +181,15 @@ int parseSerialIn(String input) {
                     return BCNOT_BT_STATE;
                 }
             }
-            else if(notif.equalsIgnoreCase("OPEN_ERROR")) {
-            }
             break;
         }
 
-        // AT [link_ID] (length) (data)
         // CLOSE_OK [link_ID] (profile) (Bluetooth address)
         // NAME [addr] (remote) (name)
         // OPEN_OK [link_ID] (profile) (Bluetooth address)
         // RECV [link_ID] (size) (report data)
         case 3: {
-            // MONPORT.printf("- param1 = %s\n", param1.c_str());
-            // MONPORT.printf("- param2 = %s\n", param2.c_str());
-            // MONPORT.printf("- param3 = %s\n", param3.c_str());
-            if(notif.equalsIgnoreCase("AT")) {
-            }
-            else if(notif.equalsIgnoreCase("CLOSE_OK")) {
+            if(notif.equalsIgnoreCase("CLOSE_OK")) {
                 if(param1.toInt() == BT_id_a2dp) {
                     if(working_state.bt_state != BTSTATE_OFF) working_state.bt_state = BTSTATE_REQ_DISC;
                 }
@@ -292,39 +242,14 @@ int parseSerialIn(String input) {
                     }
                 }
             }
-            else {
-                MONPORT.printf("%s %s %s\n", notif, param1, param2);
-            }
             break;
         }
 
-        // BLE_CHAR [link_ID] type uuid handle
-        // BLE_INDICATION [link_ID] handle size data
-        // BLE_NOTIFICATION [link_ID] handle size data
-        // BLE_READ_RES [link_ID] handle size data
-        // BLE_SERV [link_ID] type uuid handle
-        // BLE_WRITE [link_ID] handle size data
         // INQUIRY(BTADDR) (NAME) (COD) (RSSI)
         // STATE (connected) (connectable) (discoverable) (ble)
         // RECV [link_ID] (size) (report data) <-- (report data) with 2 parameters
         case 4: {
-            // MONPORT.printf("- param1 = %s\n", param1.c_str());
-            // MONPORT.printf("- param2 = %s\n", param2.c_str());
-            // MONPORT.printf("- param3 = %s\n", param3.c_str());
-            // MONPORT.printf("- param4 = %s\n", param4.c_str());
-            if(notif.equalsIgnoreCase("BLE_CHAR")) {
-            }
-            else if(notif.equalsIgnoreCase("BLE_INDICATION")) {
-            }
-            else if(notif.equalsIgnoreCase("BLE_NOTIFICATION")) {
-            }
-            else if(notif.equalsIgnoreCase("BLE_READ_RES")) {
-            }
-            else if(notif.equalsIgnoreCase("BLE_SERV")) {
-            }
-            else if(notif.equalsIgnoreCase("BLE_WRITE")) {
-            }
-            else if(notif.equalsIgnoreCase("STATE")) {
+            if(notif.equalsIgnoreCase("STATE")) {
                 if(!param1.substring(param1.length()-2, param1.length()-1).toInt()) {
                     return BCNOT_BT_STATE;
                 }
@@ -447,9 +372,6 @@ int parseSerialIn(String input) {
                     }
                 }
             }
-            else {
-                // MONPORT.printf("%s %s %s %s\n", notif, param1, param2, param3);
-            }
             break;
         }
 
@@ -546,9 +468,6 @@ int parseSerialIn(String input) {
                     // return BCNOT_BT_STATE;
                 }
             }
-            else {
-                // MONPORT.printf("%s %s %s %s %s %s\n", notif, param1, param2, param3, param4, param5);
-            }
             break;
         }
 
@@ -622,7 +541,6 @@ int parseSerialIn(String input) {
         }
 
         default:
-        // MONPORT.println(input.c_str());
         break;
     }
 
