@@ -29,6 +29,7 @@ int                                         BT_id_avrcp;
 int                                         BLE_conn_id;
 // Flag indicating that the BC127 device is ready
 bool                                        BC127_ready = false;
+String notif, param1, param2, param3, param4, param5, param6, param7, param8, param9, trash;
 
 /* initBc127(void)
 * ---------------
@@ -111,115 +112,9 @@ void bc127AdvStop(void) {
 * OUT:	- message to send back (int)
 */
 int parseSerialIn(String input) {
-    // ================================================================
-    // Slicing input string.
-    // Currently 3 usefull schemes:
-    // - 2 words   --> e.g. "OPEN_OK AVRCP"
-    // - RECV BLE  --> commands received from phone over BLE
-    // - other     --> 3+ words inputs like "INQUIRY xxxx 240404 -54dB"
-    // ================================================================
-    String notif, param1, param2, param3, param4, param5, param6, param7, param8, param9, trash;
-    unsigned int nb_params = 0;
-    int slice1 = input.indexOf(" ");
-    int slice2 = input.indexOf(" ", slice1+1);
-    int slice3 = input.indexOf(" ", slice2+1);
-    int slice4 = input.indexOf(" ", slice3+1);
-    int slice5 = input.indexOf(" ", slice4+1);
-    int slice6 = input.indexOf(" ", slice5+1);
-    int slice7 = input.indexOf(" ", slice6+1);
-    int slice8 = input.indexOf(" ", slice7+1);
-    int slice9 = input.indexOf(" ", slice8+1);
-    int slice10 = input.indexOf(" ", slice9+1);
-    double tofloat;
     MONPORT.printf("From BC127: %s\n", input.c_str());
-    // no space found -> notification without parameter
-    if(slice1 == -1) {
-        notif = input;
-        nb_params = 0;
-    }
-    // 1+ parameter
-    else {
-        notif = input.substring(0, slice1);
-        if(slice2 == -1) {
-            param1 = input.substring(slice1 + 1);
-            nb_params = 1;
-        }
-        // 2+ parameters
-        else {
-            param1 = input.substring(slice1 + 1, slice2);
-            if(slice3 == -1) {
-                param2 = input.substring(slice2 + 1);
-                nb_params = 2;
-            }
-            // 3+ parameters
-            else {
-                param2 = input.substring(slice2 + 1, slice3);
-                if(slice4 == -1) {
-                    param3 = input.substring(slice3 + 1);
-                    nb_params = 3;
-                }
-                // 4+ parameters
-                else {
-                    param3 = input.substring(slice3 + 1, slice4);
-                    if(slice5 == -1) {
-                        param4 = input.substring(slice4 + 1);
-                        nb_params = 4;
-                    }
-                    // 5+ parameters
-                    else {
-                        param4 = input.substring(slice4 + 1, slice5);
-                        if(slice6 == -1) {
-                            param5 = input.substring(slice5 + 1);
-                            nb_params = 5;
-                        }
-                        // 6+ parameters
-                        else {
-                            param5 = input.substring(slice5 + 1, slice6);
-                            if(slice7 == -1) {
-                                param6 = input.substring(slice6 + 1);
-                                nb_params = 6;
-                            }
-                            // 7+ parameters
-                            else {
-                                param6 = input.substring(slice6 + 1, slice7);
-                                if(slice8 == -1) {
-                                    trash = input.substring(slice7 + 1);
-                                    nb_params = 7;
-                                }
-                                // 8+ paramters
-                                else {
-                                    param7 = input.substring(slice7 + 1, slice8);
-                                    if(slice8 == -1) {
-                                        trash = input.substring(slice8 + 1);
-                                        nb_params = 8;
-                                    }
-                                    // 9+ parameters
-                                    else {
-                                        param8 = input.substring(slice8 + 1, slice9);
-                                        if(slice9 == -1) {
-                                            trash = input.substring(slice9 + 1);
-                                            nb_params = 9;
-                                        }
-                                        // 10+ parameters
-                                        else {
-                                            param9 = input.substring(slice9 + 1, slice10);
-                                            if(slice10 == -1) {
-                                                trash = input.substring(slice10 + 1);
-                                                nb_params = 10;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // MONPORT.printf("#params: %d\n", nb_params);
-
-    // MONPORT.printf("%d parameters found:\n- notif = %s\n", nb_params, notif.c_str());
+    unsigned int nb_params = countParams(input);
+    double tofloat;
 
     switch(nb_params) {
         // PENDING
@@ -307,7 +202,12 @@ int parseSerialIn(String input) {
             else if(notif.equalsIgnoreCase("LINK_LOSS")) {
                 MONPORT.printf("link_ID: %s, status: %s\n", param1.c_str(), param2.c_str());
                 if(param1.toInt() == BT_id_a2dp) {
-                    working_state.bt_state = BTSTATE_DISCONNECTED;
+                    if(param2.toInt() == 1) {
+                        working_state.bt_state = BTSTATE_DISCONNECTED;
+                    }
+                    else if(param2.toInt() == 0) {
+                        working_state.bt_state = BTSTATE_CONNECTED;
+                    }
                     return BCNOT_BT_STATE;
                 }
             }
@@ -950,6 +850,112 @@ bool searchDevlist(String name) {
     return false;
 }
 
+unsigned int countParams(String input) {
+    // ================================================================
+    // Slicing input string.
+    // Currently 3 usefull schemes:
+    // - 2 words   --> e.g. "OPEN_OK AVRCP"
+    // - RECV BLE  --> commands received from phone over BLE
+    // - other     --> 3+ words inputs like "INQUIRY xxxx 240404 -54dB"
+    // ================================================================
+    int slice1 = input.indexOf(" ");
+    int slice2 = input.indexOf(" ", slice1+1);
+    int slice3 = input.indexOf(" ", slice2+1);
+    int slice4 = input.indexOf(" ", slice3+1);
+    int slice5 = input.indexOf(" ", slice4+1);
+    int slice6 = input.indexOf(" ", slice5+1);
+    int slice7 = input.indexOf(" ", slice6+1);
+    int slice8 = input.indexOf(" ", slice7+1);
+    int slice9 = input.indexOf(" ", slice8+1);
+    int slice10 = input.indexOf(" ", slice9+1);
+
+    // no space found -> notification without parameter
+    if(slice1 == -1) {
+        notif = input;
+        return 0;
+    }
+    // 1+ parameter
+    else {
+        notif = input.substring(0, slice1);
+        if(slice2 == -1) {
+            param1 = input.substring(slice1 + 1);
+            return 1;
+        }
+        // 2+ parameters
+        else {
+            param1 = input.substring(slice1 + 1, slice2);
+            if(slice3 == -1) {
+                param2 = input.substring(slice2 + 1);
+                return 2;
+            }
+            // 3+ parameters
+            else {
+                param2 = input.substring(slice2 + 1, slice3);
+                if(slice4 == -1) {
+                    param3 = input.substring(slice3 + 1);
+                    return 3;
+                }
+                // 4+ parameters
+                else {
+                    param3 = input.substring(slice3 + 1, slice4);
+                    if(slice5 == -1) {
+                        param4 = input.substring(slice4 + 1);
+                        return 4;
+                    }
+                    // 5+ parameters
+                    else {
+                        param4 = input.substring(slice4 + 1, slice5);
+                        if(slice6 == -1) {
+                            param5 = input.substring(slice5 + 1);
+                            return 5;
+                        }
+                        // 6+ parameters
+                        else {
+                            param5 = input.substring(slice5 + 1, slice6);
+                            if(slice7 == -1) {
+                                param6 = input.substring(slice6 + 1);
+                                return 6;
+                            }
+                            // 7+ parameters
+                            else {
+                                param6 = input.substring(slice6 + 1, slice7);
+                                if(slice8 == -1) {
+                                    trash = input.substring(slice7 + 1);
+                                    return 7;
+                                }
+                                // 8+ paramters
+                                else {
+                                    param7 = input.substring(slice7 + 1, slice8);
+                                    if(slice8 == -1) {
+                                        trash = input.substring(slice8 + 1);
+                                        return 8;
+                                    }
+                                    // 9+ parameters
+                                    else {
+                                        param8 = input.substring(slice8 + 1, slice9);
+                                        if(slice9 == -1) {
+                                            trash = input.substring(slice9 + 1);
+                                            return 9;
+                                        }
+                                        // 10+ parameters
+                                        else {
+                                            param9 = input.substring(slice9 + 1, slice10);
+                                            if(slice10 == -1) {
+                                                trash = input.substring(slice10 + 1);
+                                                return 10;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // MONPORT.printf("#params: %d\n", nb_params);
+}
 
 String cmdDevConnect(void) {
     if(searchDevlist(BT_peer_name)) {

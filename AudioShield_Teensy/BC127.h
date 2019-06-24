@@ -85,6 +85,8 @@ bool sendCmdOut(int msg);
 void populateDevlist(String addr, String name, String caps, unsigned int stren);
 bool searchDevlist(String addr);
 
+unsigned int countParams(String input);
+
 String cmdDevConnect(void);
 String cmdInquiry(void);
 String cmdMonPause(void);
