@@ -82,7 +82,7 @@ void bc127AdvStop(void);
 void bc127Inquiry(void);
 enum serialMsg parseSerialIn(String input);
 bool sendCmdOut(int msg);
-void populateDevlist(String addr, String name, String caps, unsigned int stren);
+void populateDevlist(String addr, String name, String caps, String stren);
 bool searchDevlist(String addr);
 
 unsigned int countParams(String input);
@@ -105,9 +105,12 @@ enum serialMsg msgInquiry2(String p1, String p2, String p3, String p4, String p5
 enum serialMsg msgLink1(String p1, String p2, String p3, String p4, String p5);
 enum serialMsg msgName4(String p1, String p2, String p3, String p4, String p5);
 enum serialMsg msgRecv3(String p1, String p2, String p3, String p4, String p5);
+enum serialMsg msgInquiry3(String p1, String p2, String p3, String p4, String p5, String p6);
 enum serialMsg msgRecv4(String p1, String p2, String p3, String p4, String p5, String p6);
 enum serialMsg msgLink2(String p1, String p2, String p3, String p4, String p5, String p6);
+enum serialMsg msgInquiry4(String p1, String p2, String p3, String p4, String p5, String p6, String p7);
 enum serialMsg msgLink3(String p1, String p2, String p3, String p4, String p5, String p6, String p7);
+enum serialMsg msgInquiry5(String p1, String p2, String p3, String p4, String p5, String p6, String p7, String p8);
 enum serialMsg msgLink4(String p1, String p2, String p3, String p4, String p5, String p6, String p7, String p8);
 enum serialMsg msgLink5(String p1, String p2, String p3, String p4, String p5, String p6, String p7, String p8, String p9);
 
