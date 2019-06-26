@@ -110,7 +110,7 @@ void startRecording(String path) {
         tot_rec_bytes = 0;
     }
     else {
-        MONPORT.println("file opening error");
+        MONPORT.println("Error: file opening error");
         working_state.rec_state = RECSTATE_REQ_OFF;
         // while(1);
     }
@@ -136,7 +136,7 @@ void continueRecording(void) {
         // elapsedMicros usec = 0;
         frec.write(buffer, REC_WRITE_BUF_SIZE);
         tot_rec_bytes += REC_WRITE_BUF_SIZE;
-        // MONPORT.print("SD write, us=");
+        // MONPORT.print("Info:    SD write, us=");
         // MONPORT.println(usec);
     }
 }
@@ -160,7 +160,7 @@ void stopRecording(String path) {
 
         writeWaveHeader(path, tot_rec_bytes);
     }
-    MONPORT.println("Recording stopped, writing metadata");
+    MONPORT.println("Info:    Recording stopped, writing metadata");
     createMetadata(&next_record);
 }
 
@@ -252,7 +252,7 @@ void setHpGain(void) {
     float gain;
     vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
     gain = (float)vol_ctrl * 0.8 / 1023.0;
-    // MONPORT.printf("gain = %1.2f\n", gain);
+    // MONPORT.printf("Info:    gain = %1.2f\n", gain);
     sgtl5000.volume(gain);
 }
 

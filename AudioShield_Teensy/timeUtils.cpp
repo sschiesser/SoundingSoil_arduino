@@ -47,7 +47,7 @@ void setTimeSource(void) {
 	tmElements_t tm;
 	setSyncProvider(getTeensy3Time);
 	breakTime(now(), tm);
-	MONPORT.printf("Date/Time at startup: %02d.%02d.%d, %02dh%02dm%02ds\n", tm.Day, tm.Month, (tm.Year+1970) ,tm.Hour, tm.Minute, tm.Second);
+	MONPORT.printf("Info:    Date/Time at startup: %02d.%02d.%d, %02dh%02dm%02ds\n", tm.Day, tm.Month, (tm.Year+1970) ,tm.Hour, tm.Minute, tm.Second);
 	if(now() < MIN_TIME_DEC) time_source = TSOURCE_NONE;
 	else time_source = TSOURCE_TEENSY;
 }
@@ -84,7 +84,7 @@ void setCurTime(time_t cur_time, enum tSources source) {
 		default:
 			break;
 	}
-	// MONPORT.printf("Time adjusted from source#%d. Current time: %ld\n", source, now());
+	// MONPORT.printf("Info:    Time adjusted from source#%d. Current time: %ld\n", source, now());
 }
 
 /* setNextAlarm(void)
@@ -95,7 +95,7 @@ void setWaitAlarm(void) {
 	breakTime((next_record.ts - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX)), tm);
     breakTime(next_record.ts, tm_disp);
 	alarm_wait_id = Alarm.alarmOnce(tm.Hour, tm.Minute, tm.Second, alarmNextRec);
-	MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm_disp.Hour, tm_disp.Minute, tm_disp.Second);
+	MONPORT.printf("Info:    Next recording at %02dh%02dm%02ds\n", tm_disp.Hour, tm_disp.Minute, tm_disp.Second);
 }
 
 void setIdleSnooze(void) {
@@ -105,8 +105,8 @@ void setIdleSnooze(void) {
 	breakTime(next_record.ts, tm2);
 	snooze_config += snooze_rec;
 	snooze_rec.setRtcTimer(tm1.Hour, tm1.Minute, tm1.Second);
-	MONPORT.printf("Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
-	MONPORT.printf("Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
+	MONPORT.printf("Info:    Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
+	MONPORT.printf("Info:    Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
 	Alarm.delay(100);
 }
 
@@ -138,7 +138,7 @@ void alarmAdvTimeout(void) {
  */
 void timerRecDone(void) {
 	Alarm.free(alarm_rec_id);
-	MONPORT.printf("Recording#%d done.", (next_record.cnt+1));
+	MONPORT.printf("Info:    Recording#%d done.", (next_record.cnt+1));
 
 	if((rec_window.occurences == 0) || (next_record.cnt < (rec_window.occurences-1))) {
 		MONPORT.println("");
@@ -159,6 +159,6 @@ void timerRecDone(void) {
  */
 void alarmNextRec(void) {
 	removeWaitAlarm();
-	MONPORT.printf("Starting recording#%d\n", (next_record.cnt+1));
+	MONPORT.printf("Info:    Starting recording#%d\n", (next_record.cnt+1));
 	working_state.rec_state = RECSTATE_REQ_RESTART;
 }

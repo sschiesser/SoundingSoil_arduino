@@ -57,11 +57,11 @@ void initLEDButtons(void) {
 	}
 	// unsigned long a;
 	// a = (unsigned long)&toggleRecLED;
-	// MONPORT.print("toggleRecLED address: 0x"); MONPORT.println(a, HEX);
+	// MONPORT.print("Info:    toggleRecLED address: 0x"); MONPORT.println(a, HEX);
 	// a = (unsigned long)&toggleMonLED;
-	// MONPORT.print("toggleMonLED address: 0x"); MONPORT.println(a, HEX);
+	// MONPORT.print("Info:    toggleMonLED address: 0x"); MONPORT.println(a, HEX);
 	// a = (unsigned long)&toggleBtLED;
-	// MONPORT.print("toggleBtLED address: 0x"); MONPORT.println(a, HEX);
+	// MONPORT.print("Info:    toggleBtLED address: 0x"); MONPORT.println(a, HEX);
 }
 
 /* toggleCb(struct leds_s *)
@@ -72,22 +72,22 @@ void initLEDButtons(void) {
  * OUT:	- none
  */
 void toggleCb(struct leds_s *ld) {
-	// MONPORT.print("toggleCb called with led#"); MONPORT.println(ld->pin);
-	// MONPORT.print("address: 0x"); MONPORT.println((unsigned long)toggleCb, HEX);
+	// MONPORT.print("Info:    toggleCb called with led#"); MONPORT.println(ld->pin);
+	// MONPORT.print("Info:    address: 0x"); MONPORT.println((unsigned long)toggleCb, HEX);
 	switch(ld->mode) {
 		case LED_MODE_OFF:
-		// MONPORT.println("LED off: stopping timer");
+		// MONPORT.println("Info:    LED off: stopping timer");
 		ld->status = LED_OFF;
 		stopLED(ld);
 		break;
 
 		case LED_MODE_ON:
-		// MONPORT.println("LED on: no toggle!");
+		// MONPORT.println("Info:    LED on: no toggle!");
 		ld->status = LED_ON;
 		break;
 
 		case LED_MODE_WAITING:
-		// MONPORT.println("Waiting mode: regular medium toggle");
+		// MONPORT.println("Info:    Waiting mode: regular medium toggle");
 		ld->status = !ld->status;
 		break;
 
@@ -101,7 +101,7 @@ void toggleCb(struct leds_s *ld) {
 		break;
 
 		case LED_MODE_WARNING_LONG:
-		// MONPORT.print("Warning mode: "); MONPORT.print(ld->cnt); MONPORT.println(" toggles");
+		// MONPORT.print("Info:    Warning mode: "); MONPORT.print(ld->cnt); MONPORT.println(" toggles");
 		if(ld->cnt++ > 12) {
 			// stopLED(ld);
 			startLED(ld, LED_MODE_ON);
@@ -112,12 +112,12 @@ void toggleCb(struct leds_s *ld) {
 		break;
 
 		case LED_MODE_ERROR:
-		// MONPORT.println("Error mode: regular fast toggle");
+		// MONPORT.println("Info:    Error mode: regular fast toggle");
 		ld->status = !ld->status;
 		break;
 
 		case LED_MODE_IDLE_FAST:
-		// MONPORT.println("Fast flashing mode: irregular flash toggle");
+		// MONPORT.println("Info:    Fast flashing mode: irregular flash toggle");
 		if(ld->status == LED_ON) {
 			ld->timer.update(LED_BLINK_FAST_MS);
 		}
@@ -128,7 +128,7 @@ void toggleCb(struct leds_s *ld) {
 		break;
 
 		case LED_MODE_IDLE_SLOW:
-		// MONPORT.println("Slow flashing mode: irregular flash toggle");
+		// MONPORT.println("Info:    Slow flashing mode: irregular flash toggle");
 		if(ld->status == LED_ON) {
 			ld->timer.update(LED_BLINK_FAST_MS);
 		}
@@ -173,7 +173,7 @@ void togglePeakLED(void) {
  * OUT:	- none
  */
 void startLED(struct leds_s *ld, enum lMode mode) {
-	// MONPORT.print("startLED: LED#"); MONPORT.print(ld->pin);
+	// MONPORT.print("Info:    startLED: LED#"); MONPORT.print(ld->pin);
 	// MONPORT.print(", mode = "); MONPORT.println(mode);
 	// First stop any remaining LED state
 	stopLED(ld);
@@ -189,7 +189,7 @@ void startLED(struct leds_s *ld, enum lMode mode) {
 
 		case LED_MODE_WAITING:
 		ld->timer.begin(ld->toggle, LED_BLINK_MED_MS);
-		// MONPORT.print("Timer started, returning at 0x"); MONPORT.println((unsigned long)ld->toggle, HEX);
+		// MONPORT.print("Info:    Timer started, returning at 0x"); MONPORT.println((unsigned long)ld->toggle, HEX);
 		break;
 
 		case LED_MODE_WARNING_SHORT:
@@ -224,7 +224,7 @@ void startLED(struct leds_s *ld, enum lMode mode) {
  * OUT:	- none
  */
 void stopLED(struct leds_s *ld) {
-	// MONPORT.print("StopLED: LED#"); MONPORT.println(ld->pin);
+	// MONPORT.print("Info:    StopLED: LED#"); MONPORT.println(ld->pin);
 	ld->timer.end();
 	ld->mode = LED_MODE_OFF;
 	ld->cnt = 0;

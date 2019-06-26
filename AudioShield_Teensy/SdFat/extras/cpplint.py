@@ -2314,9 +2314,9 @@ class NestingState(object):
     # Stack for tracking all braces.  An object is pushed whenever we
     # see a "{", and popped when we see a "}".  Only 3 types of
     # objects are possible:
-    # - _ClassInfo: a class or struct.
-    # - _NamespaceInfo: a namespace.
-    # - _BlockInfo: some other type of block.
+    # - _ClassInfo:   a class or struct.
+    # - _NamespaceInfo:   a namespace.
+    # - _BlockInfo:   some other type of block.
     self.stack = []
 
     # Top of the previous stack before each Update().

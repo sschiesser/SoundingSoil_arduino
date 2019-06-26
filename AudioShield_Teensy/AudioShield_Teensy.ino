@@ -44,6 +44,7 @@ void setup() {
     setDefaultValues();
 
     helloWorld();
+    MONPORT.println("Info:    SoundingSoil firmware version 1.0 build 1906251109");
 
     working_state.ble_state = BLESTATE_REQ_ADV;
 }
@@ -118,7 +119,7 @@ WORK:
 
     // ...standard button actions
     if(button_call == BUTTON_RECORD_PIN) {
-        MONPORT.printf("REC! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
+        MONPORT.printf("Info:    REC! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
         if(working_state.rec_state == RECSTATE_OFF) {
             working_state.rec_state = RECSTATE_REQ_ON;
         }
@@ -131,7 +132,7 @@ WORK:
         button_call = (enum bCalls)BCALL_NONE;
     }
     if(button_call == BUTTON_MONITOR_PIN) {
-        MONPORT.printf("MON! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
+        MONPORT.printf("Info:    MON! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
         if(working_state.mon_state == MONSTATE_OFF) {
             working_state.mon_state = MONSTATE_REQ_ON;
         }
@@ -141,7 +142,7 @@ WORK:
         button_call = (enum bCalls)BCALL_NONE;
     }
     if(button_call == BUTTON_BLUETOOTH_PIN) {
-        MONPORT.printf("BLUE! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
+        MONPORT.printf("Info:    BLUE! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
         if(working_state.ble_state == BLESTATE_OFF) {
             working_state.ble_state = BLESTATE_REQ_ADV;
         }
@@ -222,7 +223,7 @@ WORK:
     // MON state actions
     switch(working_state.mon_state) {
         case MONSTATE_REQ_ON: {
-            MONPORT.printf("MON req... states: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
+            MONPORT.printf("Info:    MON req... states: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             startLED(&leds[LED_MONITOR], LED_MODE_ON);
             startMonitoring();
             working_state.mon_state = MONSTATE_ON;
@@ -307,7 +308,7 @@ WORK:
 
         case BLESTATE_REQ_DISC: {
             BLE_conn_id = 0;
-            MONPORT.println("BLE disconnected");
+            MONPORT.println("Info:    BLE disconnected");
             if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
                 working_state.ble_state = BLESTATE_REQ_ADV;
             }
@@ -330,7 +331,7 @@ WORK:
                 bc127BlueOff();
                 stopLED(&leds[LED_BLUETOOTH]);
             }
-            MONPORT.println("BLE OFF");
+            MONPORT.println("Info:    BLE OFF");
             working_state.ble_state = BLESTATE_OFF;
             break;
         }
@@ -383,7 +384,7 @@ WORK:
         String inMsg = BLUEPORT.readStringUntil('\r');
         int outMsg = parseSerialIn(inMsg);
         if(!sendCmdOut(outMsg)) {
-            MONPORT.println("Sending command error!!");
+            MONPORT.println("Error: Sending command error!!");
         }
     }
     if (MONPORT.available()) {
@@ -477,40 +478,26 @@ void setDefaultValues(void) {
 
 void helloWorld(void) {
     startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
-    Alarm.delay(400);
+    Alarm.delay(300);
     startLED(&leds[LED_MONITOR], LED_MODE_ON);
     stopLED(&leds[LED_BLUETOOTH]);
-    Alarm.delay(200);
+    Alarm.delay(150);
     startLED(&leds[LED_RECORD], LED_MODE_ON);
     stopLED(&leds[LED_MONITOR]);
-    Alarm.delay(200);
+    Alarm.delay(150);
     startLED(&leds[LED_MONITOR], LED_MODE_ON);
     stopLED(&leds[LED_RECORD]);
-    Alarm.delay(400);
+    Alarm.delay(300);
     startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
     stopLED(&leds[LED_MONITOR]);
-    Alarm.delay(800);
+    Alarm.delay(600);
     startLED(&leds[LED_MONITOR], LED_MODE_ON);
     stopLED(&leds[LED_BLUETOOTH]);
-    Alarm.delay(400);
+    Alarm.delay(300);
     startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
     startLED(&leds[LED_RECORD], LED_MODE_ON);
     stopLED(&leds[LED_MONITOR]);
-    Alarm.delay(800);
+    Alarm.delay(600);
     stopLED(&leds[LED_BLUETOOTH]);
     stopLED(&leds[LED_RECORD]);
-    // for(int i=0; i < 3; i++) {
-    // 	startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
-    // 	Alarm.delay(300);
-    // 	stopLED(&leds[LED_BLUETOOTH]);
-    // 	startLED(&leds[LED_MONITOR], LED_MODE_ON);
-    // 	Alarm.delay(300);
-    // 	stopLED(&leds[LED_MONITOR]);
-    // 	startLED(&leds[LED_RECORD], LED_MODE_ON);
-    // 	Alarm.delay(300);
-    // 	stopLED(&leds[LED_RECORD]);
-    // 	startLED(&leds[LED_MODE_ON], LED_MODE_ON);
-    // 	Alarm.delay(300);
-    // 	stopLED(&leds[LED_MONITOR]);
-    // }
 }

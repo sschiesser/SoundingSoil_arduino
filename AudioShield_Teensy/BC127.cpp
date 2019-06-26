@@ -112,7 +112,7 @@ void bc127AdvStop(void) {
 * OUT:	- message to send back (int)
 */
 enum serialMsg parseSerialIn(String input) {
-    MONPORT.printf("From BC127: %s\n", input.c_str());
+    MONPORT.printf("<-BC127: %s\n", input.c_str());
     unsigned int nb_params = countParams(input);
     double tofloat;
 
@@ -314,7 +314,7 @@ bool sendCmdOut(int msg) {
                 devString.concat(String(dev_list[i].strength));
                 cmdLine = "SEND " + String(BLE_conn_id) + " INQ " + devString + "\r";
                 BLUEPORT.print(cmdLine);
-                MONPORT.println(cmdLine.c_str());
+                MONPORT.printf("Info:   %s\n", cmdLine.c_str());
             }
             cmdLine = "";
             break;
@@ -364,7 +364,7 @@ bool sendCmdOut(int msg) {
         break;
     }
     if(cmdLine != "") {
-        MONPORT.printf("To BC127: %s\n", cmdLine.c_str());
+        MONPORT.printf("->BC127: %s\n", cmdLine.c_str());
     }
     // Send the prepared command line to UART
     BLUEPORT.print(cmdLine);
@@ -411,7 +411,7 @@ void populateDevlist(String addr, String name, String caps, unsigned int stren) 
         found_dev += 1;
     }
 
-    // MONPORT.println("Device list:");
+    // MONPORT.println("Info:    Device list:");
     // for(unsigned int i = 0; i < found_dev; i++) {
     // MONPORT.print(i); MONPORT.print(": ");
     // MONPORT.print(dev_list[i].address); MONPORT.print(", ");
@@ -431,12 +431,12 @@ void populateDevlist(String addr, String name, String caps, unsigned int stren) 
 bool searchDevlist(String name) {
     for(int i = 0; i < DEVLIST_MAXLEN; i++) {
         if(dev_list[i].name.equalsIgnoreCase(name)) {
-            MONPORT.println("Device found in list!");
+            MONPORT.println("Info:    Device found in list!");
             BT_peer_address = dev_list[i].address;
             return true;
         }
     }
-    MONPORT.println("Nothing found in list");
+    MONPORT.println("Info:    Nothing found in list");
     return false;
 }
 
@@ -565,7 +565,7 @@ enum serialMsg msgAbsVol(String p1, String p2) {
     }
 }
 enum serialMsg msgLinkLoss(String p1, String p2) {
-    MONPORT.printf("link_ID: %s, status: %s\n", p1.c_str(), p2.c_str());
+    MONPORT.printf("Info:    link_ID: %s, status: %s\n", p1.c_str(), p2.c_str());
     if(p1.toInt() == BT_id_a2dp) {
         if(p2.toInt() == 1) {
             working_state.bt_state = BTSTATE_DISCONNECTED;
@@ -582,7 +582,7 @@ enum serialMsg msgLinkLoss(String p1, String p2) {
 enum serialMsg msgName1(String p1, String p2) {
     if(p2.substring(0,1).equalsIgnoreCase("\"")) {
         int strlen = p2.length();
-        BT_peer_name = p2.substring(1);
+        BT_peer_name = p2.substring(1, (strlen-1));
     }
     else {
         BT_peer_name = p2;
@@ -625,7 +625,7 @@ enum serialMsg msgOpenOk(String p1, String p2, String p3) {
     if(param2.equalsIgnoreCase("A2DP")) {
         BT_id_a2dp = param1.toInt();
         BT_peer_address = param3;
-        MONPORT.printf("A2DP connection opened. Conn ID: %d, peer address = %s\n",
+        MONPORT.printf("Info:    A2DP connection opened. Conn ID: %d, peer address = %s\n",
         BT_id_a2dp, BT_peer_address.c_str());
         working_state.bt_state = BTSTATE_REQ_CONN;
         return BCCMD_BT_NAME;
@@ -633,12 +633,12 @@ enum serialMsg msgOpenOk(String p1, String p2, String p3) {
     else if(param2.equalsIgnoreCase("AVRCP")) {
         BT_id_avrcp = param1.toInt();
         BT_peer_address = param3;
-        MONPORT.printf("AVRCP connection opened. Conn ID: %d, peer address (check) = %s\n", BT_id_avrcp, BT_peer_address.c_str());
+        MONPORT.printf("Info:    AVRCP connection opened. Conn ID: %d, peer address (check) = %s\n", BT_id_avrcp, BT_peer_address.c_str());
         return BCCMD__NOTHING;
     }
     else if(param2.equalsIgnoreCase("BLE")) {
         BLE_conn_id = param1.toInt();
-        // MONPORT.printf("BLE connection opened. Conn ID: %d\n", BLE_conn_id);
+        // MONPORT.printf("Info:    BLE connection opened. Conn ID: %d\n", BLE_conn_id);
         working_state.ble_state = BLESTATE_REQ_CONN;
         return BCCMD__NOTHING;
     }
@@ -660,7 +660,7 @@ enum serialMsg msgRecv1(String p1, String p2, String p3) {
             working_state.bt_state = BTSTATE_REQ_DISC;
         }
         else if(param3.equalsIgnoreCase("latlong")) {
-            MONPORT.println("Receiving latlong without values");
+            MONPORT.println("Info:    Receiving latlong without values");
         }
     }
 
@@ -726,10 +726,10 @@ enum serialMsg msgRecv2(String p1, String p2, String p3, String p4) {
             unsigned long rec_time = p4.toInt();
             if(rec_time > MIN_TIME_DEC) {
                 setCurTime(rec_time, TSOURCE_PHONE);
-                MONPORT.printf("Timestamp received: %ld\n", rec_time);
+                MONPORT.printf("Info:    Timestamp received: %ld\n", rec_time);
             }
             else {
-                MONPORT.println("Received time not correct!");
+                MONPORT.println("Error: Received time not correct!");
             }
         }
         else if(p3.equalsIgnoreCase("rec")) {
@@ -740,19 +740,19 @@ enum serialMsg msgRecv2(String p1, String p2, String p3, String p4) {
         else if(p3.equalsIgnoreCase("rec_next")) {
             if(p4.equalsIgnoreCase("?")) return BCNOT_REC_NEXT;
             else {
-                MONPORT.println("BLE rec_next command not listed");
+                MONPORT.println("Error: BLE rec_next command not listed");
             }
         }
         else if(p3.equalsIgnoreCase("rec_nb")) {
             if(p4.equalsIgnoreCase("?")) return BCNOT_REC_NB;
             else {
-                MONPORT.println("BLE rec_nb command not listed");
+                MONPORT.println("Error: BLE rec_nb command not listed");
             }
         }
         else if(p3.equalsIgnoreCase("rec_ts")) {
             if(p4.equalsIgnoreCase("?")) return BCNOT_REC_TS;
             else {
-                MONPORT.println("BLE rec_ts command not listed");
+                MONPORT.println("Error: BLE rec_ts command not listed");
             }
         }
         else if(p3.equalsIgnoreCase("mon")) {
@@ -820,14 +820,14 @@ enum serialMsg msgLink1(String p1, String p2, String p3, String p4, String p5) {
     if(p3.equalsIgnoreCase("A2DP")) {
         BT_id_a2dp = p1.toInt();
         BT_peer_address = p4;
-        MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
+        MONPORT.printf("Info:    A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
         working_state.bt_state = BTSTATE_CONNECTED;
         return BCCMD_BT_NAME;
     }
     else if(p3.equalsIgnoreCase("AVRCP")) {
         BT_id_avrcp = p1.toInt();
         BT_peer_address = p4;
-        MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
+        MONPORT.printf("Info:    AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
         working_state.bt_state = BTSTATE_CONNECTED;
     }
     return BCCMD__NOTHING;
@@ -909,14 +909,14 @@ enum serialMsg msgLink2(String p1, String p2, String p3, String p4, String p5, S
     if(p3.equalsIgnoreCase("A2DP")) {
         BT_id_a2dp = p1.toInt();
         BT_peer_address = p4;
-        MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
+        MONPORT.printf("Info:    A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
         working_state.bt_state = BTSTATE_CONNECTED;
         return BCCMD_BT_NAME;
     }
     else if(p3.equalsIgnoreCase("AVRCP")) {
         BT_id_avrcp = p1.toInt();
         BT_peer_address = p4;
-        MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
+        MONPORT.printf("Info:    AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
         working_state.bt_state = BTSTATE_CONNECTED;
     }
     return ret;
@@ -941,14 +941,14 @@ enum serialMsg msgLink3(String p1, String p2, String p3, String p4, String p5, S
     if(p3.equalsIgnoreCase("A2DP")) {
         BT_id_a2dp = p1.toInt();
         BT_peer_address = p4;
-        MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
+        MONPORT.printf("Info:    A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
         working_state.bt_state = BTSTATE_CONNECTED;
         return BCCMD_BT_NAME;
     }
     else if(p3.equalsIgnoreCase("AVRCP")) {
         BT_id_avrcp = p1.toInt();
         BT_peer_address = p4;
-        MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
+        MONPORT.printf("Info:    AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
         working_state.bt_state = BTSTATE_CONNECTED;
     }
     return ret;
@@ -973,14 +973,14 @@ enum serialMsg msgLink4(String p1, String p2, String p3, String p4, String p5, S
     if(p3.equalsIgnoreCase("A2DP")) {
         BT_id_a2dp = p1.toInt();
         BT_peer_address = p4;
-        MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
+        MONPORT.printf("Info:    A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
         working_state.bt_state = BTSTATE_CONNECTED;
         return BCCMD_BT_NAME;
     }
     else if(p3.equalsIgnoreCase("AVRCP")) {
         BT_id_avrcp = p1.toInt();
         BT_peer_address = p4;
-        MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
+        MONPORT.printf("Info:    AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
         working_state.bt_state = BTSTATE_CONNECTED;
     }
     return ret;
@@ -991,14 +991,14 @@ enum serialMsg msgLink5(String p1, String p2, String p3, String p4, String p5, S
     if(p3.equalsIgnoreCase("A2DP")) {
         BT_id_a2dp = p1.toInt();
         BT_peer_address = p4;
-        MONPORT.printf("A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
+        MONPORT.printf("Info:    A2DP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_a2dp);
         working_state.bt_state = BTSTATE_CONNECTED;
         return BCCMD_BT_NAME;
     }
     else if(p3.equalsIgnoreCase("AVRCP")) {
         BT_id_avrcp = p1.toInt();
         BT_peer_address = p4;
-        MONPORT.printf("AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
+        MONPORT.printf("Info:    AVRCP address: %s, ID: %d\n", BT_peer_address.c_str(), BT_id_avrcp);
         working_state.bt_state = BTSTATE_CONNECTED;
     }
     return ret;
@@ -1007,7 +1007,7 @@ enum serialMsg msgLink5(String p1, String p2, String p3, String p4, String p5, S
 
 String cmdDevConnect(void) {
     if(searchDevlist(BT_peer_name)) {
-        MONPORT.printf("Opening BT connection @%s (%s)\n", BT_peer_address.c_str(), BT_peer_name.c_str());
+        MONPORT.printf("Info:    Opening BT connection @%s (%s)\n", BT_peer_address.c_str(), BT_peer_name.c_str());
         return ("OPEN " + BT_peer_address + " A2DP\r");
     }
     else {
