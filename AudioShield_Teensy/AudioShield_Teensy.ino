@@ -159,6 +159,7 @@ WORK:
             prepareRecording(true);
             working_state.rec_state = RECSTATE_ON;
             startRecording(next_record.rpath);
+            ready_to_sleep = false;
             if(working_state.ble_state == BLESTATE_CONNECTED) {
                 sendCmdOut(BCNOT_REC_TS);
                 sendCmdOut(BCNOT_LATLONG);
@@ -174,6 +175,7 @@ WORK:
             prepareRecording(true);
             working_state.rec_state = RECSTATE_ON;
             startRecording(next_record.rpath);
+            ready_to_sleep = false;
             if(working_state.ble_state == BLESTATE_CONNECTED) {
                 sendCmdOut(BCNOT_REC_TS);
                 sendCmdOut(BCNOT_LATLONG);
@@ -188,10 +190,20 @@ WORK:
         case RECSTATE_REQ_PAUSE: {
             stopRecording(next_record.rpath);
             pauseRecording();
+            if( (working_state.mon_state != MONSTATE_OFF) || (working_state.ble_state != BLESTATE_OFF) || (working_state.bt_state != BTSTATE_OFF) ) {
+                setWaitAlarm();
+                working_state.rec_state = RECSTATE_WAIT;
+                ready_to_sleep = false;
+            }
+            else {
+                setIdleSnooze();
+                working_state.rec_state = RECSTATE_IDLE;
+                ready_to_sleep = true;
+            }
             if(working_state.ble_state == BLESTATE_CONNECTED) {
                 sendCmdOut(BCNOT_REC_NEXT);
-                // 	sendCmdOut(BCNOT_REC_STATE);
-                // 	sendCmdOut(BCNOT_FILEPATH);
+            	sendCmdOut(BCNOT_REC_STATE);
+            	sendCmdOut(BCNOT_FILEPATH);
             }
             break;
         }
@@ -199,6 +211,7 @@ WORK:
         case RECSTATE_ON: {
             continueRecording();
             detectPeaks();
+            ready_to_sleep = false;
             break;
         }
 
@@ -210,6 +223,12 @@ WORK:
             finishRecording();
             stopLED(&leds[LED_PEAK]);
             working_state.rec_state = RECSTATE_OFF;
+            if( (working_state.mon_state == MONSTATE_OFF) && (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
+                ready_to_sleep = true;
+            }
+            else {
+                ready_to_sleep = false;
+            }
             if(working_state.ble_state == BLESTATE_CONNECTED) {
                 sendCmdOut(BCNOT_REC_STATE);
                 sendCmdOut(BCNOT_FILEPATH);
@@ -227,6 +246,7 @@ WORK:
             startLED(&leds[LED_MONITOR], LED_MODE_ON);
             startMonitoring();
             working_state.mon_state = MONSTATE_ON;
+            ready_to_sleep = false;
             if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
                 sendCmdOut(BCCMD_MON_START);
                 sendCmdOut(BCCMD_VOL_A2DP);
@@ -247,6 +267,7 @@ WORK:
                 detectPeaks();
                 peak_interval = 0;
             }
+            ready_to_sleep = false;
             break;
         }
 
@@ -258,10 +279,16 @@ WORK:
                 sendCmdOut(BCCMD_MON_STOP);
                 working_state.bt_state = BTSTATE_CONNECTED;
             }
+            working_state.mon_state = MONSTATE_OFF;
+            if( (working_state.rec_state == RECSTATE_OFF) && (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF)) {
+                ready_to_sleep = true;
+            }
+            else {
+                ready_to_sleep = false;
+            }
             if(working_state.ble_state == BLESTATE_CONNECTED) {
                 sendCmdOut(BCNOT_MON_STATE);
             }
-            working_state.mon_state = MONSTATE_OFF;
             break;
         }
 
@@ -284,6 +311,7 @@ WORK:
             }
             bc127AdvStart();
             working_state.ble_state = BLESTATE_ADV;
+            ready_to_sleep = false;
             break;
         }
 
@@ -296,6 +324,7 @@ WORK:
                 startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_SLOW);
             }
             working_state.ble_state = BLESTATE_CONNECTED;
+            ready_to_sleep = false;
             break;
         }
 
@@ -303,6 +332,7 @@ WORK:
             if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
                 startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
             }
+            ready_to_sleep = false;
             break;
         }
 
@@ -315,6 +345,7 @@ WORK:
             else {
                 working_state.ble_state = BLESTATE_REQ_OFF;
             }
+            ready_to_sleep = false;
             break;
         }
 
@@ -333,6 +364,12 @@ WORK:
             }
             MONPORT.println("Info:    BLE OFF");
             working_state.ble_state = BLESTATE_OFF;
+            if( (working_state.rec_state == RECSTATE_OFF) && (working_state.mon_state == MONSTATE_OFF) && (working_state.bt_state == BTSTATE_OFF)) {
+                ready_to_sleep = true;
+            }
+            else {
+                ready_to_sleep = false;
+            }
             break;
         }
 
@@ -344,6 +381,7 @@ WORK:
         case BTSTATE_REQ_CONN: {
             // Alarm.free(alarm_adv_id);
             working_state.bt_state = BTSTATE_CONNECTED;
+            ready_to_sleep = false;
             if(working_state.ble_state == BLESTATE_CONNECTED) {
                 startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
                 sendCmdOut(BCNOT_BT_STATE);
@@ -371,7 +409,12 @@ WORK:
             BT_id_avrcp = 0;
             BT_peer_address = "";
             BT_peer_name = "auto";
-
+            if( (working_state.rec_state == RECSTATE_OFF) && (working_state.mon_state == MONSTATE_OFF) && (working_state.ble_state == BLESTATE_OFF)) {
+                ready_to_sleep = true;
+            }
+            else {
+                ready_to_sleep = false;
+            }
             break;
         }
 
@@ -409,30 +452,30 @@ WORK:
     // 2. else
     //		2.1. if REC == REQ_PAUSE -> prepare the time alarm & WORK (WAIT mode)
     //		2.2. else -> WORK
-    if( (working_state.mon_state == MONSTATE_OFF) && (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
-        if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
-            setIdleSnooze();
-            working_state.rec_state = RECSTATE_IDLE;
-            ready_to_sleep = true;
-        }
-        else if((working_state.rec_state == RECSTATE_OFF) || (working_state.rec_state == RECSTATE_IDLE)) {
-            ready_to_sleep = true;
-        }
-        else {
-            ready_to_sleep = false;
-        }
-    }
-    else {
-        if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
-            setWaitAlarm();
-            working_state.rec_state = RECSTATE_WAIT;
-            if(working_state.ble_state == BLESTATE_CONNECTED) {
-                sendCmdOut(BCNOT_REC_STATE);
-                sendCmdOut(BCNOT_FILEPATH);
-            }
-        }
-        ready_to_sleep = false;
-    }
+    // if( (working_state.mon_state == MONSTATE_OFF) && (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
+    //     if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
+    //         setIdleSnooze();
+    //         working_state.rec_state = RECSTATE_IDLE;
+    //         ready_to_sleep = true;
+    //     }
+    //     else if((working_state.rec_state == RECSTATE_OFF) || (working_state.rec_state == RECSTATE_IDLE)) {
+    //         ready_to_sleep = true;
+    //     }
+    //     else {
+    //         ready_to_sleep = false;
+    //     }
+    // }
+    // else {
+    //     if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
+    //         // setWaitAlarm();
+    //         working_state.rec_state = RECSTATE_WAIT;
+    //         if(working_state.ble_state == BLESTATE_CONNECTED) {
+    //             sendCmdOut(BCNOT_REC_STATE);
+    //             sendCmdOut(BCNOT_FILEPATH);
+    //         }
+    //     }
+    //     ready_to_sleep = false;
+    // }
 
     // Final decision
     if(ready_to_sleep) goto SLEEP;

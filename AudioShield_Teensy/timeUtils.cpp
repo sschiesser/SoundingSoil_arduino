@@ -65,6 +65,7 @@ void setCurTime(time_t cur_time, enum tSources source) {
 	int year;
 	byte month, day, hour, minute, second;
 	unsigned long fix_age;
+    tmElements_t tm;
 
 	switch(source) {
 		case TSOURCE_GPS:
@@ -78,6 +79,8 @@ void setCurTime(time_t cur_time, enum tSources source) {
 		case TSOURCE_PHONE:
 			setTime(cur_time);
 			Teensy3Clock.set(cur_time);
+            breakTime(cur_time, tm);
+            MONPORT.printf("Info:    Current time set to: %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
 			time_source = TSOURCE_TEENSY;
 			break;
 
@@ -91,11 +94,18 @@ void setCurTime(time_t cur_time, enum tSources source) {
  * ------------------
  */
 void setWaitAlarm(void) {
-	tmElements_t tm, tm_disp;
+    tmElements_t tm, tm_disp;
+    time_t next_time = next_record.ts - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX);
 	breakTime((next_record.ts - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX)), tm);
     breakTime(next_record.ts, tm_disp);
-	alarm_wait_id = Alarm.alarmOnce(tm.Hour, tm.Minute, tm.Second, alarmNextRec);
-	MONPORT.printf("Info:    Next recording at %02dh%02dm%02ds\n", tm_disp.Hour, tm_disp.Minute, tm_disp.Second);
+    if(next_time > now()) {
+        alarm_wait_id = Alarm.alarmOnce(tm.Hour, tm.Minute, tm.Second, alarmNextRec);
+        MONPORT.printf("Info:    Next recording at %02dh%02dm%02ds\n", tm_disp.Hour, tm_disp.Minute, tm_disp.Second);
+    }
+    else {
+        MONPORT.printf("Info:    Mismatching time. Stopping recording\n");
+        working_state.rec_state = RECSTATE_REQ_OFF;
+    }
 }
 
 void setIdleSnooze(void) {
@@ -141,7 +151,7 @@ void timerRecDone(void) {
 	MONPORT.printf("Info:    Recording#%d done.", (next_record.cnt+1));
 
 	if((rec_window.occurences == 0) || (next_record.cnt < (rec_window.occurences-1))) {
-		MONPORT.println("");
+		MONPORT.println(" Going on...");
 		working_state.rec_state = RECSTATE_REQ_PAUSE;
 	}
 	else {

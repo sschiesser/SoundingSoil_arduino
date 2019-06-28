@@ -42,6 +42,7 @@ elapsedMillis								hpgain_interval;
 */
 void prepareRecording(bool sync) {
     bool gps_fix = true;
+    tmElements_t tm;
 
     startLED(&leds[LED_RECORD], LED_MODE_ON);
     if(sync) {
@@ -67,10 +68,12 @@ void prepareRecording(bool sync) {
         }
         next_record.ts = now();
     }
+    breakTime(next_record.ts, tm);
     rec_path = createSDpath();
     setRecInfos(&next_record, rec_path);
     unsigned long dur = next_record.dur.Second + (next_record.dur.Minute * SECS_PER_MIN) + (next_record.dur.Hour * SECS_PER_HOUR);
     dur = (unsigned long)((float)dur * 1.03);
+    MONPORT.printf("Info:    Preparing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
 }
 
@@ -172,10 +175,14 @@ void stopRecording(String path) {
 * OUT:	- none
 */
 void pauseRecording(void) {
+    tmElements_t tm;
+    breakTime(now(), tm);
+
     last_record = next_record;
     next_record.ts = last_record.ts + ((rec_window.period.Hour * SECS_PER_HOUR) + (rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second);
     rec_path = "--";
     next_record.cnt++;
+    MONPORT.printf("Info:    Pausing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     stopLED(&leds[LED_RECORD]);
 }
 
@@ -212,9 +219,12 @@ void resetRecInfo(struct recInfo* rec) {
 * OUT:	- none
 */
 void finishRecording(void) {
+    tmElements_t tm;
     resetRecInfo(&last_record);
     resetRecInfo(&next_record);
+    breakTime(now(), tm);
     rec_path = "--";
+    MONPORT.printf("Info:    Finishing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     if((time_source == TSOURCE_GPS) || (time_source == TSOURCE_PHONE)) time_source = TSOURCE_TEENSY;
     if((gps_source == GPS_RECORDER) || (gps_source == GPS_PHONE)) gps_source = GPS_NONE;
     startLED(&leds[LED_RECORD], LED_MODE_WARNING_SHORT);
