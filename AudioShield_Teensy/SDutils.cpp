@@ -40,7 +40,8 @@ unsigned long tot_rec_bytes = 0;
 */
 void initSDcard(void) {
     SPI.setMOSI(SDCARD_MOSI_PIN);
-    // SPI.setMISO(SDCARD_MISO_PIN);
+    // COMMENT FOR BUILTIN_SDCARD AND SSSHIELD V1.0 !!
+    SPI.setMISO(SDCARD_MISO_PIN);
     SPI.setSCK(SDCARD_SCK_PIN);
     if(!(SD.begin(SDCARD_CS_PIN))) {
         while(1) {

@@ -70,6 +70,7 @@ void prepareRecording(bool sync) {
     rec_path = createSDpath();
     setRecInfos(&next_record, rec_path);
     unsigned long dur = next_record.dur.Second + (next_record.dur.Minute * SECS_PER_MIN) + (next_record.dur.Hour * SECS_PER_HOUR);
+    dur = (unsigned long)((float)dur * 1.03);
     alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
 }
 

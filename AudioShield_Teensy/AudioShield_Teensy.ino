@@ -44,7 +44,7 @@ void setup() {
     setDefaultValues();
 
     helloWorld();
-    MONPORT.println("Info:    SoundingSoil firmware version 1.0 build 1906251109");
+    MONPORT.println("Info:    SoundingSoil firmware version 1.0 build 1906261149");
 
     working_state.ble_state = BLESTATE_REQ_ADV;
 }
