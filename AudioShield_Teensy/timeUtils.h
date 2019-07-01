@@ -14,7 +14,7 @@ extern int										alarm_wait_id;
 extern int										alarm_adv_id;
 
 extern SnoozeDigital 					button_wakeup; 	// Wakeup pins on Teensy 3.6:
-																							// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
+														// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
 extern SnoozeAlarm						snooze_rec;
 extern SnoozeAlarm						snooze_led;
 extern SnoozeBlock 						snooze_config;
@@ -33,7 +33,7 @@ extern enum tSources					time_source;
 /* ======================
  * FUNCTIONS DECLARATIONS
  * ====================== */
-void setTimeSource(void);
+time_t setTimeSource(void);
 void setCurTime(time_t cur_time, enum tSources source);
 void setWaitAlarm(void);
 void setIdleSnooze(void);

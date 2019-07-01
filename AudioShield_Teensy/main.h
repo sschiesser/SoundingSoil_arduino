@@ -39,18 +39,19 @@
 #define WAKESOURCE_RTC                      35
 
 // Default recording window values
-#define RWIN_LEN_DEF_SEC                    4 // }
-#define RWIN_LEN_DEF_MIN                    0 // } Zero values -> continuous recording
-#define RWIN_LEN_DEF_HOUR                   0 // }
-#define RWIN_PER_DEF_SEC                    12
+// WARNING!! If duration < 7, the FIRST recording will be 7!!
+#define RWIN_DUR_DEF_SEC                    10 // }
+#define RWIN_DUR_DEF_MIN                    0 // } Zero values -> continuous recording
+#define RWIN_DUR_DEF_HOUR                   0 // }
+#define RWIN_PER_DEF_SEC                    15
 #define RWIN_PER_DEF_MIN                    0
 #define RWIN_PER_DEF_HOUR                   0
-#define RWIN_OCC_DEF                        5 // Zero value -> infinite repetitions
+#define RWIN_OCC_DEF                        3 // Zero value -> infinite repetitions
 // DO NOT CHANGE!! D/M/Y values have to be set to
 // minimum (1.1.1970) in order to obtain correct rwin times
-#define RWIN_LEN_DEF_DAY                    1
-#define RWIN_LEN_DEF_MON                    1
-#define RWIN_LEN_DEF_YEAR                   0
+#define RWIN_DUR_DEF_DAY                    1
+#define RWIN_DUR_DEF_MON                    1
+#define RWIN_DUR_DEF_YEAR                   0
 #define RWIN_PER_DEF_DAY                    1
 #define RWIN_PER_DEF_MON                    1
 #define RWIN_PER_DEF_YEAR                   0
@@ -136,10 +137,9 @@ extern struct recInfo                       last_record;
 extern struct recInfo                       next_record;
 // Recording window
 struct rWindow {
-    tmElements_t length;                    // length (0 -> continous recording)
+    tmElements_t duration;                  // length (0 -> continous recording)
     tmElements_t period;                    // period (occuring every h:m:s)
     unsigned int occurences;                // # of occurences (0 -> infinite repetitions)
 };
 extern struct rWindow                       rec_window;
-
 #endif /* _MAIN_H_ */

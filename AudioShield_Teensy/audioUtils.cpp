@@ -66,13 +66,14 @@ void prepareRecording(bool sync) {
             }
             startLED(&leds[LED_RECORD], LED_MODE_ON);
         }
-        next_record.ts = now();
     }
+    next_record.ts = now();
     breakTime(next_record.ts, tm);
     rec_path = createSDpath();
     setRecInfos(&next_record, rec_path);
     unsigned long dur = next_record.dur.Second + (next_record.dur.Minute * SECS_PER_MIN) + (next_record.dur.Hour * SECS_PER_HOUR);
     dur = (unsigned long)((float)dur * 1.03);
+    MONPORT.printf("Info:    Set recording duration to %d\n", dur);
     MONPORT.printf("Info:    Preparing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
 }
@@ -86,9 +87,9 @@ void prepareRecording(bool sync) {
 */
 void setRecInfos(struct recInfo* rec, String path) {
     unsigned int slen = rec->rpath.length();
-    rec->dur.Second = rec_window.length.Second;
-    rec->dur.Minute = rec_window.length.Minute;
-    rec->dur.Hour = rec_window.length.Hour;
+    rec->dur.Second = rec_window.duration.Second;
+    rec->dur.Minute = rec_window.duration.Minute;
+    rec->dur.Hour = rec_window.duration.Hour;
     rec->per.Second = rec_window.period.Second;
     rec->per.Minute = rec_window.period.Minute;
     rec->per.Hour = rec_window.period.Hour;

@@ -41,9 +41,9 @@ time_t getTeensy3Time() {
  * Test if the time value stored in Teensy3Clock
  * has been already set once or is somewhere in the 70s.
  * IN:	- none
- * OUT:	- none
+ * OUT:	- current time (time_t)
  */
-void setTimeSource(void) {
+time_t setTimeSource(void) {
 	tmElements_t tm;
 	setSyncProvider(getTeensy3Time);
 	breakTime(now(), tm);

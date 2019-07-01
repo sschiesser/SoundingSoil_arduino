@@ -39,12 +39,14 @@ void setup() {
     initGps();
     initWaveHeader();
     initBc127();
-    setTimeSource();
+    time_t t = setTimeSource();
+    tmElements_t tm;
+    breakTime(t, tm);
 
     setDefaultValues();
 
     helloWorld();
-    MONPORT.println("Info:    SoundingSoil firmware version 1.0 build 1906261149");
+    MONPORT.printf("Info:    SoundingSoil firmware version 1.0 build %02d%02d%02d%02d%02d\n", (tm.Year - 30), tm.Month, tm.Day, tm.Hour, tm.Minute);
 
     working_state.ble_state = BLESTATE_REQ_ADV;
 }
@@ -493,12 +495,12 @@ void setDefaultValues(void) {
     working_state.mon_state = MONSTATE_OFF;
     working_state.bt_state = BTSTATE_OFF;
     working_state.ble_state = BLESTATE_OFF;
-    rec_window.length.Second = RWIN_LEN_DEF_SEC;
-    rec_window.length.Minute = RWIN_LEN_DEF_MIN;
-    rec_window.length.Hour = RWIN_LEN_DEF_HOUR;
-    rec_window.length.Day = RWIN_LEN_DEF_DAY;
-    rec_window.length.Month = RWIN_LEN_DEF_MON;
-    rec_window.length.Year = RWIN_LEN_DEF_YEAR;
+    rec_window.duration.Second = RWIN_DUR_DEF_SEC;
+    rec_window.duration.Minute = RWIN_DUR_DEF_MIN;
+    rec_window.duration.Hour = RWIN_DUR_DEF_HOUR;
+    rec_window.duration.Day = RWIN_DUR_DEF_DAY;
+    rec_window.duration.Month = RWIN_DUR_DEF_DAY;
+    rec_window.duration.Year = RWIN_DUR_DEF_DAY;
     rec_window.period.Second = RWIN_PER_DEF_SEC;
     rec_window.period.Minute = RWIN_PER_DEF_MIN;
     rec_window.period.Hour = RWIN_PER_DEF_HOUR;

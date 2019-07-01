@@ -891,7 +891,7 @@ enum serialMsg msgRecv4(String p1, String p2, String p3, String p4, String p5, S
             d = p4.toInt();
             p = p5.toInt();
             if(d < p) {
-                breakTime(d, rec_window.length);
+                breakTime(d, rec_window.duration);
                 breakTime(p, rec_window.period);
                 rec_window.occurences = p6.toInt();
                 return BCNOT_RWIN_OK;
@@ -1153,8 +1153,9 @@ String notRwinOk(void) {
 String notRwinVals(void) {
     unsigned int l, p, o;
     if(working_state.ble_state == BLESTATE_CONNECTED) {
-        l = makeTime(rec_window.length);
-        p = makeTime(rec_window.period);
+        l = rec_window.duration.Second + (rec_window.duration.Minute * SECS_PER_MIN) + (rec_window.duration.Hour * SECS_PER_HOUR);
+        MONPORT.printf("Info:    Sending RWIN values. Duration in s = %ld --> %dh%dm%ds\n", l, rec_window.duration.Hour, rec_window.duration.Minute, rec_window.duration.Second);
+        p = rec_window.period.Second + (rec_window.period.Minute * SECS_PER_MIN) + (rec_window.period.Hour * SECS_PER_HOUR);
         o = rec_window.occurences;
         return ("SEND " + String(BLE_conn_id) + " RWIN " + String(l) + " " + String(p) + " " + String(o) + "\r");
     }
