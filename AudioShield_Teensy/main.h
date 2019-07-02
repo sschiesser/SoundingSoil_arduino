@@ -40,13 +40,13 @@
 
 // Default recording window values
 // WARNING!! If duration < 7, the FIRST recording will be 7!!
-#define RWIN_DUR_DEF_SEC                    10 // }
-#define RWIN_DUR_DEF_MIN                    0 // } Zero values -> continuous recording
+#define RWIN_DUR_DEF_SEC                    0 // }
+#define RWIN_DUR_DEF_MIN                    5 // } Zero values -> continuous recording
 #define RWIN_DUR_DEF_HOUR                   0 // }
-#define RWIN_PER_DEF_SEC                    15
+#define RWIN_PER_DEF_SEC                    0
 #define RWIN_PER_DEF_MIN                    0
-#define RWIN_PER_DEF_HOUR                   0
-#define RWIN_OCC_DEF                        3 // Zero value -> infinite repetitions
+#define RWIN_PER_DEF_HOUR                   1
+#define RWIN_OCC_DEF                        24 // Zero value -> infinite repetitions
 // DO NOT CHANGE!! D/M/Y values have to be set to
 // minimum (1.1.1970) in order to obtain correct rwin times
 #define RWIN_DUR_DEF_DAY                    1

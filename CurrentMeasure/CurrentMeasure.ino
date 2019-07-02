@@ -3,6 +3,7 @@
 
 Adafruit_INA219 ina219;
 
+#define CURRENT_AVG_CNT 10
 
 void setup(void) 
 {
@@ -14,7 +15,7 @@ void setup(void)
 
   uint32_t currentFrequency;
     
-  Serial.println("Hello!");
+//  Serial.println("Hello!");
   
   // Initialize the INA219.
   // By default the initialization will use the largest range (32V, 2A).  However
@@ -35,25 +36,30 @@ void loop(void)
   float current_mA = 0;
   float loadvoltage = 0;
   float power_mW = 0;
+  float current_avg = 0;
 
-  shuntvoltage = ina219.getShuntVoltage_mV();
-  busvoltage = ina219.getBusVoltage_V();
-  current_mA = ina219.getCurrent_mA();
-  power_mW = ina219.getPower_mW();
-  loadvoltage = busvoltage + (shuntvoltage / 1000);
-  
+  for(int cnt=0; cnt < CURRENT_AVG_CNT; cnt++) {
+    shuntvoltage = ina219.getShuntVoltage_mV();
+    busvoltage = ina219.getBusVoltage_V();
+    current_mA = ina219.getCurrent_mA();
+    power_mW = ina219.getPower_mW();
+    loadvoltage = busvoltage + (shuntvoltage / 1000);
+
+    current_avg += current_mA;
 //  Serial.print("Bus Voltage:   "); Serial.print(busvoltage); Serial.println(" V");
 //  Serial.print("Shunt Voltage: "); Serial.print(shuntvoltage); Serial.println(" mV");
 //  Serial.print("Load Voltage:  "); Serial.print(loadvoltage); Serial.println(" V");
 //  Serial.print("Current:       "); Serial.print(current_mA); Serial.println(" mA");
 //  Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
 //  Serial.println("");
-
-  unsigned int displayCurrent = (unsigned int)((abs(current_mA) / 200.0) * 50);
-  for(int i=0; i < displayCurrent; i++) {
-    Serial.print(" ");
+    delay(100);
   }
-  Serial.println(abs(current_mA));
-//  Serial.print(loadvoltage); Serial.print(" V/"); Serial.print(current_mA); Serial.print(" mA/"); Serial.print(power_mW); Serial.println(" mW");
-  delay(200);
+  current_avg = current_avg / CURRENT_AVG_CNT;
+
+//  unsigned int displayCurrent = (unsigned int)((abs(current_avg) / 200.0) * 50);
+//  for(int i=0; i < displayCurrent; i++) {
+//    Serial.print(" ");
+//  }
+  Serial.println(abs(current_avg));
+//  Serial.print(";");
 }

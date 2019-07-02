@@ -52,9 +52,9 @@ void setup() {
 }
 
 void loop() {
-    #if(ALWAYS_ON_MODE==1)
+#if(ALWAYS_ON_MODE==1)
     goto WORK;
-    #else
+#else
     goto WORK;
 SLEEP:
     int who;
@@ -84,7 +84,7 @@ SLEEP:
     // if not sleeping anymore, re-enable i2s clock
     SIM_SCGC6 |= SIM_SCGC6_I2S;
     Alarm.delay(50);
-    #endif
+#endif // ALWAYS_ON_MODE
 
 WORK:
     Alarm.delay(0); 							// needed for TimeAlarms timers
@@ -98,26 +98,26 @@ WORK:
     if(but_blue.fallingEdge()) button_call = (enum bCalls)BUTTON_BLUETOOTH_PIN;
 
     // Centralized button actions from WORK or SLEEP mode...
-    #if(ALWAYS_ON_MODE==1)
-    #else
+#if(ALWAYS_ON_MODE==1)
+#else
     // ...dealing with IDLE and WAIT modes
     if((button_call == BUTTON_MONITOR_PIN) || (button_call == BUTTON_BLUETOOTH_PIN)) {
         // button interruption during REC IDLE mode -> need to set an new alarm & change to WAIT mode
         if(working_state.rec_state == RECSTATE_IDLE) {
             removeIdleSnooze();
             setWaitAlarm();
-            working_state.rec_state = RECSTATE_WAIT;
-            ready_to_sleep = false;
+            // working_state.rec_state = RECSTATE_WAIT;
+            // ready_to_sleep = false;
         }
         // button interruption during REC WAIT mode -> need to set a new snooze & change to IDLE mode
         else if(working_state.rec_state == RECSTATE_WAIT) {
             removeWaitAlarm();
             setIdleSnooze();
-            working_state.rec_state = RECSTATE_IDLE;
-            ready_to_sleep = true;
+            // working_state.rec_state = RECSTATE_IDLE;
+            // ready_to_sleep = true;
         }
     }
-    #endif // ALWAYS_ON_MODE
+#endif // ALWAYS_ON_MODE
 
     // ...standard button actions
     if(button_call == BUTTON_RECORD_PIN) {
@@ -238,6 +238,16 @@ WORK:
             break;
         }
 
+        case RECSTATE_OFF: {
+            if( (working_state.mon_state == MONSTATE_OFF) && (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
+                ready_to_sleep = true;
+            }
+            else {
+                ready_to_sleep = false;
+            }
+            break;
+        }
+
         default:
         break;
     }
@@ -282,15 +292,40 @@ WORK:
                 working_state.bt_state = BTSTATE_CONNECTED;
             }
             working_state.mon_state = MONSTATE_OFF;
-            if( (working_state.rec_state == RECSTATE_OFF) && (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF)) {
-                ready_to_sleep = true;
+            if( (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
+                if(working_state.rec_state == RECSTATE_OFF) {
+                    ready_to_sleep = true;
+                }
+                else if(working_state.rec_state == RECSTATE_WAIT) {
+                    setIdleSnooze();
+                    working_state.rec_state = RECSTATE_IDLE;
+                    ready_to_sleep = true;
+                }
+                else {
+                    ready_to_sleep = false;
+                }
             }
-            else {
-                ready_to_sleep = false;
-            }
+
             if(working_state.ble_state == BLESTATE_CONNECTED) {
                 sendCmdOut(BCNOT_MON_STATE);
             }
+            break;
+        }
+
+        case MONSTATE_OFF: {
+            // if( (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
+            //     if(working_state.rec_state == RECSTATE_OFF) {
+            //         ready_to_sleep = true;
+            //     }
+            //     else if(working_state.rec_state == RECSTATE_WAIT) {
+            //         setIdleSnooze();
+            //         working_state.rec_state = RECSTATE_IDLE;
+            //         ready_to_sleep = true;
+            //     }
+            //     else {
+            //         ready_to_sleep = false;
+            //     }
+            // }
             break;
         }
 
@@ -366,10 +401,23 @@ WORK:
             }
             MONPORT.println("Info:    BLE OFF");
             working_state.ble_state = BLESTATE_OFF;
-            if( (working_state.rec_state == RECSTATE_OFF) && (working_state.mon_state == MONSTATE_OFF) && (working_state.bt_state == BTSTATE_OFF)) {
-                ready_to_sleep = true;
+            if( (working_state.mon_state == MONSTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
+                if(working_state.rec_state == RECSTATE_OFF) {
+                    ready_to_sleep = true;
+                }
+                else if(working_state.rec_state == RECSTATE_WAIT) {
+                    setIdleSnooze();
+                    working_state.rec_state = RECSTATE_IDLE;
+                    ready_to_sleep = true;
+                }
+                else {
+                    ready_to_sleep = false;
+                }
             }
             else {
+                if(working_state.mon_state == MONSTATE_ON) {
+                    working_state.mon_state = MONSTATE_REQ_OFF;
+                }
                 ready_to_sleep = false;
             }
             break;
@@ -439,13 +487,13 @@ WORK:
         MONPORT.printf("Sent to BLUEPORT: %s\n", manInput.c_str());
     }
 
-    #if(ALWAYS_ON_MODE==1)
+#if(ALWAYS_ON_MODE==1)
     if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
         setWaitAlarm();
         working_state.rec_state = RECSTATE_WAIT;
     }
     goto WORK;
-    #else
+#else
     // Sleeping or not sleeping... logical decision chain
     // 1. MON/BLE/BT off
     // 		1.1. if REC == REQ_PAUSE -> prepare the snooze alarm & SLEEP (IDLE mode)
@@ -483,7 +531,7 @@ WORK:
     if(ready_to_sleep) goto SLEEP;
     else goto WORK;
 
-    #endif // ALWAYS_ON_MODE
+#endif // ALWAYS_ON_MODE
 }
 
 
