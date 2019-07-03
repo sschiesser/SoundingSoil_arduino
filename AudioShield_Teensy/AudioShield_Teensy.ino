@@ -12,7 +12,7 @@ Mixing different code bases:
 // install driver into SnoozeBlock
 // SnoozeBlock 									snooze_config(button_wakeup);
 
-bool                                            debug = true;
+bool                                            debug = false;
 
 volatile struct wState 							working_state;
 struct rWindow									rec_window;
