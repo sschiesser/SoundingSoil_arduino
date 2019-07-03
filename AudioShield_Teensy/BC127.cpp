@@ -570,6 +570,7 @@ enum serialMsg msgLinkLoss(String p1, String p2) {
     if(debug) MONPORT.printf("Info:    link_ID: %s, status: %s\n", p1.c_str(), p2.c_str());
     if(p1.toInt() == BT_id_a2dp) {
         if(p2.toInt() == 1) {
+            working_state.mon_state = MONSTATE_REQ_OFF;
             working_state.bt_state = BTSTATE_DISCONNECTED;
         }
         else if(p2.toInt() == 0) {
