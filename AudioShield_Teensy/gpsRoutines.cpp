@@ -77,24 +77,24 @@ bool gpsGetData(void) {
 #endif
 		gps.f_get_position(&cur_lat, &cur_long, &age);
 		if((age == TinyGPS::GPS_INVALID_AGE)) {
-			MONPORT.printf("GPS:     age: %d\n");
+			if(debug) MONPORT.printf("GPS:     age: %d\n");
 		}
 		else {
 			fix_found = true;
 		}
 		retries++;
 	} while((!fix_found) && (retries < GPS_ENCODE_RETRIES_MAX));
-    MONPORT.printf("GPS:     Fix found? %d", fix_found);
+    if(debug) MONPORT.printf("GPS:     Fix found? %d", fix_found);
 	if(fix_found) {
         next_record.gps_lat = cur_lat;
         next_record.gps_long = cur_long;
-		MONPORT.printf(" fLat: %f, fLong: %f\n", next_record.gps_lat, next_record.gps_long);
+		if(debug) MONPORT.printf(" fLat: %f, fLong: %f\n", next_record.gps_lat, next_record.gps_long);
 		Alarm.delay((GPS_ENCODE_RETRIES_MAX - retries) * 1000);
 	}
 	else {
         next_record.gps_lat = NULL;
         next_record.gps_long = NULL;
-        MONPORT.println("");
+        if(debug) MONPORT.println("");
     }
 	return fix_found;
 }

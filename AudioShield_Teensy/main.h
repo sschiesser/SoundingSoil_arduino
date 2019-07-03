@@ -57,7 +57,7 @@
 #define RWIN_PER_DEF_YEAR                   0
 // DO NOT CHANGE!!
 
-
+extern bool                                 debug;
 // Recording states...
 enum recState {
     RECSTATE_OFF,								// 0 -> recording off

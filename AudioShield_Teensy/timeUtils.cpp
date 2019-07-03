@@ -47,7 +47,7 @@ time_t setTimeSource(void) {
 	tmElements_t tm;
 	setSyncProvider(getTeensy3Time);
 	breakTime(now(), tm);
-	MONPORT.printf("Time:    Date/Time at startup: %02d.%02d.%d, %02dh%02dm%02ds\n", tm.Day, tm.Month, (tm.Year+1970) ,tm.Hour, tm.Minute, tm.Second);
+	if(debug) MONPORT.printf("Time:    Date/Time at startup: %02d.%02d.%d, %02dh%02dm%02ds\n", tm.Day, tm.Month, (tm.Year+1970) ,tm.Hour, tm.Minute, tm.Second);
 	if(now() < MIN_TIME_DEC) time_source = TSOURCE_NONE;
 	else time_source = TSOURCE_TEENSY;
     return now();
@@ -81,14 +81,14 @@ void setCurTime(time_t cur_time, enum tSources source) {
 			setTime(cur_time);
 			Teensy3Clock.set(cur_time);
             breakTime(cur_time, tm);
-            MONPORT.printf("Time:    Current time set to: %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
+            if(debug) MONPORT.printf("Time:    Current time set to: %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
 			time_source = TSOURCE_TEENSY;
 			break;
 
 		default:
 			break;
 	}
-	// MONPORT.printf("Time:    Time adjusted from source#%d. Current time: %ld\n", source, now());
+	// if(debug) MONPORT.printf("Time:    Time adjusted from source#%d. Current time: %ld\n", source, now());
 }
 
 /* setNextAlarm(void)
@@ -101,10 +101,10 @@ void setWaitAlarm(void) {
     breakTime(next_record.ts, tm_disp);
     if(next_time > now()) {
         alarm_wait_id = Alarm.alarmOnce(tm.Hour, tm.Minute, tm.Second, alarmNextRec);
-        MONPORT.printf("Time:    Next recording at %02dh%02dm%02ds\n", tm_disp.Hour, tm_disp.Minute, tm_disp.Second);
+        if(debug) MONPORT.printf("Time:    Next recording at %02dh%02dm%02ds\n", tm_disp.Hour, tm_disp.Minute, tm_disp.Second);
     }
     else {
-        MONPORT.printf("Time:    Mismatching time. Stopping recording\n");
+        if(debug) MONPORT.printf("Time:    Mismatching time. Stopping recording\n");
         working_state.rec_state = RECSTATE_REQ_OFF;
     }
 }
@@ -116,8 +116,8 @@ void setIdleSnooze(void) {
 	breakTime(next_record.ts, tm2);
 	snooze_config += snooze_rec;
 	snooze_rec.setRtcTimer(tm1.Hour, tm1.Minute, tm1.Second);
-	MONPORT.printf("Time:    Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
-	MONPORT.printf("Time:    Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
+	if(debug) MONPORT.printf("Time:    Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
+	if(debug) MONPORT.printf("Time:    Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
 	Alarm.delay(100);
 }
 
@@ -136,7 +136,7 @@ void removeIdleSnooze(void) {
  * OUT:	- none
  */
 void alarmAdvTimeout(void) {
-    MONPORT.printf("Time:    Advertising timeout.\n");
+    if(debug) MONPORT.printf("Time:    Advertising timeout.\n");
 	Alarm.free(alarm_adv_id);
 	working_state.ble_state = BLESTATE_REQ_OFF;
 }
@@ -150,14 +150,14 @@ void alarmAdvTimeout(void) {
  */
 void timerRecDone(void) {
 	Alarm.free(alarm_rec_id);
-	MONPORT.printf("Time:    Recording#%d done.", (next_record.cnt+1));
+	if(debug) MONPORT.printf("Time:    Recording#%d done.", (next_record.cnt+1));
 
 	if((rec_window.occurences == 0) || (next_record.cnt < (rec_window.occurences-1))) {
-		MONPORT.println(" Going on...");
+		if(debug) MONPORT.println(" Going on...");
 		working_state.rec_state = RECSTATE_REQ_PAUSE;
 	}
 	else {
-		MONPORT.println(" Finished!");
+		if(debug) MONPORT.println(" Finished!");
 		working_state.rec_state = RECSTATE_REQ_OFF;
 	}
 }
@@ -171,6 +171,6 @@ void timerRecDone(void) {
  */
 void alarmNextRec(void) {
 	removeWaitAlarm();
-	MONPORT.printf("Time:    Starting recording#%d\n", (next_record.cnt+1));
+	if(debug) MONPORT.printf("Time:    Starting recording#%d\n", (next_record.cnt+1));
 	working_state.rec_state = RECSTATE_REQ_RESTART;
 }
