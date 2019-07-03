@@ -12,7 +12,7 @@ Mixing different code bases:
 // install driver into SnoozeBlock
 // SnoozeBlock 									snooze_config(button_wakeup);
 
-bool                                            debug = false;
+bool                                            debug = true;
 
 volatile struct wState 							working_state;
 struct rWindow									rec_window;
@@ -108,7 +108,9 @@ WORK:
         if(working_state.rec_state == RECSTATE_IDLE) {
             removeIdleSnooze();
             setWaitAlarm();
-            working_state.rec_state = RECSTATE_WAIT;
+            if(working_state.rec_state != RECSTATE_REQ_OFF) {
+                working_state.rec_state = RECSTATE_WAIT;
+            }
         }
         // button interruption during REC WAIT mode -> need to set a new snooze & change to IDLE mode
         else if(working_state.rec_state == RECSTATE_WAIT) {
@@ -300,15 +302,16 @@ WORK:
                 working_state.bt_state = BTSTATE_CONNECTED;
             }
             working_state.mon_state = MONSTATE_OFF;
+
             if( (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
-                if(working_state.rec_state == RECSTATE_OFF) {
+                if( (working_state.rec_state == RECSTATE_OFF) || (working_state.rec_state == RECSTATE_IDLE) ) {
                     ready_to_sleep = true;
                 }
-                else if(working_state.rec_state == RECSTATE_WAIT) {
-                    setIdleSnooze();
-                    working_state.rec_state = RECSTATE_IDLE;
-                    ready_to_sleep = true;
-                }
+                // else if(working_state.rec_state == RECSTATE_WAIT) {
+                //     // setIdleSnooze();
+                //     // working_state.rec_state = RECSTATE_IDLE;
+                //     ready_to_sleep = true;
+                // }
                 else {
                     ready_to_sleep = false;
                 }
@@ -390,6 +393,7 @@ WORK:
             else {
                 working_state.ble_state = BLESTATE_REQ_OFF;
             }
+
             ready_to_sleep = false;
             break;
         }
@@ -397,7 +401,8 @@ WORK:
         case BLESTATE_REQ_OFF: {
             if(debug) MONPORT.printf("Info:    Requesting BLE OFF. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             if(working_state.ble_state == BLESTATE_ADV) {
-                Alarm.free(alarm_adv_id);
+                Alarm.disable(alarm_adv_id);
+                // Alarm.free(alarm_adv_id);
                 bc127AdvStop();
                 Alarm.delay(100);
             }
@@ -409,23 +414,30 @@ WORK:
                 stopLED(&leds[LED_BLUETOOTH]);
             }
             working_state.ble_state = BLESTATE_OFF;
-            if( (working_state.mon_state == MONSTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
-                if(working_state.rec_state == RECSTATE_OFF) {
-                    ready_to_sleep = true;
-                }
-                else if(working_state.rec_state == RECSTATE_WAIT) {
+            if(working_state.bt_state == BTSTATE_OFF) {
+                // if(working_state.rec_state == RECSTATE_OFF) {
+                //     ready_to_sleep = true;
+                // }
+                if(working_state.rec_state == RECSTATE_WAIT) {
+                    removeWaitAlarm();
                     setIdleSnooze();
                     working_state.rec_state = RECSTATE_IDLE;
-                    ready_to_sleep = true;
+                    // ready_to_sleep = true;
                 }
-                else {
+                // else {
+                //     ready_to_sleep = false;
+                // }
+
+                if(working_state.mon_state != MONSTATE_OFF) {
+                    working_state.mon_state = MONSTATE_REQ_OFF;
                     ready_to_sleep = false;
                 }
+                else {
+                    ready_to_sleep = true;
+                }
+
             }
             else {
-                if(working_state.mon_state == MONSTATE_ON) {
-                    working_state.mon_state = MONSTATE_REQ_OFF;
-                }
                 ready_to_sleep = false;
             }
             break;

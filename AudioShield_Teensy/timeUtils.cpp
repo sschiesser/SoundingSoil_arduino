@@ -32,6 +32,7 @@ SnoozeBlock													snooze_cpu;
  * OUT:	- current Teensy time (time_t)
  */
 time_t getTeensy3Time() {
+    Teensy3Clock.compensate(-13383);
 	return Teensy3Clock.get();
 }
 
@@ -74,12 +75,14 @@ void setCurTime(time_t cur_time, enum tSources source) {
 			setTime(hour, minute, second, day, month, year);
 			adjustTime(GPS_TIME_OFFSET * SECS_PER_HOUR);
 			Teensy3Clock.set(now());
+            breakTime(cur_time, tm);
+            if(debug) MONPORT.printf("Time:    Current time set to: %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
 			time_source = TSOURCE_TEENSY;
 			break;
 
 		case TSOURCE_PHONE:
 			setTime(cur_time);
-			Teensy3Clock.set(cur_time);
+			Teensy3Clock.set(now());
             breakTime(cur_time, tm);
             if(debug) MONPORT.printf("Time:    Current time set to: %02dh%02dm%02ds\n", tm.Hour, tm.Minute, tm.Second);
 			time_source = TSOURCE_TEENSY;
@@ -105,6 +108,7 @@ void setWaitAlarm(void) {
     }
     else {
         if(debug) MONPORT.printf("Time:    Mismatching time. Stopping recording\n");
+        Alarm.disable(alarm_wait_id);
         working_state.rec_state = RECSTATE_REQ_OFF;
     }
 }
