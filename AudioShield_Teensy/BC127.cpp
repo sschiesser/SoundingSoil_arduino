@@ -459,80 +459,81 @@ unsigned int countParams(String input) {
     int slice9 = input.indexOf(" ", slice8+1);
     int slice10 = input.indexOf(" ", slice9+1);
 
+    unsigned int ret = 0;
     // no space found -> notification without parameter
     if(slice1 == -1) {
         notif = input;
-        return 0;
+        ret = 0;
     }
     // 1+ parameter
     else {
         notif = input.substring(0, slice1);
         if(slice2 == -1) {
             param1 = input.substring(slice1 + 1);
-            return 1;
+            ret = 1;
         }
         // 2+ parameters
         else {
             param1 = input.substring(slice1 + 1, slice2);
             if(slice3 == -1) {
                 param2 = input.substring(slice2 + 1);
-                return 2;
+                ret = 2;
             }
             // 3+ parameters
             else {
                 param2 = input.substring(slice2 + 1, slice3);
                 if(slice4 == -1) {
                     param3 = input.substring(slice3 + 1);
-                    return 3;
+                    ret = 3;
                 }
                 // 4+ parameters
                 else {
                     param3 = input.substring(slice3 + 1, slice4);
                     if(slice5 == -1) {
                         param4 = input.substring(slice4 + 1);
-                        return 4;
+                        ret = 4;
                     }
                     // 5+ parameters
                     else {
                         param4 = input.substring(slice4 + 1, slice5);
                         if(slice6 == -1) {
                             param5 = input.substring(slice5 + 1);
-                            return 5;
+                            ret = 5;
                         }
                         // 6+ parameters
                         else {
                             param5 = input.substring(slice5 + 1, slice6);
                             if(slice7 == -1) {
                                 param6 = input.substring(slice6 + 1);
-                                return 6;
+                                ret = 6;
                             }
                             // 7+ parameters
                             else {
                                 param6 = input.substring(slice6 + 1, slice7);
                                 if(slice8 == -1) {
                                     trash = input.substring(slice7 + 1);
-                                    return 7;
+                                    ret = 7;
                                 }
                                 // 8+ paramters
                                 else {
                                     param7 = input.substring(slice7 + 1, slice8);
                                     if(slice8 == -1) {
                                         trash = input.substring(slice8 + 1);
-                                        return 8;
+                                        ret = 8;
                                     }
                                     // 9+ parameters
                                     else {
                                         param8 = input.substring(slice8 + 1, slice9);
                                         if(slice9 == -1) {
                                             trash = input.substring(slice9 + 1);
-                                            return 9;
+                                            ret = 9;
                                         }
                                         // 10+ parameters
                                         else {
                                             param9 = input.substring(slice9 + 1, slice10);
                                             if(slice10 == -1) {
                                                 trash = input.substring(slice10 + 1);
-                                                return 10;
+                                                ret = 10;
                                             }
                                         }
                                     }
@@ -545,6 +546,7 @@ unsigned int countParams(String input) {
         }
     }
     // MONPORT.printf("#params: %d\n", nb_params);
+    return ret;
 }
 
 enum serialMsg msgAvrcpPlay(void) {
@@ -606,9 +608,8 @@ enum serialMsg msgCloseOk(String p1, String p2, String p3) {
 }
 enum serialMsg msgName2(String p1, String p2, String p3) {
     if(p2.substring(0,1).equalsIgnoreCase("\"")) {
-        int strlen1 = p2.length();
-        int strlen2 = p3.length();
-        BT_peer_name = p2.substring(1) + "_" + p3.substring(0, (strlen2-1));
+        int strlen = p3.length();
+        BT_peer_name = p2.substring(1) + "_" + p3.substring(0, (strlen-1));
     }
     else {
         BT_peer_name = p2 + "_" + p3;
@@ -682,9 +683,8 @@ enum serialMsg msgInquiry1(String p1, String p2, String p3, String p4) {
 }
 enum serialMsg msgName3(String p1, String p2, String p3, String p4) {
     if(p2.substring(0,1).equalsIgnoreCase("\"")) {
-        int strlen1 = p2.length();
-        int strlen2 = p4.length();
-        BT_peer_name = p2.substring(1) + "_" + p3 + "_" + p4.substring(0, (strlen2-1));
+        int strlen = p4.length();
+        BT_peer_name = p2.substring(1) + "_" + p3 + "_" + p4.substring(0, (strlen-1));
     }
     else {
         BT_peer_name = p2 + "_" + p3 + "_" + p4;
@@ -834,9 +834,8 @@ enum serialMsg msgLink1(String p1, String p2, String p3, String p4, String p5) {
 }
 enum serialMsg msgName4(String p1, String p2, String p3, String p4, String p5) {
     if(p2.substring(0,1).equalsIgnoreCase("\"")) {
-        int strlen1 = p2.length();
-        int strlen2 = p5.length();
-        BT_peer_name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" + p5.substring(0, (strlen2-1));
+        int strlen = p5.length();
+        BT_peer_name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" + p5.substring(0, (strlen-1));
     }
     else {
         BT_peer_name = p2 + "_" + p3 + "_" + p4 + "_" + p5;

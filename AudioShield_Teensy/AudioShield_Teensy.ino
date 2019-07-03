@@ -106,22 +106,18 @@ WORK:
         if(working_state.rec_state == RECSTATE_IDLE) {
             removeIdleSnooze();
             setWaitAlarm();
-            // working_state.rec_state = RECSTATE_WAIT;
-            // ready_to_sleep = false;
         }
         // button interruption during REC WAIT mode -> need to set a new snooze & change to IDLE mode
         else if(working_state.rec_state == RECSTATE_WAIT) {
             removeWaitAlarm();
             setIdleSnooze();
-            // working_state.rec_state = RECSTATE_IDLE;
-            // ready_to_sleep = true;
         }
     }
 #endif // ALWAYS_ON_MODE
 
     // ...standard button actions
     if(button_call == BUTTON_RECORD_PIN) {
-        MONPORT.printf("Info:    REC! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
+        // MONPORT.printf("Info:    REC! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
         if(working_state.rec_state == RECSTATE_OFF) {
             working_state.rec_state = RECSTATE_REQ_ON;
         }
@@ -134,7 +130,7 @@ WORK:
         button_call = (enum bCalls)BCALL_NONE;
     }
     if(button_call == BUTTON_MONITOR_PIN) {
-        MONPORT.printf("Info:    MON! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
+        // MONPORT.printf("Info:    MON! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
         if(working_state.mon_state == MONSTATE_OFF) {
             working_state.mon_state = MONSTATE_REQ_ON;
         }
@@ -144,11 +140,14 @@ WORK:
         button_call = (enum bCalls)BCALL_NONE;
     }
     if(button_call == BUTTON_BLUETOOTH_PIN) {
-        MONPORT.printf("Info:    BLUE! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
+        // MONPORT.printf("Info:    BLUE! Current state (R/M/BLE/BT): %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state, working_state.ble_state, working_state.bt_state);
         if(working_state.ble_state == BLESTATE_OFF) {
             working_state.ble_state = BLESTATE_REQ_ADV;
         }
         else {
+            if(working_state.ble_state == BLESTATE_ADV) {
+                Alarm.disable(alarm_adv_id);
+            }
             working_state.ble_state = BLESTATE_REQ_OFF;
         }
         button_call = (enum bCalls)BCALL_NONE;
@@ -157,6 +156,7 @@ WORK:
     // REC state actions
     switch(working_state.rec_state) {
         case RECSTATE_REQ_ON: {
+            MONPORT.printf("Info:    Requesting REC ON. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             next_record.cnt = 0;
             prepareRecording(true);
             working_state.rec_state = RECSTATE_ON;
@@ -174,6 +174,7 @@ WORK:
         }
 
         case RECSTATE_REQ_RESTART: {
+            MONPORT.printf("Info:    Requesting REC RESTART. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             prepareRecording(true);
             working_state.rec_state = RECSTATE_ON;
             startRecording(next_record.rpath);
@@ -190,6 +191,7 @@ WORK:
         }
 
         case RECSTATE_REQ_PAUSE: {
+            MONPORT.printf("Info:    Requesting REC PAUSE. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             stopRecording(next_record.rpath);
             pauseRecording();
             if( (working_state.mon_state != MONSTATE_OFF) || (working_state.ble_state != BLESTATE_OFF) || (working_state.bt_state != BTSTATE_OFF) ) {
@@ -218,6 +220,7 @@ WORK:
         }
 
         case RECSTATE_REQ_OFF: {
+            MONPORT.printf("Info:    Requesting REC OFF. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             Alarm.free(alarm_wait_id);
             Alarm.free(alarm_rec_id);
 
@@ -254,7 +257,7 @@ WORK:
     // MON state actions
     switch(working_state.mon_state) {
         case MONSTATE_REQ_ON: {
-            MONPORT.printf("Info:    MON req... states: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
+            MONPORT.printf("Info:    Requesting MON ON. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             startLED(&leds[LED_MONITOR], LED_MODE_ON);
             startMonitoring();
             working_state.mon_state = MONSTATE_ON;
@@ -284,6 +287,7 @@ WORK:
         }
 
         case MONSTATE_REQ_OFF: {
+            MONPORT.printf("Info:    Requesting MON OFF. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             stopMonitoring();
             stopLED(&leds[LED_MONITOR]);
             stopLED(&leds[LED_PEAK]);
@@ -335,12 +339,11 @@ WORK:
     // BLE state actions
     switch(working_state.ble_state) {
         case BLESTATE_REQ_ADV: {
+            MONPORT.printf("Info:    Requesting BLE ADV. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
                 startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
             }
             else {
-                // bc127Reset();
-                // delay(500);
                 bc127BlueOn();
                 delay(500);
                 startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
@@ -353,6 +356,7 @@ WORK:
         }
 
         case BLESTATE_REQ_CONN: {
+            MONPORT.printf("Info:    Requesting BLE CONN. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             Alarm.free(alarm_adv_id);
             if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
                 startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
@@ -374,6 +378,7 @@ WORK:
         }
 
         case BLESTATE_REQ_DISC: {
+            MONPORT.printf("Info:    Requesting BLE DISC. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             BLE_conn_id = 0;
             MONPORT.println("Info:    BLE disconnected");
             if((working_state.bt_state == BTSTATE_CONNECTED) || (working_state.bt_state == BTSTATE_PLAY)) {
@@ -387,6 +392,7 @@ WORK:
         }
 
         case BLESTATE_REQ_OFF: {
+            MONPORT.printf("Info:    Requesting BLE OFF. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             if(working_state.ble_state == BLESTATE_ADV) {
                 Alarm.free(alarm_adv_id);
                 bc127AdvStop();
@@ -429,6 +435,7 @@ WORK:
     // BT state actions
     switch(working_state.bt_state) {
         case BTSTATE_REQ_CONN: {
+            MONPORT.printf("Info:    Requesting BT CONN. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             // Alarm.free(alarm_adv_id);
             working_state.bt_state = BTSTATE_CONNECTED;
             ready_to_sleep = false;
@@ -443,6 +450,7 @@ WORK:
         }
 
         case BTSTATE_REQ_DISC: {
+            MONPORT.printf("Info:    Requesting BT DISC. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             if(working_state.ble_state == BLESTATE_CONNECTED) {
                 sendCmdOut(BCCMD_DEV_DISCONNECT1);
                 sendCmdOut(BCCMD_DEV_DISCONNECT2);

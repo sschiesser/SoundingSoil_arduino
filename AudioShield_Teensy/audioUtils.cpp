@@ -73,8 +73,8 @@ void prepareRecording(bool sync) {
     setRecInfos(&next_record, rec_path);
     unsigned long dur = next_record.dur.Second + (next_record.dur.Minute * SECS_PER_MIN) + (next_record.dur.Hour * SECS_PER_HOUR);
     dur = (unsigned long)((float)dur * 1.03);
-    MONPORT.printf("Info:    Set recording duration to %d\n", dur);
-    MONPORT.printf("Info:    Preparing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
+    MONPORT.printf("Audio:   Set recording duration to %d\n", dur);
+    MONPORT.printf("Audio:   Preparing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
 }
 
@@ -86,7 +86,6 @@ void prepareRecording(bool sync) {
 * OUT:	- none
 */
 void setRecInfos(struct recInfo* rec, String path) {
-    unsigned int slen = rec->rpath.length();
     rec->dur.Second = rec_window.duration.Second;
     rec->dur.Minute = rec_window.duration.Minute;
     rec->dur.Hour = rec_window.duration.Hour;
@@ -115,7 +114,7 @@ void startRecording(String path) {
         tot_rec_bytes = 0;
     }
     else {
-        MONPORT.println("Error: file opening error");
+        MONPORT.println("Audio:   file opening error");
         working_state.rec_state = RECSTATE_REQ_OFF;
         // while(1);
     }
@@ -141,7 +140,7 @@ void continueRecording(void) {
         // elapsedMicros usec = 0;
         frec.write(buffer, REC_WRITE_BUF_SIZE);
         tot_rec_bytes += REC_WRITE_BUF_SIZE;
-        // MONPORT.print("Info:    SD write, us=");
+        // MONPORT.print("Audio:   SD write, us=");
         // MONPORT.println(usec);
     }
 }
@@ -165,7 +164,7 @@ void stopRecording(String path) {
 
         writeWaveHeader(path, tot_rec_bytes);
     }
-    MONPORT.println("Info:    Recording stopped, writing metadata");
+    MONPORT.println("Audio:   Recording stopped, writing metadata");
     createMetadata(&next_record);
 }
 
@@ -183,7 +182,7 @@ void pauseRecording(void) {
     next_record.ts = last_record.ts + ((rec_window.period.Hour * SECS_PER_HOUR) + (rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second);
     rec_path = "--";
     next_record.cnt++;
-    MONPORT.printf("Info:    Pausing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
+    MONPORT.printf("Audio:   Pausing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     stopLED(&leds[LED_RECORD]);
 }
 
@@ -225,7 +224,7 @@ void finishRecording(void) {
     resetRecInfo(&next_record);
     breakTime(now(), tm);
     rec_path = "--";
-    MONPORT.printf("Info:    Finishing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
+    MONPORT.printf("Audio:   Finishing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     if((time_source == TSOURCE_GPS) || (time_source == TSOURCE_PHONE)) time_source = TSOURCE_TEENSY;
     if((gps_source == GPS_RECORDER) || (gps_source == GPS_PHONE)) gps_source = GPS_NONE;
     startLED(&leds[LED_RECORD], LED_MODE_WARNING_SHORT);
@@ -264,7 +263,7 @@ void setHpGain(void) {
     float gain;
     vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
     gain = (float)vol_ctrl * 0.8 / 1023.0;
-    // MONPORT.printf("Info:    gain = %1.2f\n", gain);
+    // MONPORT.printf("Audio:   gain = %1.2f\n", gain);
     sgtl5000.volume(gain);
 }
 

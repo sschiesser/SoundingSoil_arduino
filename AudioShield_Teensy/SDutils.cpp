@@ -45,7 +45,7 @@ void initSDcard(void) {
     SPI.setSCK(SDCARD_SCK_PIN);
     if(!(SD.begin(SDCARD_CS_PIN))) {
         while(1) {
-            MONPORT.printf("Error: Unable to access the SD card on CS: %d, MOSI: %d, SCK: %d\n", SDCARD_CS_PIN, SDCARD_MOSI_PIN, SDCARD_SCK_PIN);
+            MONPORT.printf("SD:      Unable to access the SD card on CS: %d, MOSI: %d, SCK: %d\n", SDCARD_CS_PIN, SDCARD_MOSI_PIN, SDCARD_SCK_PIN);
             startLED(&leds[LED_RECORD], LED_MODE_ON);
             startLED(&leds[LED_MONITOR], LED_MODE_ON);
             startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
@@ -161,23 +161,23 @@ void createMetadata(struct recInfo* rec) {
     tmElements_t tm;
     File fh;
     fh = SD.open(rec->mpath.c_str(), FILE_WRITE);
-    MONPORT.printf("Info:    Opening: %s\n", rec->mpath.c_str());
+    MONPORT.printf("SD:      Opening: %s\n", rec->mpath.c_str());
     if(fh) {
         fh.printf("Recording meta-data (file: %s)\n", rec->mpath.c_str());
         fh.printf("----------------------------------------------\n");
         fh.printf("- recording path: %s\n", rec->rpath.c_str());
-        // MONPORT.printf("Info:    Recording meta-data (file: %s)\n", rec->mpath.c_str());
-        // MONPORT.printf("Info:   ----------------------------------------------\n");
-        // MONPORT.printf("Info:   - recording path: %s\n", rec->rpath.c_str());
+        // MONPORT.printf("SD:      Recording meta-data (file: %s)\n", rec->mpath.c_str());
+        // MONPORT.printf("SD:      ----------------------------------------------\n");
+        // MONPORT.printf("SD:      - recording path: %s\n", rec->rpath.c_str());
         breakTime(rec->ts, tm);
         fh.printf("- recording date/time: %02d.%02d.%d, %d:%02d'%02d\"\n", tm.Day, tm.Month, (tm.Year+1970), tm.Hour, tm.Minute, tm.Second);
-        // MONPORT.printf("Info:   - recording date/time: %02d.%02d.%d, %d:%02d'%02d\"\n", tm.Day, tm.Month, (tm.Year+1970), tm.Hour, tm.Minute, tm.Second);
+        // MONPORT.printf("SD:      - recording date/time: %02d.%02d.%d, %d:%02d'%02d\"\n", tm.Day, tm.Month, (tm.Year+1970), tm.Hour, tm.Minute, tm.Second);
         fh.printf("- recording duration/period: %d:%02d'%02d\" / %d:%02d'%02d\"\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->per.Hour, rec->per.Minute, rec->per.Second);
         fh.printf("- recording #%d of %d\n", (rec->cnt+1), rec->rec_tot);
         fh.printf("- device position (lat, long (DD)): %0.5f, %0.5f\n", rec->gps_lat, rec->gps_long);
-        // MONPORT.printf("Info:   - recording duration/period: %d:%02d'%02d\" / %d:%02d'%02d\"\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->per.Hour, rec->per.Minute, rec->per.Second);
-        // MONPORT.printf("Info:   - recording #%d of %d\n", (rec->cnt+1), rec->rec_tot);
-        // MONPORT.printf("Info:   - position (lat, long (DD)): %0.5f, %0.5f\n", rec->gps_lat, rec->gps_long);
+        // MONPORT.printf("SD:      - recording duration/period: %d:%02d'%02d\" / %d:%02d'%02d\"\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->per.Hour, rec->per.Minute, rec->per.Second);
+        // MONPORT.printf("SD:      - recording #%d of %d\n", (rec->cnt+1), rec->rec_tot);
+        // MONPORT.printf("SD:      - position (lat, long (DD)): %0.5f, %0.5f\n", rec->gps_lat, rec->gps_long);
     }
     fh.close();
 }

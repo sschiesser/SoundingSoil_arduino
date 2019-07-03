@@ -77,14 +77,14 @@ bool gpsGetData(void) {
 #endif
 		gps.f_get_position(&cur_lat, &cur_long, &age);
 		if((age == TinyGPS::GPS_INVALID_AGE)) {
-			MONPORT.printf("Info:    age: %d\n");
+			MONPORT.printf("GPS:     age: %d\n");
 		}
 		else {
 			fix_found = true;
 		}
 		retries++;
 	} while((!fix_found) && (retries < GPS_ENCODE_RETRIES_MAX));
-	MONPORT.printf("Info:    Fix found? %d", fix_found);
+    MONPORT.printf("GPS:     Fix found? %d", fix_found);
 	if(fix_found) {
         next_record.gps_lat = cur_lat;
         next_record.gps_long = cur_long;
