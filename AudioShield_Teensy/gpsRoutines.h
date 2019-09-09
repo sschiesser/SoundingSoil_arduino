@@ -16,8 +16,8 @@
 // #define GPS_TX_PIN						     26
 // #define GPS_RX_PIN						     27
 
-#define GPS_ENCODE_TIME_MS                      1000
-#define GPS_ENCODE_RETRIES_MAX                  3
+#define GPS_ENCODE_TIME_MS                      1000//1000
+#define GPS_ENCODE_RETRIES_MAX                  3//3
 
 extern TinyGPS                                  gps;
 extern float                                    cur_lat, cur_long;

@@ -24,7 +24,7 @@ float											cur_lat, cur_long;
 
 void initGps(void) {
 	pinMode(GPS_WAKEUP_PIN, OUTPUT);
-	digitalWrite(GPS_WAKEUP_PIN, LOW);
+    gpsEnable(false);
 }
 
 /* gpsPowerOn(void)
@@ -71,18 +71,19 @@ bool gpsGetData(void) {
 			gpsSendString(gps, teststrs[i]);
 		}
 #else
-		gpsEnable(true);
+		// gpsEnable(true);
 		gpsEncodeData(GPS_ENCODE_TIME_MS);
-		gpsEnable(false);
+		// gpsEnable(false);
 #endif
 		gps.f_get_position(&cur_lat, &cur_long, &age);
 		if((age == TinyGPS::GPS_INVALID_AGE)) {
-			if(debug) MONPORT.printf("GPS:     age: %d\n");
+			if(debug) MONPORT.printf("GPS:     age: %d\n", age);
 		}
 		else {
 			fix_found = true;
 		}
 		retries++;
+    // } while(!fix_found);
 	} while((!fix_found) && (retries < GPS_ENCODE_RETRIES_MAX));
     if(debug) MONPORT.printf("GPS:     Fix found? %d", fix_found);
 	if(fix_found) {

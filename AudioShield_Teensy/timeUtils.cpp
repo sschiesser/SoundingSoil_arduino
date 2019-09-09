@@ -32,7 +32,7 @@ SnoozeBlock													snooze_cpu;
  * OUT:	- current Teensy time (time_t)
  */
 time_t getTeensy3Time() {
-    Teensy3Clock.compensate(-13383);
+    Teensy3Clock.compensate(0);
 	return Teensy3Clock.get();
 }
 

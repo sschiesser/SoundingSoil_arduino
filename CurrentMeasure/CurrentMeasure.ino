@@ -26,7 +26,7 @@ void setup(void)
   // Or to use a lower 16V, 400mA range (higher precision on volts and amps):
   ina219.setCalibration_16V_400mA();
 
-  Serial.println("Measuring voltage and current with INA219 ...");
+//  Serial.println("Measuring voltage and current with INA219 ...");
 }
 
 void loop(void) 
@@ -60,6 +60,6 @@ void loop(void)
 //  for(int i=0; i < displayCurrent; i++) {
 //    Serial.print(" ");
 //  }
-  Serial.println(abs(current_avg));
+  Serial.println((current_avg));
 //  Serial.print(";");
 }
