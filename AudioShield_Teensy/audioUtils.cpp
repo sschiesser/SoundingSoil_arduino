@@ -75,7 +75,9 @@ void prepareRecording(bool sync) {
     dur = (unsigned long)((float)dur * 1.03);
     if(debug) MONPORT.printf("Audio:   Set recording duration to %d\n", dur);
     if(debug) MONPORT.printf("Audio:   Preparing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
-    alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
+    if(dur != 0) {
+        alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
+    }
 }
 
 /* setRecInfos(struct recInfos*, String)
