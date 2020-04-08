@@ -7,7 +7,7 @@ Mixing different code bases:
 */
 #include "main.h"
 
-#define ALWAYS_ON_MODE							0
+#define ALWAYS_ON_MODE							1
 
 // install driver into SnoozeBlock
 // SnoozeBlock 									snooze_config(button_wakeup);
@@ -67,9 +67,9 @@ SLEEP:
     // switch off i2s clock before sleeping
     SIM_SCGC6 &= ~SIM_SCGC6_I2S;
     Alarm.delay(50);
-    REDUCED_CPU_BLOCK(snooze_cpu) {
+    // REDUCED_CPU_BLOCK(snooze_cpu) {
         who = Snooze.hibernate(snooze_config);	// returns module that woke up processor
-    }
+    // }
     setTimeSource(); // Re-adjust time, since Snooze doesn't keep it
     if(who == WAKESOURCE_RTC) {
         // Snooze wake-up -> remove alarm and re-start recording
