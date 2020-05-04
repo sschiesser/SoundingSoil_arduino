@@ -13,6 +13,11 @@ Mixing different code bases:
 // SnoozeBlock 									snooze_config(button_wakeup);
 
 bool                                            debug = true;
+#if(ALWAYS_ON_MODE==1)
+bool                            sleeping_permitted = false;
+#else
+bool                            sleeping_permitted = true;
+#endif
 
 volatile struct wState 							working_state;
 struct rWindow									rec_window;
@@ -57,7 +62,7 @@ void loop() {
 #if(ALWAYS_ON_MODE==1)
     goto WORK;
 #else
-    goto WORK;
+    goto SLEEP;
 SLEEP:
     int who;
     // you need to update before sleeping.
@@ -92,7 +97,7 @@ WORK:
     Alarm.delay(0); 							// needed for TimeAlarms timers
     but_rec.update();							// }
     but_mon.update();							// } needed for button bounces
-    but_blue.update();							// }
+    but_blue.update();						// }
 
     // Button edge detection -> notification
     if(but_rec.fallingEdge()) button_call = (enum bCalls)BUTTON_RECORD_PIN;
@@ -100,8 +105,8 @@ WORK:
     if(but_blue.fallingEdge()) button_call = (enum bCalls)BUTTON_BLUETOOTH_PIN;
 
     // Centralized button actions from WORK or SLEEP mode...
-#if(ALWAYS_ON_MODE==1)
-#else
+// #if(ALWAYS_ON_MODE==1)
+// #else
     // ...dealing with IDLE and WAIT modes
     if((button_call == BUTTON_MONITOR_PIN) || (button_call == BUTTON_BLUETOOTH_PIN)) {
         // button interruption during REC IDLE mode -> need to set an new alarm & change to WAIT mode
@@ -113,13 +118,13 @@ WORK:
             }
         }
         // button interruption during REC WAIT mode -> need to set a new snooze & change to IDLE mode
-        else if(working_state.rec_state == RECSTATE_WAIT) {
+        else if( (working_state.rec_state == RECSTATE_WAIT) && (sleeping_permitted == true) ) {
             removeWaitAlarm();
             setIdleSnooze();
             working_state.rec_state = RECSTATE_IDLE;
         }
     }
-#endif // ALWAYS_ON_MODE
+// #endif // ALWAYS_ON_MODE
 
     // ...standard button actions
     if(button_call == BUTTON_RECORD_PIN) {
@@ -200,7 +205,7 @@ WORK:
             if(debug) MONPORT.printf("Info:    Requesting REC PAUSE. States: BT %d, BLE %d, REC %d, MON %d\n", working_state.bt_state, working_state.ble_state, working_state.rec_state, working_state.mon_state);
             stopRecording(next_record.rpath);
             pauseRecording();
-            if( (working_state.mon_state != MONSTATE_OFF) || (working_state.ble_state != BLESTATE_OFF) || (working_state.bt_state != BTSTATE_OFF) ) {
+            if( (working_state.mon_state != MONSTATE_OFF) || (working_state.ble_state != BLESTATE_OFF) || (working_state.bt_state != BTSTATE_OFF) || (sleeping_permitted == false) ) {
                 setWaitAlarm();
                 working_state.rec_state = RECSTATE_WAIT;
                 ready_to_sleep = false;
@@ -418,7 +423,7 @@ WORK:
                 // if(working_state.rec_state == RECSTATE_OFF) {
                 //     ready_to_sleep = true;
                 // }
-                if(working_state.rec_state == RECSTATE_WAIT) {
+                if( (working_state.rec_state == RECSTATE_WAIT) && (sleeping_permitted == true) ) {
                     removeWaitAlarm();
                     setIdleSnooze();
                     working_state.rec_state = RECSTATE_IDLE;

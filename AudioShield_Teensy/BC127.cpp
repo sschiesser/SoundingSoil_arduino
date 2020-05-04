@@ -314,6 +314,7 @@ bool sendCmdOut(int msg) {
                 devString.concat(String(dev_list[i].strength));
                 cmdLine = "SEND " + String(BLE_conn_id) + " INQ " + devString + "\r";
                 BLUEPORT.print(cmdLine);
+                Alarm.delay(80);
                 if(debug) MONPORT.printf("Info:   %s\n", cmdLine.c_str());
             }
             cmdLine = "";
@@ -369,7 +370,7 @@ bool sendCmdOut(int msg) {
     // Send the prepared command line to UART
     BLUEPORT.print(cmdLine);
     // Wait some time to let the sent line finish
-    Alarm.delay(50);
+    Alarm.delay(80);
     // Send positive confirmation
     return true;
 }

@@ -18,7 +18,7 @@ extern SnoozeDigital 					button_wakeup; 	// Wakeup pins on Teensy 3.6:
 extern SnoozeAlarm						snooze_rec;
 extern SnoozeAlarm						snooze_led;
 extern SnoozeBlock 						snooze_config;
-extern SnoozeBlock						snooze_cpu;
+// extern SnoozeBlock						snooze_cpu;
 
 // Time sources
 enum tSources {
