@@ -14,10 +14,11 @@ extern AlarmID_t								alarm_wait_id;
 extern AlarmID_t								alarm_adv_id;
 
 extern SnoozeDigital 					button_wakeup; 	// Wakeup pins on Teensy 3.6:
-														// 2,4,6,7,9,10,11,13,16,21,22,26,30,33
+														                  // 2,4,6,7,9,10,11,13,16,21,22,26,30,33
 extern SnoozeAlarm						snooze_rec;
 extern SnoozeAlarm						snooze_led;
 extern SnoozeBlock 						snooze_config;
+extern SnoozeUSBSerial        snooze_usb;
 // extern SnoozeBlock						snooze_cpu;
 
 // Time sources

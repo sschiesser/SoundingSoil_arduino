@@ -28,7 +28,7 @@
 // SdFat													SD;
 
 // Monitoring serial port
-#define MONPORT                             Serial
+// #define snooze_usb                             Serial
 
 #define BLEADV_TIMEOUT_S                    30
 
@@ -40,12 +40,12 @@
 
 // Default recording window values
 // WARNING!! If duration < 7, the FIRST recording will be 7!!
-#define RWIN_DUR_DEF_SEC                    0 // }
-#define RWIN_DUR_DEF_MIN                    5 // } Zero values -> continuous recording
+#define RWIN_DUR_DEF_SEC                    20//0 // }
+#define RWIN_DUR_DEF_MIN                    0//5 // } Zero values -> continuous recording
 #define RWIN_DUR_DEF_HOUR                   0 // }
-#define RWIN_PER_DEF_SEC                    0
+#define RWIN_PER_DEF_SEC                    30//0
 #define RWIN_PER_DEF_MIN                    0
-#define RWIN_PER_DEF_HOUR                   1
+#define RWIN_PER_DEF_HOUR                   0//1
 #define RWIN_OCC_DEF                        24 // Zero value -> infinite repetitions
 // DO NOT CHANGE!! D/M/Y values have to be set to
 // minimum (1.1.1970) in order to obtain correct rwin times
