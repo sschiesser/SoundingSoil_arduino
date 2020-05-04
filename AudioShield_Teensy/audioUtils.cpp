@@ -72,7 +72,7 @@ void prepareRecording(bool sync) {
     rec_path = createSDpath();
     setRecInfos(&next_record, rec_path);
     unsigned long dur = next_record.dur.Second + (next_record.dur.Minute * SECS_PER_MIN) + (next_record.dur.Hour * SECS_PER_HOUR);
-    dur = (unsigned long)((float)dur * 1.03);
+    dur = (unsigned long)((float)dur * REC_DUR_CORRECTION_RATIO);
     if(debug) snooze_usb.printf("Audio:   Set recording duration to %d\n", dur);
     if(debug) snooze_usb.printf("Audio:   Preparing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     if(dur != 0) {
