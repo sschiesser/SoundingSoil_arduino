@@ -222,9 +222,8 @@ WORK:
       sendCmdOut(BCNOT_REC_STATE);
     }
 
-    // Setting own States
+    // Setting sleep flag
     sleep_flags.rec_ready = false;
-    rts = setRts(sleep_flags);
 
     break;
   }
@@ -252,20 +251,21 @@ WORK:
       sendCmdOut(BCNOT_REC_STATE);
     }
 
-    // Setting own states
-    // sf.rec_ready = false;
-    // rts = setRts(struct sf);
-    if(debug) snooze_usb.printf("sf: %b %b %b %b -> rts? %d", sleep_flags.rec_ready, sleep_flags.mon_ready, sleep_flags.ble_ready, sleep_flags.bt_ready, rts);
+    // Setting sleep flag
+    sleep_flags.rec_ready = false;
 
     break;
   }
 
   case RECSTATE_REQ_PAUSE: {
+    // Debug...
     if (debug)
       snooze_usb.printf("Info:    Requesting REC PAUSE. States: BT %d, BLE %d, "
                         "REC %d, MON %d\n",
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
+
+    // Doing things
     stopRecording(next_record.rpath);
     pauseRecording();
     if ((working_state.mon_state != MONSTATE_OFF) ||
@@ -274,12 +274,13 @@ WORK:
         (sleeping_permitted == false)) {
       setWaitAlarm();
       working_state.rec_state = RECSTATE_WAIT;
-      rts = false;
+      sleep_flags.rec_ready = false;
     } else {
       setIdleSnooze();
       working_state.rec_state = RECSTATE_IDLE;
-      rts = true;
+      sleep_flags.rec_ready = true;
     }
+
     if (working_state.ble_state == BLESTATE_CONNECTED) {
       sendCmdOut(BCNOT_REC_NEXT);
       sendCmdOut(BCNOT_REC_STATE);
@@ -291,30 +292,29 @@ WORK:
   case RECSTATE_ON: {
     continueRecording();
     detectPeaks();
-    rts = false;
+    sleep_flags.rec_ready = false;
     break;
   }
 
   case RECSTATE_REQ_OFF: {
+    // Debug...
     if (debug)
       snooze_usb.printf("Info:    Requesting REC OFF. States: BT %d, BLE %d, "
                         "REC %d, MON %d\n",
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
+
     Alarm.free(alarm_wait_id);
     Alarm.free(alarm_rec_id);
-
     stopRecording(next_record.rpath);
     finishRecording();
     stopLED(&leds[LED_PEAK]);
     working_state.rec_state = RECSTATE_OFF;
-    if ((working_state.mon_state == MONSTATE_OFF) &&
-        (working_state.ble_state == BLESTATE_OFF) &&
-        (working_state.bt_state == BTSTATE_OFF)) {
-      rts = true;
-    } else {
-      rts = false;
-    }
+    sleep_flags.rec_ready = true;
+    sleep_flags.mon_ready = (working_state.mon_state == MONSTATE_OFF ? true : false);
+    sleep_flags.ble_ready = (working_state.ble_state == BLESTATE_OFF ? true : false);
+    sleep_flags.bt_ready = (working_state.bt_state == BTSTATE_OFF ? true : false);
+
     if (working_state.ble_state == BLESTATE_CONNECTED) {
       sendCmdOut(BCNOT_REC_STATE);
       sendCmdOut(BCNOT_FILEPATH);
@@ -323,31 +323,33 @@ WORK:
   }
 
   case RECSTATE_OFF: {
-    if ((working_state.mon_state == MONSTATE_OFF) &&
-        (working_state.ble_state == BLESTATE_OFF) &&
-        (working_state.bt_state == BTSTATE_OFF)) {
-      rts = true;
-    } else {
-      rts = false;
-    }
+    sleep_flags.rec_ready = true;
+    sleep_flags.mon_ready = (working_state.mon_state == MONSTATE_OFF ? true : false);
+    sleep_flags.ble_ready = (working_state.ble_state == BLESTATE_OFF ? true : false);
+    sleep_flags.bt_ready = (working_state.bt_state == BTSTATE_OFF ? true : false);
     break;
   }
 
   default:
     break;
   }
+
   // MON state actions
   switch (working_state.mon_state) {
   case MONSTATE_REQ_ON: {
+    // Debug...
     if (debug)
       snooze_usb.printf(
           "Info:    Requesting MON ON. States: BT %d, BLE %d, REC %d, MON %d\n",
           working_state.bt_state, working_state.ble_state,
           working_state.rec_state, working_state.mon_state);
+
+    // Doing things
     startLED(&leds[LED_MONITOR], LED_MODE_ON);
     startMonitoring();
     working_state.mon_state = MONSTATE_ON;
-    rts = false;
+    sleep_flags.mon_ready = false;
+
     if ((working_state.bt_state == BTSTATE_CONNECTED) ||
         (working_state.bt_state == BTSTATE_PLAY)) {
       sendCmdOut(BCCMD_MON_START);
@@ -369,16 +371,18 @@ WORK:
       detectPeaks();
       peak_interval = 0;
     }
-    rts = false;
+    sleep_flags.mon_ready = false;
     break;
   }
 
   case MONSTATE_REQ_OFF: {
+    // Debug...
     if (debug)
       snooze_usb.printf("Info:    Requesting MON OFF. States: BT %d, BLE %d, "
                         "REC %d, MON %d\n",
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
+
     stopMonitoring();
     stopLED(&leds[LED_MONITOR]);
     stopLED(&leds[LED_PEAK]);
@@ -389,11 +393,9 @@ WORK:
     }
     working_state.mon_state = MONSTATE_OFF;
 
-    if ((working_state.ble_state == BLESTATE_OFF) &&
-        (working_state.bt_state == BTSTATE_OFF)) {
-      if ((working_state.rec_state == RECSTATE_OFF) ||
-          (working_state.rec_state == RECSTATE_IDLE)) {
-        rts = true;
+    if ((working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF)) {
+      if ((working_state.rec_state == RECSTATE_OFF) || (working_state.rec_state == RECSTATE_IDLE)) {
+        sleep_flags.mon_ready = true;
       }
       // else if(working_state.rec_state == RECSTATE_WAIT) {
       //     // setIdleSnooze();
@@ -401,7 +403,7 @@ WORK:
       //     rts = true;
       // }
       else {
-        rts = false;
+        sleep_flags.mon_ready = false;
       }
     }
 
@@ -426,12 +428,14 @@ WORK:
     //         rts = false;
     //     }
     // }
+    sleep_flags.mon_ready = true;
     break;
   }
 
   default:
     break;
   }
+
   // BLE state actions
   switch (working_state.ble_state) {
   case BLESTATE_REQ_ADV: {
@@ -441,7 +445,6 @@ WORK:
                         "REC %d, MON %d\n",
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
-    // Debug...
 
     // BT state check
     if ((working_state.bt_state == BTSTATE_CONNECTED) ||
@@ -456,8 +459,7 @@ WORK:
 
     bc127AdvStart();
     working_state.ble_state = BLESTATE_ADV;
-    // sleep_flags.bt_ready = false;
-    // rts = setRts(sleep_flags);
+    sleep_flags.ble_ready = false;
     break;
   }
 
@@ -468,7 +470,6 @@ WORK:
                         "REC %d, MON %d\n",
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
-    // Debug...
 
     Alarm.free(alarm_adv_id);
 
@@ -482,8 +483,7 @@ WORK:
 
     // Setting states
     working_state.ble_state = BLESTATE_CONNECTED;
-    // sleep_flags.ble_ready = false;
-    // rts = setRts(sleep_flags);
+    sleep_flags.ble_ready = false;
 
     break;
   }
@@ -493,29 +493,34 @@ WORK:
         (working_state.bt_state == BTSTATE_PLAY)) {
       startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
     }
-    rts = false;
+    sleep_flags.ble_ready = false;
     break;
   }
 
   case BLESTATE_REQ_DISC: {
+    // Debug...
     if (debug)
       snooze_usb.printf("Info:    Requesting BLE DISC. States: BT %d, BLE %d, "
                         "REC %d, MON %d\n",
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
+
     BLE_conn_id = 0;
+    // If a BT classic device (headset) is connected, re-advertise for 30 seconds. Then just switch off the bluetooth link
     if ((working_state.bt_state == BTSTATE_CONNECTED) ||
         (working_state.bt_state == BTSTATE_PLAY)) {
       working_state.ble_state = BLESTATE_REQ_ADV;
+      sleep_flags.ble_ready = false;
     } else {
       working_state.ble_state = BLESTATE_REQ_OFF;
+      sleep_flags.ble_ready = true;
     }
 
-    rts = false;
     break;
   }
 
   case BLESTATE_REQ_OFF: {
+    // Debug...
     if (debug)
       snooze_usb.printf("Info:    Requesting BLE OFF. States: BT %d, BLE %d, "
                         "REC %d, MON %d\n",
@@ -535,23 +540,25 @@ WORK:
       stopLED(&leds[LED_BLUETOOTH]);
     }
     working_state.ble_state = BLESTATE_OFF;
+    sleep_flags.ble_ready = true;
+
     if (working_state.bt_state == BTSTATE_OFF) {
       if ((working_state.rec_state == RECSTATE_WAIT) &&
           (sleeping_permitted == true)) {
         removeWaitAlarm();
         setIdleSnooze();
         working_state.rec_state = RECSTATE_IDLE;
+        sleep_flags.rec_ready = true;
       } else if (working_state.rec_state == RECSTATE_ON) {
-        rts = false;
+        sleep_flags.rec_ready = false;
       } else if (working_state.mon_state != MONSTATE_OFF) {
         working_state.mon_state = MONSTATE_REQ_OFF;
-        rts = false;
+        sleep_flags.mon_ready = false;
       } else {
-        rts = true;
+        sleep_flags.mon_ready = true;
       }
-
     } else {
-      rts = false;
+      sleep_flags.bt_ready = false;
     }
     break;
   }
@@ -559,17 +566,21 @@ WORK:
   default:
     break;
   }
+
   // BT state actions
   switch (working_state.bt_state) {
   case BTSTATE_REQ_CONN: {
+    // Debug...
     if (debug)
       snooze_usb.printf("Info:    Requesting BT CONN. States: BT %d, BLE %d, "
                         "REC %d, MON %d\n",
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
+
     // Alarm.free(alarm_adv_id);
     working_state.bt_state = BTSTATE_CONNECTED;
-    rts = false;
+    sleep_flags.bt_ready = false;
+
     if (working_state.ble_state == BLESTATE_CONNECTED) {
       startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
       sendCmdOut(BCNOT_BT_STATE);
@@ -580,33 +591,39 @@ WORK:
   }
 
   case BTSTATE_REQ_DISC: {
+    // Debug...
     if (debug)
       snooze_usb.printf("Info:    Requesting BT DISC. States: BT %d, BLE %d, "
                         "REC %d, MON %d\n",
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
+
     if (working_state.ble_state == BLESTATE_CONNECTED) {
       sendCmdOut(BCCMD_DEV_DISCONNECT1);
       sendCmdOut(BCCMD_DEV_DISCONNECT2);
       startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_SLOW);
       sendCmdOut(BCNOT_BT_STATE);
+      sleep_flags.ble_ready = false;
     } else {
       bc127BlueOff();
       stopLED(&leds[LED_BLUETOOTH]);
       working_state.ble_state = BLESTATE_OFF;
+      sleep_flags.ble_ready = true;
     }
+
+    working_state.mon_state = MONSTATE_REQ_OFF;
     working_state.bt_state = BTSTATE_OFF;
+    sleep_flags.bt_ready = true;
+
     BT_id_a2dp = 0;
     BT_id_avrcp = 0;
     BT_peer_address = "";
     BT_peer_name = "auto";
-    if ((working_state.rec_state == RECSTATE_OFF) &&
-        (working_state.mon_state == MONSTATE_OFF) &&
-        (working_state.ble_state == BLESTATE_OFF)) {
-      rts = true;
-    } else {
-      rts = false;
-    }
+
+    sleep_flags.rec_ready = (working_state.rec_state == RECSTATE_OFF ? true : false);
+    sleep_flags.mon_ready = (working_state.mon_state == MONSTATE_OFF ? true : false);
+    sleep_flags.ble_ready = (working_state.ble_state == BLESTATE_OFF ? true : false);
+
     break;
   }
 
@@ -674,6 +691,7 @@ WORK:
   // }
 
   // Final decision
+  rts = setRts(sleep_flags);
   if (rts)
     goto SLEEP;
   else
@@ -686,8 +704,16 @@ WORK:
  * ----------------------
  */
 bool setRts(struct sfState sf) {
+  static struct sfState sf_old;
+
   bool toRet = (sf.rec_ready & sf.mon_ready & sf.ble_ready & sf.bt_ready);
-  if(debug) snooze_usb.printf("Info:    sf: %d %d %d %d -> rts: %d\n", sf.rec_ready, sf.mon_ready, sf.ble_ready, sf.bt_ready, toRet);
+  if( (sf.rec_ready != sf_old.rec_ready) || (sf.mon_ready != sf_old.mon_ready) || (sf.ble_ready != sf_old.ble_ready) || (sf.bt_ready != sf_old.bt_ready) ) {
+    if(debug) snooze_usb.printf("Info:    sf: %d %d %d %d -> rts: %d\n", sf.rec_ready, sf.mon_ready, sf.ble_ready, sf.bt_ready, toRet);
+    sf_old.rec_ready = sf.rec_ready;
+    sf_old.mon_ready = sf.mon_ready;
+    sf_old.ble_ready = sf.ble_ready;
+    sf_old.bt_ready = sf.bt_ready;
+  }
   return toRet;
 }
 
