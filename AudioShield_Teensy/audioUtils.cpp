@@ -72,9 +72,9 @@ void prepareRecording(bool sync) {
     rec_path = createSDpath();
     setRecInfos(&next_record, rec_path);
     unsigned long dur = next_record.dur.Second + (next_record.dur.Minute * SECS_PER_MIN) + (next_record.dur.Hour * SECS_PER_HOUR);
-    dur = (unsigned long)((float)dur * 1.03);
-    if(debug) MONPORT.printf("Audio:   Set recording duration to %d\n", dur);
-    if(debug) MONPORT.printf("Audio:   Preparing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
+    dur = (unsigned long)((float)dur * REC_DUR_CORRECTION_RATIO);
+    if(debug) snooze_usb.printf("Audio:   Set recording duration to %d\n", dur);
+    if(debug) snooze_usb.printf("Audio:   Preparing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     if(dur != 0) {
         alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
     }
@@ -116,7 +116,7 @@ void startRecording(String path) {
         tot_rec_bytes = 0;
     }
     else {
-        if(debug) MONPORT.println("Audio:   file opening error");
+        if(debug) snooze_usb.println("Audio:   file opening error");
         working_state.rec_state = RECSTATE_REQ_OFF;
         // while(1);
     }
@@ -142,8 +142,8 @@ void continueRecording(void) {
         // elapsedMicros usec = 0;
         frec.write(buffer, REC_WRITE_BUF_SIZE);
         tot_rec_bytes += REC_WRITE_BUF_SIZE;
-        // if(debug) MONPORT.print("Audio:   SD write, us=");
-        // if(debug) MONPORT.println(usec);
+        // if(debug) snooze_usb.print("Audio:   SD write, us=");
+        // if(debug) snooze_usb.println(usec);
     }
 }
 
@@ -166,7 +166,7 @@ void stopRecording(String path) {
 
         writeWaveHeader(path, tot_rec_bytes);
     }
-    if(debug) MONPORT.println("Audio:   Recording stopped, writing metadata");
+    if(debug) snooze_usb.println("Audio:   Recording stopped, writing metadata");
     createMetadata(&next_record);
 }
 
@@ -184,7 +184,7 @@ void pauseRecording(void) {
     next_record.ts = last_record.ts + ((rec_window.period.Hour * SECS_PER_HOUR) + (rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second);
     rec_path = "--";
     next_record.cnt++;
-    if(debug) MONPORT.printf("Audio:   Pausing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
+    if(debug) snooze_usb.printf("Audio:   Pausing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     stopLED(&leds[LED_RECORD]);
 }
 
@@ -226,7 +226,7 @@ void finishRecording(void) {
     resetRecInfo(&next_record);
     breakTime(now(), tm);
     rec_path = "--";
-    if(debug) MONPORT.printf("Audio:   Finishing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
+    if(debug) snooze_usb.printf("Audio:   Finishing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
     if((time_source == TSOURCE_GPS) || (time_source == TSOURCE_PHONE)) time_source = TSOURCE_TEENSY;
     if((gps_source == GPS_RECORDER) || (gps_source == GPS_PHONE)) gps_source = GPS_NONE;
     startLED(&leds[LED_RECORD], LED_MODE_WARNING_SHORT);
@@ -265,7 +265,7 @@ void setHpGain(void) {
     float gain;
     vol_ctrl = analogRead(AUDIO_VOLUME_PIN);
     gain = (float)vol_ctrl * 0.8 / 1023.0;
-    // if(debug) MONPORT.printf("Audio:   gain = %1.2f\n", gain);
+    // if(debug) snooze_usb.printf("Audio:   gain = %1.2f\n", gain);
     sgtl5000.volume(gain);
 }
 

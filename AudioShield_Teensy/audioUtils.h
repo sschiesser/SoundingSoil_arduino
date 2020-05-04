@@ -6,6 +6,8 @@
 
 #include "main.h"
 
+#define REC_DUR_CORRECTION_RATIO            1.00
+
 #define REC_READ_BUF_SIZE                   256
 #define REC_WRITE_BUF_SIZE                  (2 * REC_READ_BUF_SIZE)
 
