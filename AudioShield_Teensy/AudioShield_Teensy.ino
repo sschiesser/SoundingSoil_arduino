@@ -306,14 +306,25 @@ WORK:
 
     Alarm.free(alarm_wait_id);
     Alarm.free(alarm_rec_id);
+    time_t now = getTeensy3Time();
+    next_record.tsp = now;
+    time_t delta = next_record.tsp - next_record.tss;
+    breakTime(delta, next_record.dur);
+    if (debug)
+      snooze_usb.printf("Info:    Record duration changed to %02dh%02dm%02ds\n",
+                        next_record.dur.Hour, next_record.dur.Minute,
+                        next_record.dur.Second);
     stopRecording(next_record.rpath);
     finishRecording();
     stopLED(&leds[LED_PEAK]);
     working_state.rec_state = RECSTATE_OFF;
     sleep_flags.rec_ready = true;
-    sleep_flags.mon_ready = (working_state.mon_state == MONSTATE_OFF ? true : false);
-    sleep_flags.ble_ready = (working_state.ble_state == BLESTATE_OFF ? true : false);
-    sleep_flags.bt_ready = (working_state.bt_state == BTSTATE_OFF ? true : false);
+    sleep_flags.mon_ready =
+        (working_state.mon_state == MONSTATE_OFF ? true : false);
+    sleep_flags.ble_ready =
+        (working_state.ble_state == BLESTATE_OFF ? true : false);
+    sleep_flags.bt_ready =
+        (working_state.bt_state == BTSTATE_OFF ? true : false);
 
     if (working_state.ble_state == BLESTATE_CONNECTED) {
       sendCmdOut(BCNOT_REC_STATE);
@@ -324,9 +335,12 @@ WORK:
 
   case RECSTATE_OFF: {
     sleep_flags.rec_ready = true;
-    sleep_flags.mon_ready = (working_state.mon_state == MONSTATE_OFF ? true : false);
-    sleep_flags.ble_ready = (working_state.ble_state == BLESTATE_OFF ? true : false);
-    sleep_flags.bt_ready = (working_state.bt_state == BTSTATE_OFF ? true : false);
+    sleep_flags.mon_ready =
+        (working_state.mon_state == MONSTATE_OFF ? true : false);
+    sleep_flags.ble_ready =
+        (working_state.ble_state == BLESTATE_OFF ? true : false);
+    sleep_flags.bt_ready =
+        (working_state.bt_state == BTSTATE_OFF ? true : false);
     break;
   }
 
@@ -393,8 +407,10 @@ WORK:
     }
     working_state.mon_state = MONSTATE_OFF;
 
-    if ((working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF)) {
-      if ((working_state.rec_state == RECSTATE_OFF) || (working_state.rec_state == RECSTATE_IDLE)) {
+    if ((working_state.ble_state == BLESTATE_OFF) &&
+        (working_state.bt_state == BTSTATE_OFF)) {
+      if ((working_state.rec_state == RECSTATE_OFF) ||
+          (working_state.rec_state == RECSTATE_IDLE)) {
         sleep_flags.mon_ready = true;
       }
       // else if(working_state.rec_state == RECSTATE_WAIT) {
@@ -506,7 +522,8 @@ WORK:
                         working_state.rec_state, working_state.mon_state);
 
     BLE_conn_id = 0;
-    // If a BT classic device (headset) is connected, re-advertise for 30 seconds. Then just switch off the bluetooth link
+    // If a BT classic device (headset) is connected, re-advertise for 30
+    // seconds. Then just switch off the bluetooth link
     if ((working_state.bt_state == BTSTATE_CONNECTED) ||
         (working_state.bt_state == BTSTATE_PLAY)) {
       working_state.ble_state = BLESTATE_REQ_ADV;
@@ -620,9 +637,12 @@ WORK:
     BT_peer_address = "";
     BT_peer_name = "auto";
 
-    sleep_flags.rec_ready = (working_state.rec_state == RECSTATE_OFF ? true : false);
-    sleep_flags.mon_ready = (working_state.mon_state == MONSTATE_OFF ? true : false);
-    sleep_flags.ble_ready = (working_state.ble_state == BLESTATE_OFF ? true : false);
+    sleep_flags.rec_ready =
+        (working_state.rec_state == RECSTATE_OFF ? true : false);
+    sleep_flags.mon_ready =
+        (working_state.mon_state == MONSTATE_OFF ? true : false);
+    sleep_flags.ble_ready =
+        (working_state.ble_state == BLESTATE_OFF ? true : false);
 
     break;
   }
@@ -707,8 +727,12 @@ bool setRts(struct sfState sf) {
   static struct sfState sf_old;
 
   bool toRet = (sf.rec_ready & sf.mon_ready & sf.ble_ready & sf.bt_ready);
-  if( (sf.rec_ready != sf_old.rec_ready) || (sf.mon_ready != sf_old.mon_ready) || (sf.ble_ready != sf_old.ble_ready) || (sf.bt_ready != sf_old.bt_ready) ) {
-    if(debug) snooze_usb.printf("Info:    sf: %d %d %d %d -> rts: %d\n", sf.rec_ready, sf.mon_ready, sf.ble_ready, sf.bt_ready, toRet);
+  if ((sf.rec_ready != sf_old.rec_ready) ||
+      (sf.mon_ready != sf_old.mon_ready) ||
+      (sf.ble_ready != sf_old.ble_ready) || (sf.bt_ready != sf_old.bt_ready)) {
+    if (debug)
+      snooze_usb.printf("Info:    sf: %d %d %d %d -> rts: %d\n", sf.rec_ready,
+                        sf.mon_ready, sf.ble_ready, sf.bt_ready, toRet);
     sf_old.rec_ready = sf.rec_ready;
     sf_old.mon_ready = sf.mon_ready;
     sf_old.ble_ready = sf.ble_ready;

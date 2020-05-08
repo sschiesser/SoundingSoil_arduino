@@ -80,7 +80,7 @@ String createSDpath(void) {
         file_name.concat(buf);
     }
     else {
-        breakTime(next_record.ts, tm);
+        breakTime(next_record.tss, tm);
         sprintf(buf, "u%02d%02d%02d", (tm.Year-30), tm.Month, tm.Day);
         dir_name.concat(buf);
         sprintf(buf, "u%02d%02d%02d.wav", tm.Hour, tm.Minute, tm.Second);
@@ -169,7 +169,7 @@ void createMetadata(struct recInfo* rec) {
         // if(debug) snooze_usb.printf("SD:      Recording meta-data (file: %s)\n", rec->mpath.c_str());
         // if(debug) snooze_usb.printf("SD:      ----------------------------------------------\n");
         // if(debug) snooze_usb.printf("SD:      - recording path: %s\n", rec->rpath.c_str());
-        breakTime(rec->ts, tm);
+        breakTime(rec->tss, tm);
         fh.printf("- recording date/time: %02d.%02d.%d, %d:%02d'%02d\"\n", tm.Day, tm.Month, (tm.Year+1970), tm.Hour, tm.Minute, tm.Second);
         // if(debug) snooze_usb.printf("SD:      - recording date/time: %02d.%02d.%d, %d:%02d'%02d\"\n", tm.Day, tm.Month, (tm.Year+1970), tm.Hour, tm.Minute, tm.Second);
         fh.printf("- recording duration/period: %d:%02d'%02d\" / %d:%02d'%02d\"\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->per.Hour, rec->per.Minute, rec->per.Second);

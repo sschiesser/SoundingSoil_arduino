@@ -1118,7 +1118,7 @@ String notRecNb(void) {
 }
 String notRecNext(void) {
     if(working_state.ble_state == BLESTATE_CONNECTED) {
-        return ("SEND " + String(BLE_conn_id) + " REC_NEXT " + next_record.ts + "\r");
+        return ("SEND " + String(BLE_conn_id) + " REC_NEXT " + next_record.tss + "\r");
     }
     else return "";
 }
@@ -1141,7 +1141,7 @@ String notRecState(void) {
 }
 String notRecTs(void) {
     if(working_state.ble_state == BLESTATE_CONNECTED) {
-        return ("SEND " + String(BLE_conn_id) + " REC_TS " + next_record.ts + "\r");
+        return ("SEND " + String(BLE_conn_id) + " REC_TS " + next_record.tss + "\r");
     }
     else return "";
 }

@@ -35,6 +35,7 @@ extern enum tSources					time_source;
  * FUNCTIONS DECLARATIONS
  * ====================== */
 time_t setTimeSource(void);
+time_t getTeensy3Time(void);
 void setCurTime(time_t cur_time, enum tSources source);
 void setWaitAlarm(void);
 void setIdleSnooze(void);

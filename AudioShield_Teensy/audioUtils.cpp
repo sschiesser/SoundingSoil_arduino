@@ -67,8 +67,8 @@ void prepareRecording(bool sync) {
             startLED(&leds[LED_RECORD], LED_MODE_ON);
         }
     }
-    next_record.ts = now();
-    breakTime(next_record.ts, tm);
+    next_record.tss = now();
+    breakTime(next_record.tss, tm);
     rec_path = createSDpath();
     setRecInfos(&next_record, rec_path);
     unsigned long dur = next_record.dur.Second + (next_record.dur.Minute * SECS_PER_MIN) + (next_record.dur.Hour * SECS_PER_HOUR);
@@ -98,7 +98,7 @@ void setRecInfos(struct recInfo* rec, String path) {
     rec->rpath.concat(path.c_str());
     rec->mpath = rec->rpath;
     rec->mpath.replace(".wav", ".txt");
-    rec->t_set = (bool)rec->ts;
+    rec->t_set = (bool)rec->tss;
     rec->rec_tot = rec_window.occurences;
 }
 
@@ -167,6 +167,7 @@ void stopRecording(String path) {
         writeWaveHeader(path, tot_rec_bytes);
     }
     if(debug) snooze_usb.println("Audio:   Recording stopped, writing metadata");
+
     createMetadata(&next_record);
 }
 
@@ -181,7 +182,7 @@ void pauseRecording(void) {
     breakTime(now(), tm);
 
     last_record = next_record;
-    next_record.ts = last_record.ts + ((rec_window.period.Hour * SECS_PER_HOUR) + (rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second);
+    next_record.tss = last_record.tss + ((rec_window.period.Hour * SECS_PER_HOUR) + (rec_window.period.Minute * SECS_PER_MIN) + rec_window.period.Second);
     rec_path = "--";
     next_record.cnt++;
     if(debug) snooze_usb.printf("Audio:   Pausing recording. Time source: %d, current time: %02dh%02dm%02ds, GPS source: %d\n", time_source, tm.Hour, tm.Minute, tm.Second, gps_source);
@@ -196,7 +197,8 @@ void pauseRecording(void) {
 * OUT:	- none
 */
 void resetRecInfo(struct recInfo* rec) {
-    rec->ts = 0;
+    rec->tss = 0;
+    rec->tsp = 0;
     rec->dur.Hour = 0;
     rec->dur.Minute = 0;
     rec->dur.Second = 0;

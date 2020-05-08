@@ -100,9 +100,9 @@ void setCurTime(time_t cur_time, enum tSources source) {
  */
 void setWaitAlarm(void) {
     tmElements_t tm, tm_disp;
-    time_t next_time = next_record.ts - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX);
-	breakTime((next_record.ts - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX)), tm);
-    breakTime(next_record.ts, tm_disp);
+    time_t next_time = next_record.tss - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX);
+	breakTime((next_record.tss - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX)), tm);
+    breakTime(next_record.tss, tm_disp);
     if(next_time > now()) {
         alarm_wait_id = Alarm.alarmOnce(tm.Hour, tm.Minute, tm.Second, alarmNextRec);
         if(debug) snooze_usb.printf("Time:    Next recording at %02dh%02dm%02ds\n", tm_disp.Hour, tm_disp.Minute, tm_disp.Second);
@@ -115,10 +115,10 @@ void setWaitAlarm(void) {
 }
 
 void setIdleSnooze(void) {
-	time_t delta = next_record.ts - now() - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX);
+	time_t delta = next_record.tss - now() - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX);
 	tmElements_t tm1, tm2;
 	breakTime(delta, tm1);
-	breakTime(next_record.ts, tm2);
+	breakTime(next_record.tss, tm2);
 	snooze_config += snooze_rec;
 	snooze_rec.setRtcTimer(tm1.Hour, tm1.Minute, tm1.Second);
 	if(debug) snooze_usb.printf("Time:    Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
