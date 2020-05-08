@@ -172,8 +172,14 @@ void createMetadata(struct recInfo* rec) {
         breakTime(rec->tss, tm);
         fh.printf("- recording date/time: %02d.%02d.%d, %d:%02d'%02d\"\n", tm.Day, tm.Month, (tm.Year+1970), tm.Hour, tm.Minute, tm.Second);
         // if(debug) snooze_usb.printf("SD:      - recording date/time: %02d.%02d.%d, %d:%02d'%02d\"\n", tm.Day, tm.Month, (tm.Year+1970), tm.Hour, tm.Minute, tm.Second);
-        fh.printf("- recording duration/period: %d:%02d'%02d\" / %d:%02d'%02d\"\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->per.Hour, rec->per.Minute, rec->per.Second);
-        fh.printf("- recording #%d of %d\n", (rec->cnt+1), rec->rec_tot);
+        if(next_record.man_stop) {
+          fh.printf("- recording duration: %d:%02d'%02d\" (manually stopped)\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second);
+          fh.printf("- recording #%d of %d (manually stopped)\n", (rec->cnt+1), rec->rec_tot);
+        }
+        else {
+          fh.printf("- recording duration/period: %d:%02d'%02d\" / %d:%02d'%02d\"\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->per.Hour, rec->per.Minute, rec->per.Second);
+          fh.printf("- recording #%d of %d\n", (rec->cnt+1), rec->rec_tot);
+        }
         fh.printf("- device position (lat, long (DD)): %0.5f, %0.5f\n", rec->gps_lat, rec->gps_long);
         // if(debug) snooze_usb.printf("SD:      - recording duration/period: %d:%02d'%02d\" / %d:%02d'%02d\"\n", rec->dur.Hour, rec->dur.Minute, rec->dur.Second, rec->per.Hour, rec->per.Minute, rec->per.Second);
         // if(debug) snooze_usb.printf("SD:      - recording #%d of %d\n", (rec->cnt+1), rec->rec_tot);

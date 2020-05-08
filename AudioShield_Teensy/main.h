@@ -47,7 +47,7 @@
 #define RWIN_PER_DEF_SEC 30 // 0
 #define RWIN_PER_DEF_MIN 0
 #define RWIN_PER_DEF_HOUR 0 // 1
-#define RWIN_OCC_DEF 2     // Zero value -> infinite repetitions
+#define RWIN_OCC_DEF 3     // Zero value -> infinite repetitions
 // DO NOT CHANGE!! D/M/Y values have to be set to
 // minimum (1.1.1970) in order to obtain correct rwin times
 #define RWIN_DUR_DEF_DAY 1
@@ -146,6 +146,7 @@ struct recInfo {
   enum gpsSource gps_source; // GPS source
   unsigned int cnt;          // record counter
   unsigned int rec_tot;      // total number of records
+  bool man_stop;            // recording sequence manually stopped
 };
 extern struct recInfo last_record;
 extern struct recInfo next_record;

@@ -167,6 +167,7 @@ WORK:
       // Alarm.free(alarm_wait_id);
       // Alarm.free(alarm_rec_id);
       working_state.rec_state = RECSTATE_REQ_OFF;
+      next_record.man_stop = true;
     }
     button_call = (enum bCalls)BCALL_NONE;
   }
@@ -208,7 +209,8 @@ WORK:
 
     // Doing things
     next_record.cnt = 0;
-    prepareRecording(true);
+    if(next_record.gps_source == GPS_PHONE) prepareRecording(false);
+    else prepareRecording(true);
     working_state.rec_state = RECSTATE_ON;
     startRecording(next_record.rpath);
 

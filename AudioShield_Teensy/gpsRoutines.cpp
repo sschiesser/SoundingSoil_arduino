@@ -87,8 +87,8 @@ bool gpsGetData(void) {
 	} while((!fix_found) && (retries < GPS_ENCODE_RETRIES_MAX));
     if(debug) snooze_usb.printf("GPS:     Fix found? %d", fix_found);
 	if(fix_found) {
-        next_record.gps_lat = cur_lat;
-        next_record.gps_long = cur_long;
+    next_record.gps_lat = cur_lat;
+    next_record.gps_long = cur_long;
 		if(debug) snooze_usb.printf(" fLat: %f, fLong: %f\n", next_record.gps_lat, next_record.gps_long);
 		Alarm.delay((GPS_ENCODE_RETRIES_MAX - retries) * 1000);
 	}

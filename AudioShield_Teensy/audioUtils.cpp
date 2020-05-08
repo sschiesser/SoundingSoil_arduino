@@ -213,6 +213,7 @@ void resetRecInfo(struct recInfo* rec) {
     rec->gps_source = GPS_NONE;
     rec->cnt = 0;
     rec->rec_tot = 0;
+    rec->man_stop = false;
 }
 
 /* finishRecording(void)
