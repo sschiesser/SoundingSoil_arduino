@@ -4,28 +4,31 @@
 #ifndef _GPSROUTINES_H_
 #define _GPSROUTINES_H_
 
+/*** IMPORTED EXTERNAL OBJECTS ***********************************************/
+/*****************************************************************************/
 #include "main.h"
 
+/*** EXPORTED OBJECTS ********************************************************/
+/*****************************************************************************/
+
+/*** Constants ***************************************************************/
 // GPS serial port
-#define GPSPORT                                 Serial1
+#define GPSPORT Serial1
 // GPS wakeup pin#
-#define GPS_WAKEUP_PIN                          5
+#define GPS_WAKEUP_PIN 5
 // GPS switch pin#
-#define GPS_RST_PIN                             8
+#define GPS_RST_PIN 8
 
-// #define GPS_TX_PIN						     26
-// #define GPS_RX_PIN						     27
+#define GPS_ENCODE_TIME_MS 1000
+#define GPS_ENCODE_RETRIES_MAX 3
 
-#define GPS_ENCODE_TIME_MS                      1000//1000
-#define GPS_ENCODE_RETRIES_MAX                  3//3
+/*** Types *******************************************************************/
 
-extern TinyGPS                                  gps;
-extern float                                    cur_lat, cur_long;
+/*** Variables ***************************************************************/
+extern TinyGPS gps;
+extern float cur_lat, cur_long;
 
-
-/* ======================
- * FUNCTIONS DECLARATIONS
- * ====================== */
+/*** Functions ***************************************************************/
 void initGps(void);
 void gpsPowerOn(void);
 void gpsPowerOff(void);

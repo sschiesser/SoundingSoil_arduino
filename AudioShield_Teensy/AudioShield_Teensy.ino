@@ -1,54 +1,101 @@
 /*
-AudioShield firmware for SoundingSoil
--------------------------------------
-Mixing different code bases:
-- Serial_monitor (ICST)
-- Teensy_recorder (PJRC)
-*/
+ * AudioShield firmware for SoundingSoil
+ * -------------------------------------
+ * Mixing different code bases:
+ * - Serial_monitor (ICST)
+ * - Teensy_recorder (PJRC)
+ * -------------------------------------
+ * The AudioShield firmware works on an infinite loop checking the current state
+ * of the four working elements:
+ * - REC -> recording function controlled either by the REC button (device/app)
+ *          or by the timer sequence of the recording window settings
+ * - MON -> monitoring function controller by the MON button (device/app)
+ * - BLE -> Bluetooth LE functions controlled by the BLUE button (device) or by
+ *          the app
+ * - BT  -> Bluetooth BR/EDR functions for the wireless monitoring function to
+ *          BT headphones/receiver
+ *
+ * Each loop calls the functions according to the current states and returns
+ * with the updated state values. In addition, a sleep flag can be set for each
+ * working element. At the end of the loop, the sleep flags are evaluated and
+ * the device is set either to sleep mode or to a new working loop.
+ *
+ * Waking up from the sleep mode can be achieved either by button pressing
+ * (external interrupt) or by alarm call (RTC interrupt).
+ */
+/*** IMPORTED EXTERNAL OBJECTS ***********************************************/
+/*****************************************************************************/
 #include "main.h"
 
+/*** MODULE OBJECTS **********************************************************/
+/*****************************************************************************/
+/*** Constants ***************************************************************/
+// Debugging values
 #define ALWAYS_ON_MODE 0
+const bool debug = true;
 
-// install driver into SnoozeBlock
-// SnoozeBlock
-// snooze_config(button_wakeup);
-
-bool debug = true;
+// Still needed?
 #if (ALWAYS_ON_MODE == 1)
-bool sleeping_permitted = false;
+const bool sleeping_permitted = false;
 #else
-bool sleeping_permitted = true;
+const bool sleeping_permitted = true;
 #endif
 
+/*** Types *******************************************************************/
+/*** Variables ***************************************************************/
+/* Project-wide variables:
+ * -----------------------
+ * - working_state -> struct keeping the current state of each working element
+ * - sleep_flags   -> struct keeping the authorization to sleep (or not) for
+ * each element
+ * - rts           -> 'ready-to-sleep' flag
+ * - rec_window    -> struct keeping the current rec window settings
+ * (duration/period/occurences)
+ * - last_record   -> struct keeping the information for the last recording
+ * - next_record   -> struct keeping the information for the next (current)
+ * recording
+ */
 volatile struct wState working_state;
+struct sfState sleep_flags;
+bool rts;
 struct rWindow rec_window;
 struct recInfo last_record;
 struct recInfo next_record;
 
-struct sfState sleep_flags;
-bool rts;
+/*** Function prototypes *****************************************************/
+/*** Macros ******************************************************************/
+/*** Constant objects ********************************************************/
+/*** Functions implementation ************************************************/
 
-enum gpsSource gps_source;
+/*** EXPORTED OBJECTS ********************************************************/
+/*****************************************************************************/
+/*** Functions ***************************************************************/
 
+/*****************************************************************************/
 void setup() {
-  // Initialize serial ports:
-  // if(debug) snooze_usb.begin(115200);
-  // // Serial monitor port
+  /* Initialize serial ports:
+   * - snooze_usb -> monitor (adapted for the snooze library) for debugging
+   * purposes
+   * - BLUEPORT   -> communication to BC127 for sending/receiving bluetooth
+   * commands
+   * - GPSPORT    -> communication to GPS
+   */
   if (debug) {
-    while (!snooze_usb)
-      ;
-    delay(100);
+    // Don't wait for snooze_usb to be ready. Risk to enter an infinite loop if
+    // serial monitor is not connected and debug enabled while (!snooze_usb)
+    //   ;
+    Alarm.delay(500);
   }
-  BLUEPORT.begin(9600); // BC127 communication port
-  GPSPORT.begin(9600);  // GPS port
+  BLUEPORT.begin(9600);
+  GPSPORT.begin(9600);
 
+  // Init GUI (buttons/LEDs)
   initLEDButtons();
   button_wakeup.pinMode(BUTTON_RECORD_PIN, INPUT_PULLUP, FALLING);
   button_wakeup.pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP, FALLING);
   button_wakeup.pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP, FALLING);
 
-  pinMode(AUDIO_VOLUME_PIN, INPUT);
-
+  // Init all peripherals
   initAudio();
   initSDcard();
   initGps();
@@ -58,8 +105,10 @@ void setup() {
   tmElements_t tm;
   breakTime(t, tm);
 
+  // Set default values to the project-wide variables
   setDefaultValues();
 
+  // Say hello on GUI
   helloWorld();
 
   // Debug...
@@ -67,39 +116,32 @@ void setup() {
     snooze_usb.printf("Info:    SoundingSoil firmware version 1.0 build "
                       "%02d%02d%02d%02d%02d\n",
                       (tm.Year - 30), tm.Month, tm.Day, tm.Hour, tm.Minute);
-
-  working_state.ble_state = BLESTATE_REQ_ADV;
-  sleep_flags.rec_ready = true;
-  sleep_flags.mon_ready = true;
-  sleep_flags.bt_ready = true;
-  sleep_flags.ble_ready = false;
-  rts = setRts(sleep_flags);
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 void loop() {
-#if (ALWAYS_ON_MODE == 1)
   goto WORK;
-#else
-  goto WORK;
-SLEEP:
+
+SLEEP : {
+  // GOTO SLEEP PART!
   int who;
-  // you need to update before sleeping.
+  // Need to update before sleeping.
   but_rec.update();
   but_mon.update();
   but_blue.update();
-  // switch off i2s clock before sleeping
+  // Switch off i2s clock before sleeping
   SIM_SCGC6 &= ~SIM_SCGC6_I2S;
   Alarm.delay(50);
-  // REDUCED_CPU_BLOCK(snooze_cpu) {
-  // returns module that woke up processor
+  // Go (and stay) to hibernation, until 'who' wakes up
   who = Snooze.hibernate(snooze_config);
-  // }
 
-  // Re-adjust time, since Snooze doesn't keep it
+  // WAKING UP PART!
+  // Re-adjust time, since snooze doesn't keep it
   setTimeSource();
 
   if (who == WAKESOURCE_RTC) {
-    // Snooze wake-up -> remove alarm and re-start recording
+    // RTS wake-up -> remove alarm and re-start recording
     removeIdleSnooze();
     working_state.rec_state = RECSTATE_REQ_RESTART;
   } else {
@@ -108,14 +150,16 @@ SLEEP:
     elapsedMillis timeout = 0;
     while (timeout < (BUTTON_BOUNCE_TIME_MS + 1))
       cur_bt.update();
+
+    // Set ID of wake-up button
     button_call = (enum bCalls)who;
   }
-  // if not sleeping anymore, re-enable i2s clock
+  // If not sleeping anymore, re-enable i2s clock
   SIM_SCGC6 |= SIM_SCGC6_I2S;
   Alarm.delay(50);
-#endif // ALWAYS_ON_MODE
+}
 
-WORK:
+WORK : {
   Alarm.delay(0);    // needed for TimeAlarms timers
   but_rec.update();  // }
   but_mon.update();  // } needed for button bounces
@@ -129,63 +173,59 @@ WORK:
   if (but_blue.fallingEdge())
     button_call = (enum bCalls)BUTTON_BLUETOOTH_PIN;
 
-  // Centralized button actions from WORK or SLEEP mode...
-  // #if(ALWAYS_ON_MODE==1)
-  // #else
-  // ...dealing with IDLE and WAIT modes
+  /* Dealing with REC IDLE and WAIT modes when button call coming from MON or
+   * BLUE button
+   * - if REC mode currently IDLE -> change to WAIT and overtake alarm counter
+   * - if REC mode currently WAIT -> change to IDLE and overtake alarm counter
+   */
   if ((button_call == BUTTON_MONITOR_PIN) ||
       (button_call == BUTTON_BLUETOOTH_PIN)) {
-    // button interruption during REC IDLE mode -> need to set an new alarm &
-    // change to WAIT mode
     if (working_state.rec_state == RECSTATE_IDLE) {
+      // Need to remove IDLE alarm and set a new WAIT-one
       removeIdleSnooze();
       setWaitAlarm();
-      if (working_state.rec_state != RECSTATE_REQ_OFF) {
-        working_state.rec_state = RECSTATE_WAIT;
-      }
-    }
-    // button interruption during REC WAIT mode -> need to set a new snooze &
-    // change to IDLE mode
-    else if ((working_state.rec_state == RECSTATE_WAIT) &&
-             (sleeping_permitted == true)) {
+      // Change REC state value to WAIT
+      working_state.rec_state = RECSTATE_WAIT;
+    } else if ((working_state.rec_state == RECSTATE_WAIT) &&
+               (sleeping_permitted == true)) {
+      // Neet to remove WAIT-alarm and set a new IDLE-one
       removeWaitAlarm();
       setIdleSnooze();
+      // Change REC state value to IDLE
       working_state.rec_state = RECSTATE_IDLE;
     }
   }
-  // #endif // ALWAYS_ON_MODE
 
-  // ...standard button actions
+  /* Standard button actions:
+   * - REC  -> state OFF >> request switch ON, all other states >> request
+   * switch OFF
+   * - MON  -> state OFF >> request switch ON, all other states >> request
+   * switch OFF
+   * - BLUE -> state OFF >> request ADV, all other states >> request switch OFF
+   * (disable ADV)
+   */
   if (button_call == BUTTON_RECORD_PIN) {
-    // if(debug) snooze_usb.printf("Info:    REC! Current state (R/M/BLE/BT):
-    // %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state,
-    // working_state.ble_state, working_state.bt_state);
     if (working_state.rec_state == RECSTATE_OFF) {
       working_state.rec_state = RECSTATE_REQ_ON;
     } else {
       snooze_config -= snooze_rec;
-      // Alarm.free(alarm_wait_id);
-      // Alarm.free(alarm_rec_id);
       working_state.rec_state = RECSTATE_REQ_OFF;
+      // Set manual stop flag to change rec duration and notify user
       next_record.man_stop = true;
     }
+    // Reset button call value
     button_call = (enum bCalls)BCALL_NONE;
   }
   if (button_call == BUTTON_MONITOR_PIN) {
-    // if(debug) snooze_usb.printf("Info:    MON! Current state (R/M/BLE/BT):
-    // %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state,
-    // working_state.ble_state, working_state.bt_state);
     if (working_state.mon_state == MONSTATE_OFF) {
       working_state.mon_state = MONSTATE_REQ_ON;
     } else {
       working_state.mon_state = MONSTATE_REQ_OFF;
     }
+    // Reset button call value
     button_call = (enum bCalls)BCALL_NONE;
   }
   if (button_call == BUTTON_BLUETOOTH_PIN) {
-    // if(debug) snooze_usb.printf("Info:    BLUE! Current state (R/M/BLE/BT):
-    // %d/%d/%d/%d\n", working_state.rec_state, working_state.mon_state,
-    // working_state.ble_state, working_state.bt_state);
     if (working_state.ble_state == BLESTATE_OFF) {
       working_state.ble_state = BLESTATE_REQ_ADV;
     } else {
@@ -194,11 +234,25 @@ WORK:
       }
       working_state.ble_state = BLESTATE_REQ_OFF;
     }
+    // Reset button call value
     button_call = (enum bCalls)BCALL_NONE;
   }
 
-  // REC state actions
+  // States actions for each element
+  // REC
   switch (working_state.rec_state) {
+  // 0
+  case RECSTATE_OFF: {
+    sleep_flags.rec_ready = true;
+    sleep_flags.mon_ready =
+        (working_state.mon_state == MONSTATE_OFF ? true : false);
+    sleep_flags.ble_ready =
+        (working_state.ble_state == BLESTATE_OFF ? true : false);
+    sleep_flags.bt_ready =
+        (working_state.bt_state == BTSTATE_OFF ? true : false);
+    break;
+  }
+  // 1
   case RECSTATE_REQ_ON: {
     // Debug...
     if (debug)
@@ -209,8 +263,10 @@ WORK:
 
     // Doing things
     next_record.cnt = 0;
-    if(next_record.gps_source == GPS_PHONE) prepareRecording(false);
-    else prepareRecording(true);
+    if (next_record.gps_source == GPS_PHONE)
+      prepareRecording(false);
+    else
+      prepareRecording(true);
     working_state.rec_state = RECSTATE_ON;
     startRecording(next_record.rpath);
 
@@ -229,36 +285,14 @@ WORK:
 
     break;
   }
-
-  case RECSTATE_REQ_RESTART: {
-    // Debug...
-    if (debug)
-      snooze_usb.printf("Info:    Requesting REC RESTART. States: BT %d, BLE "
-                        "%d, REC %d, MON %d\n",
-                        working_state.bt_state, working_state.ble_state,
-                        working_state.rec_state, working_state.mon_state);
-
-    // Doing things
-    prepareRecording(true);
-    working_state.rec_state = RECSTATE_ON;
-    startRecording(next_record.rpath);
-
-    // Checking other states
-    if (working_state.ble_state == BLESTATE_CONNECTED) {
-      sendCmdOut(BCNOT_REC_TS);
-      sendCmdOut(BCNOT_LATLONG);
-      sendCmdOut(BCNOT_RWIN_VALS);
-      sendCmdOut(BCNOT_FILEPATH);
-      sendCmdOut(BCNOT_REC_NB);
-      sendCmdOut(BCNOT_REC_STATE);
-    }
-
-    // Setting sleep flag
+  // 2
+  case RECSTATE_ON: {
+    continueRecording();
+    detectPeaks();
     sleep_flags.rec_ready = false;
-
     break;
   }
-
+  // 3
   case RECSTATE_REQ_PAUSE: {
     // Debug...
     if (debug)
@@ -290,14 +324,50 @@ WORK:
     }
     break;
   }
-
-  case RECSTATE_ON: {
-    continueRecording();
-    detectPeaks();
+  // 4
+  case RECSTATE_WAIT: {
     sleep_flags.rec_ready = false;
     break;
   }
+  // 5
+  case RECSTATE_REQ_IDLE: {
+    break;
+  }
+  // 6
+  case RECSTATE_IDLE: {
+    sleep_flags.rec_ready = true;
+    break;
+  }
+  // 7
+  case RECSTATE_REQ_RESTART: {
+    // Debug...
+    if (debug)
+      snooze_usb.printf("Info:    Requesting REC RESTART. States: BT %d, BLE "
+                        "%d, REC %d, MON %d\n",
+                        working_state.bt_state, working_state.ble_state,
+                        working_state.rec_state, working_state.mon_state);
 
+    // Doing things
+    prepareRecording(true);
+    working_state.rec_state = RECSTATE_ON;
+    startRecording(next_record.rpath);
+
+    // Checking other states
+    if (working_state.ble_state == BLESTATE_CONNECTED) {
+      sendCmdOut(BCNOT_REC_TS);
+      sendCmdOut(BCNOT_LATLONG);
+      sendCmdOut(BCNOT_RWIN_VALS);
+      sendCmdOut(BCNOT_FILEPATH);
+      sendCmdOut(BCNOT_REC_NB);
+      sendCmdOut(BCNOT_REC_STATE);
+    }
+
+    // Setting sleep flag
+    sleep_flags.rec_ready = false;
+
+    break;
+  }
+  // 8
   case RECSTATE_REQ_OFF: {
     // Debug...
     if (debug)
@@ -334,24 +404,18 @@ WORK:
     }
     break;
   }
-
-  case RECSTATE_OFF: {
-    sleep_flags.rec_ready = true;
-    sleep_flags.mon_ready =
-        (working_state.mon_state == MONSTATE_OFF ? true : false);
-    sleep_flags.ble_ready =
-        (working_state.ble_state == BLESTATE_OFF ? true : false);
-    sleep_flags.bt_ready =
-        (working_state.bt_state == BTSTATE_OFF ? true : false);
+  default: {
     break;
   }
-
-  default:
-    break;
   }
-
-  // MON state actions
+  // MON
   switch (working_state.mon_state) {
+  // 0
+  case MONSTATE_OFF: {
+    sleep_flags.mon_ready = true;
+    break;
+  }
+    // 1
   case MONSTATE_REQ_ON: {
     // Debug...
     if (debug)
@@ -377,7 +441,7 @@ WORK:
     }
     break;
   }
-
+  // 2
   case MONSTATE_ON: {
     if (hpgain_interval > HPGAIN_INTERVAL_MS) {
       setHpGain();
@@ -390,7 +454,7 @@ WORK:
     sleep_flags.mon_ready = false;
     break;
   }
-
+  // 3
   case MONSTATE_REQ_OFF: {
     // Debug...
     if (debug)
@@ -430,32 +494,21 @@ WORK:
     }
     break;
   }
-
-  case MONSTATE_OFF: {
-    // if( (working_state.ble_state == BLESTATE_OFF) && (working_state.bt_state
-    // == BTSTATE_OFF) ) {
-    //     if(working_state.rec_state == RECSTATE_OFF) {
-    //         rts = true;
-    //     }
-    //     else if(working_state.rec_state == RECSTATE_WAIT) {
-    //         setIdleSnooze();
-    //         working_state.rec_state = RECSTATE_IDLE;
-    //         rts = true;
-    //     }
-    //     else {
-    //         rts = false;
-    //     }
-    // }
-    sleep_flags.mon_ready = true;
+  default: {
     break;
   }
-
-  default:
-    break;
   }
-
-  // BLE state actions
+  // BLE
   switch (working_state.ble_state) {
+  // 0
+  case BLESTATE_OFF: {
+    break;
+  }
+  // 1
+  case BLESTATE_IDLE: {
+    break;
+  }
+    // 2
   case BLESTATE_REQ_ADV: {
     // Debug...
     if (debug)
@@ -480,7 +533,11 @@ WORK:
     sleep_flags.ble_ready = false;
     break;
   }
-
+  // 3
+  case BLESTATE_ADV: {
+    break;
+  }
+  // 4
   case BLESTATE_REQ_CONN: {
     // Debug...
     if (debug)
@@ -505,7 +562,7 @@ WORK:
 
     break;
   }
-
+  // 5
   case BLESTATE_CONNECTED: {
     if ((working_state.bt_state == BTSTATE_CONNECTED) ||
         (working_state.bt_state == BTSTATE_PLAY)) {
@@ -514,7 +571,7 @@ WORK:
     sleep_flags.ble_ready = false;
     break;
   }
-
+  // 6
   case BLESTATE_REQ_DISC: {
     // Debug...
     if (debug)
@@ -537,7 +594,7 @@ WORK:
 
     break;
   }
-
+  // 7
   case BLESTATE_REQ_OFF: {
     // Debug...
     if (debug)
@@ -581,13 +638,25 @@ WORK:
     }
     break;
   }
-
-  default:
+  default: {
     break;
   }
-
-  // BT state actions
+  }
+  // BT
   switch (working_state.bt_state) {
+  // 0
+  case BTSTATE_OFF: {
+    break;
+  }
+  // 1
+  case BTSTATE_IDLE: {
+    break;
+  }
+  // 2
+  case BTSTATE_INQUIRY: {
+    break;
+  }
+    // 3
   case BTSTATE_REQ_CONN: {
     // Debug...
     if (debug)
@@ -608,7 +677,15 @@ WORK:
     }
     break;
   }
-
+  // 4
+  case BTSTATE_CONNECTED: {
+    break;
+  }
+  // 5
+  case BTSTATE_PLAY: {
+    break;
+  }
+  // 6
   case BTSTATE_REQ_DISC: {
     // Debug...
     if (debug)
@@ -618,8 +695,8 @@ WORK:
                         working_state.rec_state, working_state.mon_state);
 
     if (working_state.ble_state == BLESTATE_CONNECTED) {
-      sendCmdOut(BCCMD_DEV_DISCONNECT1);
-      sendCmdOut(BCCMD_DEV_DISCONNECT2);
+      sendCmdOut(BCCMD_DEV_A2DP_DISCONNECT);
+      sendCmdOut(BCCMD_DEV_AVRCP_DISCONNECT);
       startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_SLOW);
       sendCmdOut(BCNOT_BT_STATE);
       sleep_flags.ble_ready = false;
@@ -648,12 +725,17 @@ WORK:
 
     break;
   }
-
-  default:
+  // 7
+  case BTSTATE_DISCONNECTED: {
     break;
+  }
+  default: {
+    break;
+  }
   }
 
   // Serial messaging
+  // BLUEPORT
   if (BLUEPORT.available()) {
     String inMsg = BLUEPORT.readStringUntil('\r');
     int outMsg = parseSerialIn(inMsg);
@@ -662,95 +744,80 @@ WORK:
         snooze_usb.println("Error: Sending command error!!");
     }
   }
+  // Monitor
   if (snooze_usb.available()) {
     String manInput = snooze_usb.readStringUntil('\n');
     int len = manInput.length() - 1;
     BLUEPORT.print(manInput.substring(0, len) + '\r');
     snooze_usb.printf("Sent to BLUEPORT: %s\n", manInput.c_str());
   }
+}
 
+// rts setting and goto-sleep decision
 #if (ALWAYS_ON_MODE == 1)
-  if (working_state.rec_state == RECSTATE_REQ_PAUSE) {
-    setWaitAlarm();
-    working_state.rec_state = RECSTATE_WAIT;
-  }
-  goto WORK;
+  rts = false;
 #else
-  // Sleeping or not sleeping... logical decision chain
-  // 1. MON/BLE/BT off
-  // 		1.1. if REC == REQ_PAUSE -> prepare the snooze alarm & SLEEP
-  // (IDLE mode)
-  //		1.2. if REC == OFF or REC == IDLE -> SLEEP
-  //		1.3. else -> WORK
-  // 2. else
-  //		2.1. if REC == REQ_PAUSE -> prepare the time alarm & WORK (WAIT
-  // mode) 		2.2. else -> WORK
-  // if( (working_state.mon_state == MONSTATE_OFF) && (working_state.ble_state
-  // == BLESTATE_OFF) && (working_state.bt_state == BTSTATE_OFF) ) {
-  //     if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
-  //         setIdleSnooze();
-  //         working_state.rec_state = RECSTATE_IDLE;
-  //         rts = true;
-  //     }
-  //     else if((working_state.rec_state == RECSTATE_OFF) ||
-  //     (working_state.rec_state == RECSTATE_IDLE)) {
-  //         rts = true;
-  //     }
-  //     else {
-  //         rts = false;
-  //     }
-  // }
-  // else {
-  //     if(working_state.rec_state == RECSTATE_REQ_PAUSE) {
-  //         // setWaitAlarm();
-  //         working_state.rec_state = RECSTATE_WAIT;
-  //         if(working_state.ble_state == BLESTATE_CONNECTED) {
-  //             sendCmdOut(BCNOT_REC_STATE);
-  //             sendCmdOut(BCNOT_FILEPATH);
-  //         }
-  //     }
-  //     rts = false;
-  // }
-
-  // Final decision
   rts = setRts(sleep_flags);
+#endif // ALWAYS_ON_MODE
   if (rts)
     goto SLEEP;
   else
     goto WORK;
-
-#endif // ALWAYS_ON_MODE
 }
+/*****************************************************************************/
 
-/* setDefaultValues(void)
+/*****************************************************************************/
+/* setRts(struct sfState)
  * ----------------------
+ * Return a 'ready-to-sleep' general flag according to the state of all entered
+ * sleep flags. In debug mode, keeping old sleep flag values in order to changes
+ * only. IN : sleep flags of all working elements (struct) OUT: ready-to-sleep
+ * flag (bool)
  */
 bool setRts(struct sfState sf) {
-  static struct sfState sf_old;
-
   bool toRet = (sf.rec_ready & sf.mon_ready & sf.ble_ready & sf.bt_ready);
-  if ((sf.rec_ready != sf_old.rec_ready) ||
-      (sf.mon_ready != sf_old.mon_ready) ||
-      (sf.ble_ready != sf_old.ble_ready) || (sf.bt_ready != sf_old.bt_ready)) {
-    if (debug)
+  if (debug) {
+    static struct sfState sf_old;
+    if ((sf.rec_ready != sf_old.rec_ready) ||
+        (sf.mon_ready != sf_old.mon_ready) ||
+        (sf.ble_ready != sf_old.ble_ready) ||
+        (sf.bt_ready != sf_old.bt_ready)) {
       snooze_usb.printf("Info:    sf: %d %d %d %d -> rts: %d\n", sf.rec_ready,
                         sf.mon_ready, sf.ble_ready, sf.bt_ready, toRet);
-    sf_old.rec_ready = sf.rec_ready;
-    sf_old.mon_ready = sf.mon_ready;
-    sf_old.ble_ready = sf.ble_ready;
-    sf_old.bt_ready = sf.bt_ready;
+      sf_old.rec_ready = sf.rec_ready;
+      sf_old.mon_ready = sf.mon_ready;
+      sf_old.ble_ready = sf.ble_ready;
+      sf_old.bt_ready = sf.bt_ready;
+    }
   }
   return toRet;
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* setDefaultValues(void)
  * ----------------------
+ * Set startup default values for all global variables:
+ * - working_state -> struct keeping the current state of each working element
+ * - sleep_flags   -> struct keeping the authorization to sleep (or not) for
+ * each element
+ * - rts           -> 'ready-to-sleep' flag
+ * - rec_window    -> struct keeping the current rec window settings
+ * (duration/period/occurences)
+ * - last_record   -> struct keeping the information for the last recording
+ * - next_record   -> struct keeping the information for the next (current)
+ * recording
  */
 void setDefaultValues(void) {
   working_state.rec_state = RECSTATE_OFF;
   working_state.mon_state = MONSTATE_OFF;
   working_state.bt_state = BTSTATE_OFF;
-  working_state.ble_state = BLESTATE_OFF;
+  working_state.ble_state = BLESTATE_REQ_ADV;
+  sleep_flags.rec_ready = true;
+  sleep_flags.mon_ready = true;
+  sleep_flags.bt_ready = true;
+  sleep_flags.ble_ready = false;
+  rts = setRts(sleep_flags);
   rec_window.duration.Second = RWIN_DUR_DEF_SEC;
   rec_window.duration.Minute = RWIN_DUR_DEF_MIN;
   rec_window.duration.Hour = RWIN_DUR_DEF_HOUR;
@@ -766,16 +833,17 @@ void setDefaultValues(void) {
   rec_window.occurences = RWIN_OCC_DEF;
   last_record.cnt = 0;
   last_record.gps_source = GPS_NONE;
-  last_record.gps_lat = NULL;
-  last_record.gps_long = NULL;
+  last_record.gps_lat = 1000.0;
+  last_record.gps_long = 1000.0;
   next_record = last_record;
-  BT_id_a2dp = 0;
-  BT_id_avrcp = 0;
-  BLE_conn_id = 0;
-  BT_peer_address = "";
-  BT_peer_name = "auto";
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
+/* helloWorld(void)
+ * ----------------
+ * :-)
+ */
 void helloWorld(void) {
   startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
   Alarm.delay(300);
@@ -801,3 +869,4 @@ void helloWorld(void) {
   stopLED(&leds[LED_BLUETOOTH]);
   stopLED(&leds[LED_RECORD]);
 }
+/*****************************************************************************/

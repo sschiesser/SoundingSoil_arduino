@@ -4,36 +4,36 @@
 #ifndef _TIMEUTILS_H_
 #define _TIMEUTILS_H_
 
+/*** IMPORTED EXTERNAL OBJECTS ***********************************************/
+/*****************************************************************************/
 #include "main.h"
 
-#define MIN_TIME_DEC					1549014885  // 01.02.2019, 09h54m00
+/*** EXPORTED OBJECTS ********************************************************/
+/*****************************************************************************/
 
-extern time_t									received_time;
-extern AlarmID_t								alarm_rec_id;
-extern AlarmID_t								alarm_wait_id;
-extern AlarmID_t								alarm_adv_id;
+/*** Constants ***************************************************************/
+#define MIN_TIME_DEC 1549014885 // 01.02.2019, 09h54m00
 
-extern SnoozeDigital 					button_wakeup; 	// Wakeup pins on Teensy 3.6:
-														                  // 2,4,6,7,9,10,11,13,16,21,22,26,30,33
-extern SnoozeAlarm						snooze_rec;
-extern SnoozeAlarm						snooze_led;
-extern SnoozeBlock 						snooze_config;
-extern SnoozeUSBSerial        snooze_usb;
+/*** Types *******************************************************************/
+// Time sources
+enum tSources { TSOURCE_NONE, TSOURCE_TEENSY, TSOURCE_GPS, TSOURCE_PHONE };
+extern enum tSources time_source;
+
+/*** Variables ***************************************************************/
+extern time_t received_time;
+extern AlarmID_t alarm_rec_id;
+extern AlarmID_t alarm_wait_id;
+extern AlarmID_t alarm_adv_id;
+
+extern SnoozeDigital button_wakeup; // Wakeup pins on Teensy 3.6:
+                                    // 2,4,6,7,9,10,11,13,16,21,22,26,30,33
+extern SnoozeAlarm snooze_rec;
+extern SnoozeAlarm snooze_led;
+extern SnoozeBlock snooze_config;
+extern SnoozeUSBSerial snooze_usb;
 // extern SnoozeBlock						snooze_cpu;
 
-// Time sources
-enum tSources {
-	TSOURCE_NONE,
-	TSOURCE_TEENSY,
-	TSOURCE_GPS,
-	TSOURCE_PHONE
-};
-extern enum tSources					time_source;
-
-
-/* ======================
- * FUNCTIONS DECLARATIONS
- * ====================== */
+/*** Functions ***************************************************************/
 time_t setTimeSource(void);
 time_t getTeensy3Time(void);
 void setCurTime(time_t cur_time, enum tSources source);
