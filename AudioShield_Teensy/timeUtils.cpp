@@ -116,13 +116,17 @@ void setWaitAlarm(void) {
 
 void setIdleSnooze(void) {
 	time_t delta = next_record.tss - now() - (GPS_ENCODE_TIME_MS/1000 * GPS_ENCODE_RETRIES_MAX);
-	tmElements_t tm1, tm2;
-	breakTime(delta, tm1);
-	breakTime(next_record.tss, tm2);
+	tmElements_t now_tm, delta_tm, next_tm;
+  breakTime(now(), now_tm);
+	breakTime(delta, delta_tm);
+	breakTime(next_record.tss, next_tm);
 	snooze_config += snooze_rec;
-	snooze_rec.setRtcTimer(tm1.Hour, tm1.Minute, tm1.Second);
-	if(debug) snooze_usb.printf("Time:    Next recording at %02dh%02dm%02ds\n", tm2.Hour, tm2.Minute, tm2.Second);
-	if(debug) snooze_usb.printf("Time:    Waking up in %02dh%02dm%02ds\n", tm1.Hour, tm1.Minute, tm1.Second);
+	snooze_rec.setRtcTimer(delta_tm.Hour, delta_tm.Minute, delta_tm.Second);
+	if(debug) {
+    snooze_usb.printf("Time:    Current time %02dh%02dm%02ds\n", now_tm.Hour, now_tm.Minute, now_tm.Second);
+    snooze_usb.printf("Time:    Next recording at %02dh%02dm%02ds\n", next_tm.Hour, next_tm.Minute, next_tm.Second);
+    snooze_usb.printf("Time:    Waking up in %02dh%02dm%02ds\n", delta_tm.Hour, delta_tm.Minute, delta_tm.Second);
+  }
 	Alarm.delay(100);
 }
 

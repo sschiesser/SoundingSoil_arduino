@@ -18,7 +18,7 @@ struct leds_s 										leds[LED_MAX_NUMBER];
 
 /* initLEDButtons(void)
  * --------------------
- * Assign and initialize all the LED-related elements
+ * Assign and initialize all the LED struct
  * (pin#, status, mode, cnt, timer, callback_fn)
  * ...and initialize the button inputs
  * IN:	- none
@@ -55,13 +55,6 @@ void initLEDButtons(void) {
 		pinMode(leds[i].pin, OUTPUT);
 		digitalWrite(leds[i].pin, leds[i].status);
 	}
-	// unsigned long a;
-	// a = (unsigned long)&toggleRecLED;
-	// if(debug) snooze_usb.print("I/O:     toggleRecLED address: 0x"); if(debug) snooze_usb.println(a, HEX);
-	// a = (unsigned long)&toggleMonLED;
-	// if(debug) snooze_usb.print("I/O:     toggleMonLED address: 0x"); if(debug) snooze_usb.println(a, HEX);
-	// a = (unsigned long)&toggleBtLED;
-	// if(debug) snooze_usb.print("I/O:     toggleBtLED address: 0x"); if(debug) snooze_usb.println(a, HEX);
 }
 
 /* toggleCb(struct leds_s *)

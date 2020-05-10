@@ -69,8 +69,7 @@ enum recState {
   RECSTATE_WAIT,      // 4 -> waiting mode (WORK state)
   RECSTATE_REQ_IDLE,  // 5 -> requesting to go to idle mode (SLEEP state)
   RECSTATE_IDLE,      // 6 -> idle mode (SLEEP state)
-  RECSTATE_REQ_RESTART, // 7 -> requesting to restart recording (after wait or
-                        // idle mode)
+  RECSTATE_REQ_RESTART, // 7 -> requesting to restart recording (after wait or idle mode)
   RECSTATE_REQ_OFF // 8 -> requesting to stop recording (REC button pressed)
 };
 extern enum recState rec_state;
@@ -130,7 +129,7 @@ extern struct sfState sleep_flags;
 
 // GPS sources
 enum gpsSource { GPS_NONE, GPS_PHONE, GPS_RECORDER };
-extern enum gpsSource gps_source;
+// extern enum gpsSource gps_source;
 
 // Record informations
 struct recInfo {
