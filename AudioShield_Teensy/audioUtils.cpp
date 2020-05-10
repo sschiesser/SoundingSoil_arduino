@@ -219,8 +219,8 @@ void resetRecInfo(struct recInfo *rec) {
   rec->t_set = false;
   rec->rpath.remove(0);
   rec->mpath.remove(0);
-  rec->gps_lat = NULL;
-  rec->gps_long = NULL;
+  rec->gps_lat = 1000.0;
+  rec->gps_long = 1000.0;
   rec->gps_source = GPS_NONE;
   rec->cnt = 0;
   rec->rec_tot = 0;

@@ -93,8 +93,8 @@ bool gpsGetData(void) {
 		Alarm.delay((GPS_ENCODE_RETRIES_MAX - retries) * 1000);
 	}
 	else {
-        next_record.gps_lat = NULL;
-        next_record.gps_long = NULL;
+        next_record.gps_lat = 1000.0;
+        next_record.gps_long = 1000.0;
         if(debug) snooze_usb.println("");
     }
 	return fix_found;
