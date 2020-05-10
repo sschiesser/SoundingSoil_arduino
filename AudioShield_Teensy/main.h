@@ -4,6 +4,8 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
+/*** IMPORTED EXTERNAL OBJECTS ***********************************************/
+/*****************************************************************************/
 // Arduino or Teensyduino libraries
 #include <Audio.h>
 #include <Bounce.h>
@@ -25,12 +27,10 @@
 #include "gpsRoutines.h"
 #include "timeUtils.h"
 
-// SdFat
-// SD;
+/*** EXPORTED OBJECTS ********************************************************/
+/*****************************************************************************/
 
-// Monitoring serial port
-// #define snooze_usb                             Serial
-
+/*** Constants ***************************************************************/
 #define BLEADV_TIMEOUT_S 30
 
 // Wake-up sources from hibernating mode
@@ -47,7 +47,7 @@
 #define RWIN_PER_DEF_SEC 30 // 0
 #define RWIN_PER_DEF_MIN 0
 #define RWIN_PER_DEF_HOUR 0 // 1
-#define RWIN_OCC_DEF 3     // Zero value -> infinite repetitions
+#define RWIN_OCC_DEF 3      // Zero value -> infinite repetitions
 // DO NOT CHANGE!! D/M/Y values have to be set to
 // minimum (1.1.1970) in order to obtain correct rwin times
 #define RWIN_DUR_DEF_DAY 1
@@ -58,8 +58,7 @@
 #define RWIN_PER_DEF_YEAR 0
 // DO NOT CHANGE!!
 
-extern bool debug;
-
+/*** Types *******************************************************************/
 // Recording states...
 enum recState {
   RECSTATE_OFF,       // 0 -> recording off
@@ -69,11 +68,11 @@ enum recState {
   RECSTATE_WAIT,      // 4 -> waiting mode (WORK state)
   RECSTATE_REQ_IDLE,  // 5 -> requesting to go to idle mode (SLEEP state)
   RECSTATE_IDLE,      // 6 -> idle mode (SLEEP state)
-  RECSTATE_REQ_RESTART, // 7 -> requesting to restart recording (after wait or idle mode)
+  RECSTATE_REQ_RESTART, // 7 -> requesting to restart recording (after wait or
+                        // idle mode)
   RECSTATE_REQ_OFF // 8 -> requesting to stop recording (REC button pressed)
 };
 extern enum recState rec_state;
-
 // Monitoring states...
 enum monState {
   MONSTATE_OFF,    // 0 -> monitoring off
@@ -82,7 +81,6 @@ enum monState {
   MONSTATE_REQ_OFF // 3 -> requesting to stop monitoring (MON button pressed)
 };
 extern enum monState mon_state;
-
 // Bluetooth states...
 // classic (BT)
 enum btState {
@@ -108,7 +106,6 @@ enum bleState {
   BLESTATE_REQ_OFF    // 7 -> requesting BLE off (BLUE button pressed)
 };
 extern enum bleState ble_state;
-
 // Working states
 struct wState {
   enum recState rec_state;
@@ -117,7 +114,6 @@ struct wState {
   enum bleState ble_state;
 };
 extern volatile struct wState working_state;
-
 // Ready-to-sleep states
 struct sfState {
   bool rec_ready;
@@ -126,15 +122,12 @@ struct sfState {
   bool bt_ready;
 };
 extern struct sfState sleep_flags;
-
 // GPS sources
 enum gpsSource { GPS_NONE, GPS_PHONE, GPS_RECORDER };
-// extern enum gpsSource gps_source;
-
 // Record informations
 struct recInfo {
-  time_t tss;                 // start timestamp
-  time_t tsp;                 // stop timestamp
+  time_t tss;                // start timestamp
+  time_t tsp;                // stop timestamp
   tmElements_t dur;          // duration
   tmElements_t per;          // period
   bool t_set;                // time synced?
@@ -145,11 +138,10 @@ struct recInfo {
   enum gpsSource gps_source; // GPS source
   unsigned int cnt;          // record counter
   unsigned int rec_tot;      // total number of records
-  bool man_stop;            // recording sequence manually stopped
+  bool man_stop;             // recording sequence manually stopped
 };
 extern struct recInfo last_record;
 extern struct recInfo next_record;
-
 // Recording window
 struct rWindow {
   tmElements_t duration;   // length (0 -> continous recording)
@@ -157,5 +149,10 @@ struct rWindow {
   unsigned int occurences; // # of occurences (0 -> infinite repetitions)
 };
 extern struct rWindow rec_window;
+
+/*** Variables ***************************************************************/
+extern const bool debug;
+
+/*** Functions ***************************************************************/
 
 #endif /* _MAIN_H_ */

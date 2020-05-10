@@ -23,27 +23,37 @@
  * Waking up from the sleep mode can be achieved either by button pressing
  * (external interrupt) or by alarm call (RTC interrupt).
  */
+/*** IMPORTED EXTERNAL OBJECTS ***********************************************/
+/*****************************************************************************/
 #include "main.h"
 
+/*** MODULE OBJECTS **********************************************************/
+/*****************************************************************************/
+/*** Constants ***************************************************************/
 // Debugging values
 #define ALWAYS_ON_MODE 0
-bool debug = true;
+const bool debug = true;
 
 // Still needed?
 #if (ALWAYS_ON_MODE == 1)
-bool sleeping_permitted = false;
+const bool sleeping_permitted = false;
 #else
-bool sleeping_permitted = true;
+const bool sleeping_permitted = true;
 #endif
 
+/*** Types *******************************************************************/
+/*** Variables ***************************************************************/
 /* Project-wide variables:
  * -----------------------
  * - working_state -> struct keeping the current state of each working element
- * - sleep_flags   -> struct keeping the authorization to sleep (or not) for each element
+ * - sleep_flags   -> struct keeping the authorization to sleep (or not) for
+ * each element
  * - rts           -> 'ready-to-sleep' flag
- * - rec_window    -> struct keeping the current rec window settings (duration/period/occurences)
+ * - rec_window    -> struct keeping the current rec window settings
+ * (duration/period/occurences)
  * - last_record   -> struct keeping the information for the last recording
- * - next_record   -> struct keeping the information for the next (current) recording
+ * - next_record   -> struct keeping the information for the next (current)
+ * recording
  */
 volatile struct wState working_state;
 struct sfState sleep_flags;
@@ -52,15 +62,27 @@ struct rWindow rec_window;
 struct recInfo last_record;
 struct recInfo next_record;
 
+/*** Function prototypes *****************************************************/
+/*** Macros ******************************************************************/
+/*** Constant objects ********************************************************/
+/*** Functions implementation ************************************************/
+
+/*** EXPORTED OBJECTS ********************************************************/
+/*****************************************************************************/
+/*** Functions ***************************************************************/
+
+/*****************************************************************************/
 void setup() {
   /* Initialize serial ports:
-   * - snooze_usb -> monitor (adapted for the snooze library) for debugging purposes
-   * - BLUEPORT   -> communication to BC127 for sending/receiving bluetooth commands
+   * - snooze_usb -> monitor (adapted for the snooze library) for debugging
+   * purposes
+   * - BLUEPORT   -> communication to BC127 for sending/receiving bluetooth
+   * commands
    * - GPSPORT    -> communication to GPS
    */
   if (debug) {
-    // Don't wait for snooze_usb to be ready. Risk to enter an infinite loop if serial monitor is not connected and debug enabled
-    // while (!snooze_usb)
+    // Don't wait for snooze_usb to be ready. Risk to enter an infinite loop if
+    // serial monitor is not connected and debug enabled while (!snooze_usb)
     //   ;
     Alarm.delay(500);
   }
@@ -95,7 +117,9 @@ void setup() {
                       "%02d%02d%02d%02d%02d\n",
                       (tm.Year - 30), tm.Month, tm.Day, tm.Hour, tm.Minute);
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 void loop() {
   goto WORK;
 
@@ -154,7 +178,8 @@ WORK : {
    * - if REC mode currently IDLE -> change to WAIT and overtake alarm counter
    * - if REC mode currently WAIT -> change to IDLE and overtake alarm counter
    */
-  if ((button_call == BUTTON_MONITOR_PIN) || (button_call == BUTTON_BLUETOOTH_PIN)) {
+  if ((button_call == BUTTON_MONITOR_PIN) ||
+      (button_call == BUTTON_BLUETOOTH_PIN)) {
     if (working_state.rec_state == RECSTATE_IDLE) {
       // Need to remove IDLE alarm and set a new WAIT-one
       removeIdleSnooze();
@@ -172,9 +197,12 @@ WORK : {
   }
 
   /* Standard button actions:
-   * - REC  -> state OFF >> request switch ON, all other states >> request switch OFF
-   * - MON  -> state OFF >> request switch ON, all other states >> request switch OFF
-   * - BLUE -> state OFF >> request ADV, all other states >> request switch OFF (disable ADV)
+   * - REC  -> state OFF >> request switch ON, all other states >> request
+   * switch OFF
+   * - MON  -> state OFF >> request switch ON, all other states >> request
+   * switch OFF
+   * - BLUE -> state OFF >> request ADV, all other states >> request switch OFF
+   * (disable ADV)
    */
   if (button_call == BUTTON_RECORD_PIN) {
     if (working_state.rec_state == RECSTATE_OFF) {
@@ -725,7 +753,7 @@ WORK : {
   }
 }
 
-  // rts setting and goto-sleep decision
+// rts setting and goto-sleep decision
 #if (ALWAYS_ON_MODE == 1)
   rts = false;
 #else
@@ -736,21 +764,24 @@ WORK : {
   else
     goto WORK;
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* setRts(struct sfState)
  * ----------------------
- * Return a 'ready-to-sleep' general flag according to the state of all entered sleep flags.
- * In debug mode, keeping old sleep flag values in order to changes only.
- * IN : sleep flags of all working elements (struct)
- * OUT: ready-to-sleep flag (bool)
+ * Return a 'ready-to-sleep' general flag according to the state of all entered
+ * sleep flags. In debug mode, keeping old sleep flag values in order to changes
+ * only. IN : sleep flags of all working elements (struct) OUT: ready-to-sleep
+ * flag (bool)
  */
 bool setRts(struct sfState sf) {
   bool toRet = (sf.rec_ready & sf.mon_ready & sf.ble_ready & sf.bt_ready);
-  if(debug) {
+  if (debug) {
     static struct sfState sf_old;
     if ((sf.rec_ready != sf_old.rec_ready) ||
         (sf.mon_ready != sf_old.mon_ready) ||
-        (sf.ble_ready != sf_old.ble_ready) || (sf.bt_ready != sf_old.bt_ready)) {
+        (sf.ble_ready != sf_old.ble_ready) ||
+        (sf.bt_ready != sf_old.bt_ready)) {
       snooze_usb.printf("Info:    sf: %d %d %d %d -> rts: %d\n", sf.rec_ready,
                         sf.mon_ready, sf.ble_ready, sf.bt_ready, toRet);
       sf_old.rec_ready = sf.rec_ready;
@@ -761,16 +792,21 @@ bool setRts(struct sfState sf) {
   }
   return toRet;
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* setDefaultValues(void)
  * ----------------------
  * Set startup default values for all global variables:
  * - working_state -> struct keeping the current state of each working element
- * - sleep_flags   -> struct keeping the authorization to sleep (or not) for each element
+ * - sleep_flags   -> struct keeping the authorization to sleep (or not) for
+ * each element
  * - rts           -> 'ready-to-sleep' flag
- * - rec_window    -> struct keeping the current rec window settings (duration/period/occurences)
+ * - rec_window    -> struct keeping the current rec window settings
+ * (duration/period/occurences)
  * - last_record   -> struct keeping the information for the last recording
- * - next_record   -> struct keeping the information for the next (current) recording
+ * - next_record   -> struct keeping the information for the next (current)
+ * recording
  */
 void setDefaultValues(void) {
   working_state.rec_state = RECSTATE_OFF;
@@ -801,7 +837,9 @@ void setDefaultValues(void) {
   last_record.gps_long = 1000.0;
   next_record = last_record;
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* helloWorld(void)
  * ----------------
  * :-)
@@ -831,3 +869,4 @@ void helloWorld(void) {
   stopLED(&leds[LED_BLUETOOTH]);
   stopLED(&leds[LED_RECORD]);
 }
+/*****************************************************************************/

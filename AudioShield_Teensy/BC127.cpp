@@ -35,7 +35,8 @@ int BT_id_avrcp = 0;
 int BLE_conn_id = 0;
 // Flag indicating that the BC127 device is ready
 bool BC127_ready = false;
-String notif, param1, param2, param3, param4, param5, param6, param7, param8, param9, trash;
+String notif, param1, param2, param3, param4, param5, param6, param7, param8,
+    param9, trash;
 
 /*** Function prototypes *****************************************************/
 /*** Macros ******************************************************************/
@@ -1214,7 +1215,8 @@ enum serialMsg parseSerialIn(String input) {
   // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3)
   case 7: {
     if (notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry4(param1, param2, param3, param4, param5, param6, param7);
+      return msgInquiry4(param1, param2, param3, param4, param5, param6,
+                         param7);
     else if (notif.equalsIgnoreCase("LINK"))
       return msgLink3(param1, param2, param3, param4, param5, param6, param7);
     break;

@@ -5,10 +5,18 @@
  * audio processes (recording, monitoring, etc.)
  *
  */
+/*** IMPORTED EXTERNAL OBJECTS ***********************************************/
+/*****************************************************************************/
 #include "audioUtils.h"
 
-// Audio connections definition
+/*** MODULE OBJECTS **********************************************************/
+/*****************************************************************************/
+/*** Constants ***************************************************************/
+const int audioInput = AUDIO_INPUT_LINEIN;
 
+/*** Types *******************************************************************/
+
+/*** Variables ***************************************************************/
 // GUItool: begin automatically generated code
 AudioInputI2S i2sRec;      // xy=76,36
 AudioPlaySdWav playWav;    // xy=78,114
@@ -25,13 +33,22 @@ AudioConnection patchCord6(monMixer, 0, i2sMon, 1);
 AudioControlSGTL5000 sgtl5000; // xy=251,186
 // GUItool: end automatically generated code
 
-const int audioInput = AUDIO_INPUT_LINEIN;
 String rec_path = "--";
 int vol_ctrl;
 float vol_value;
 elapsedMillis peak_interval;
 elapsedMillis hpgain_interval;
 
+/*** Function prototypes *****************************************************/
+/*** Macros ******************************************************************/
+/*** Constant objects ********************************************************/
+/*** Functions implementation ************************************************/
+
+/*** EXPORTED OBJECTS ********************************************************/
+/*****************************************************************************/
+/*** Functions ***************************************************************/
+
+/*****************************************************************************/
 /* prepareRecording(bool)
  * ----------------------
  * Fetch a GPS fix (if demanded), set the record timestamp to now(),
@@ -78,12 +95,15 @@ void prepareRecording(bool sync) {
   if (debug)
     snooze_usb.printf("Audio:   Preparing recording. Time source: %d, current "
                       "time: %02dh%02dm%02ds, GPS source: %d\n",
-                      time_source, tm.Hour, tm.Minute, tm.Second, next_record.gps_source);
+                      time_source, tm.Hour, tm.Minute, tm.Second,
+                      next_record.gps_source);
   if (dur != 0) {
     alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
   }
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* setRecInfos(struct recInfos*, String)
  * -------------------------------------
  * Set the information related to the pointed recording.
@@ -105,7 +125,9 @@ void setRecInfos(struct recInfo *rec, String path) {
   rec->t_set = (bool)rec->tss;
   rec->rec_tot = rec_window.occurences;
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* startRecording(String)
  * ----------------------
  * Open the file path and start the recording queue.
@@ -125,7 +147,9 @@ void startRecording(String path) {
     // while(1);
   }
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* continueRecording(void)
  * -----------------------
  * Write to the SD card and free the recording queue every 512 samples
@@ -151,7 +175,9 @@ void continueRecording(void) {
     // if(debug) snooze_usb.println(usec);
   }
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* stopRecording(String)
  * ---------------------
  * Stop the recording queue, write the remaining data
@@ -176,7 +202,9 @@ void stopRecording(String path) {
 
   createMetadata(&next_record);
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* pauseRecording(void)
  * --------------------
  * Prepare the next record informations.
@@ -197,10 +225,13 @@ void pauseRecording(void) {
   if (debug)
     snooze_usb.printf("Audio:   Pausing recording. Time source: %d, current "
                       "time: %02dh%02dm%02ds, GPS source: %d\n",
-                      time_source, tm.Hour, tm.Minute, tm.Second, next_record.gps_source);
+                      time_source, tm.Hour, tm.Minute, tm.Second,
+                      next_record.gps_source);
   stopLED(&leds[LED_RECORD]);
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* resetRecInfo(struct recInfo*)
  * -----------------------------
  * Set all values of the pointed record to 0
@@ -226,7 +257,9 @@ void resetRecInfo(struct recInfo *rec) {
   rec->rec_tot = 0;
   rec->man_stop = false;
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* finishRecording(void)
  * ---------------------
  * Reset the record informations, time source
@@ -243,19 +276,23 @@ void finishRecording(void) {
   if (debug)
     snooze_usb.printf("Audio:   Finishing recording. Time source: %d, current "
                       "time: %02dh%02dm%02ds, GPS source: %d\n",
-                      time_source, tm.Hour, tm.Minute, tm.Second, next_record.gps_source);
+                      time_source, tm.Hour, tm.Minute, tm.Second,
+                      next_record.gps_source);
 
   if ((time_source == TSOURCE_GPS) || (time_source == TSOURCE_PHONE))
     time_source = TSOURCE_TEENSY;
 
-  if ((next_record.gps_source == GPS_RECORDER) || (next_record.gps_source == GPS_PHONE))
+  if ((next_record.gps_source == GPS_RECORDER) ||
+      (next_record.gps_source == GPS_PHONE))
     next_record.gps_source = GPS_NONE;
 
   startLED(&leds[LED_RECORD], LED_MODE_WARNING_SHORT);
   // Wait until the notification is finished before sleeping or doing whatever.
   Alarm.delay(500);
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* startMonitoring(void)
  * ---------------------
  * To start monitoring, just open the mixer channel at the read gain value
@@ -268,13 +305,17 @@ void startMonitoring(void) {
   peak_interval = 0;
   setHpGain();
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* stopMonitoring(void)
  * --------------------
  * To stop monitoring, close the mixer channel
  */
 void stopMonitoring(void) { monMixer.gain(MIXER_CH_REC, 0); }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* setHpGain(void)
  * ---------------
  * Read the rotary pot value and set the headphones gain.
@@ -288,7 +329,9 @@ void setHpGain(void) {
   // if(debug) snooze_usb.printf("Audio:   gain = %1.2f\n", gain);
   sgtl5000.volume(gain);
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* detectPeaks(void)
  * -----------------
  * Detect possible peaks at line input and
@@ -305,7 +348,9 @@ void detectPeaks(void) {
     }
   }
 }
+/*****************************************************************************/
 
+/*****************************************************************************/
 /* initAudio(void)
  * ---------------
  * Set memory to buffer audio signal, enable & set-up
@@ -330,3 +375,4 @@ void initAudio(void) {
   monMixer.gain(MIXER_CH_REC, 0);
   monMixer.gain(MIXER_CH_SDC, 0);
 }
+/*****************************************************************************/
