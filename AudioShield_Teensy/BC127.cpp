@@ -20,6 +20,11 @@ struct btDev {
   unsigned int strength;
 };
 struct btDev dev_list[DEVLIST_MAXLEN];
+typedef struct {
+  String notif;
+  String p[10];
+  String trash;
+}serialParams_t;
 
 /*** Variables ***************************************************************/
 // Amount of found BT devices on inquiry
@@ -35,8 +40,8 @@ int BT_id_avrcp = 0;
 int BLE_conn_id = 0;
 // Flag indicating that the BC127 device is ready
 bool BC127_ready = false;
-String notif, param1, param2, param3, param4, param5, param6, param7, param8,
-    param9, trash;
+// String notif, param1, param2, param3, param4, param5, param6, param7, param8,
+//     param9, trash;
 
 /*** Function prototypes *****************************************************/
 /*** Macros ******************************************************************/
@@ -85,7 +90,7 @@ static void populateDevlist(String addr, String name, String caps,
 /*****************************************************************************/
 
 /*****************************************************************************/
-static unsigned int countParams(String input) {
+static unsigned int countParams(String input, serialParams_t *output) {
   // ================================================================
   // Slicing input string.
   // Currently 3 usefull schemes:
@@ -107,77 +112,77 @@ static unsigned int countParams(String input) {
   unsigned int ret = 0;
   // no space found -> notification without parameter
   if (slice1 == -1) {
-    notif = input;
+    output->notif = input;
     ret = 0;
   }
   // 1+ parameter
   else {
-    notif = input.substring(0, slice1);
+    output->notif = input.substring(0, slice1);
     if (slice2 == -1) {
-      param1 = input.substring(slice1 + 1);
+      output->p[0] = input.substring(slice1 + 1);
       ret = 1;
     }
     // 2+ parameters
     else {
-      param1 = input.substring(slice1 + 1, slice2);
+      output->p[0] = input.substring(slice1 + 1, slice2);
       if (slice3 == -1) {
-        param2 = input.substring(slice2 + 1);
+        output->p[1] = input.substring(slice2 + 1);
         ret = 2;
       }
       // 3+ parameters
       else {
-        param2 = input.substring(slice2 + 1, slice3);
+        output->p[1] = input.substring(slice2 + 1, slice3);
         if (slice4 == -1) {
-          param3 = input.substring(slice3 + 1);
+          output->p[2] = input.substring(slice3 + 1);
           ret = 3;
         }
         // 4+ parameters
         else {
-          param3 = input.substring(slice3 + 1, slice4);
+          output->p[2] = input.substring(slice3 + 1, slice4);
           if (slice5 == -1) {
-            param4 = input.substring(slice4 + 1);
+            output->p[3] = input.substring(slice4 + 1);
             ret = 4;
           }
           // 5+ parameters
           else {
-            param4 = input.substring(slice4 + 1, slice5);
+            output->p[3] = input.substring(slice4 + 1, slice5);
             if (slice6 == -1) {
-              param5 = input.substring(slice5 + 1);
+              output->p[4] = input.substring(slice5 + 1);
               ret = 5;
             }
             // 6+ parameters
             else {
-              param5 = input.substring(slice5 + 1, slice6);
+              output->p[4] = input.substring(slice5 + 1, slice6);
               if (slice7 == -1) {
-                param6 = input.substring(slice6 + 1);
+                output->p[5] = input.substring(slice6 + 1);
                 ret = 6;
               }
               // 7+ parameters
               else {
-                param6 = input.substring(slice6 + 1, slice7);
+                output->p[5] = input.substring(slice6 + 1, slice7);
                 if (slice8 == -1) {
-                  trash = input.substring(slice7 + 1);
+                  output->trash = input.substring(slice7 + 1);
                   ret = 7;
                 }
                 // 8+ paramters
                 else {
-                  param7 = input.substring(slice7 + 1, slice8);
+                  output->p[6] = input.substring(slice7 + 1, slice8);
                   if (slice8 == -1) {
-                    trash = input.substring(slice8 + 1);
+                    output->trash = input.substring(slice8 + 1);
                     ret = 8;
                   }
                   // 9+ parameters
                   else {
-                    param8 = input.substring(slice8 + 1, slice9);
+                    output->p[7] = input.substring(slice8 + 1, slice9);
                     if (slice9 == -1) {
-                      trash = input.substring(slice9 + 1);
+                      output->trash = input.substring(slice9 + 1);
                       ret = 9;
                     }
                     // 10+ parameters
                     else {
-                      param9 = input.substring(slice9 + 1, slice10);
+                      output->p[8] = input.substring(slice9 + 1, slice10);
                       if (slice10 == -1) {
-                        trash = input.substring(slice10 + 1);
+                        output->trash = input.substring(slice10 + 1);
                         ret = 10;
                       }
                     }
@@ -233,8 +238,8 @@ static enum serialMsg msgAvrcpPause(void) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgAbsVol(String p1, String p2) {
-  vol_value = (float)p2.toInt() / ABS_VOL_MAX_VAL;
+static enum serialMsg msgAbsVol(serialParams_t *p) {
+  vol_value = (float)p->p[1].toInt() / ABS_VOL_MAX_VAL;
   if (working_state.ble_state == BLESTATE_CONNECTED) {
     return BCNOT_VOL_LEVEL;
   } else {
@@ -244,15 +249,15 @@ static enum serialMsg msgAbsVol(String p1, String p2) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgLinkLoss(String p1, String p2) {
+static enum serialMsg msgLinkLoss(serialParams_t *p) {
   if (debug)
-    snooze_usb.printf("Info:    link_ID: %s, status: %s\n", p1.c_str(),
-                      p2.c_str());
-  if (p1.toInt() == BT_id_a2dp) {
-    if (p2.toInt() == 1) {
+    snooze_usb.printf("Info:    link_ID: %s, status: %s\n", p->p[0].c_str(),
+                      p->p[1].c_str());
+  if (p->p[0].toInt() == BT_id_a2dp) {
+    if (p->p[1].toInt() == 1) {
       working_state.mon_state = MONSTATE_REQ_OFF;
       working_state.bt_state = BTSTATE_DISCONNECTED;
-    } else if (p2.toInt() == 0) {
+    } else if (p->p[1].toInt() == 0) {
       working_state.bt_state = BTSTATE_CONNECTED;
     }
     return BCNOT_BT_STATE;
@@ -263,12 +268,12 @@ static enum serialMsg msgLinkLoss(String p1, String p2) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgName1(String p1, String p2) {
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    int strlen = p2.length();
-    BT_peer_name = p2.substring(1, (strlen - 1));
+static enum serialMsg msgName1(serialParams_t *p) {
+  if (p->p[1].substring(0, 1).equalsIgnoreCase("\"")) {
+    int strlen = p->p[1].length();
+    BT_peer_name = p->p[1].substring(1, (strlen - 1));
   } else {
-    BT_peer_name = p2;
+    BT_peer_name = p->p[1];
   }
   if (working_state.ble_state == BLESTATE_CONNECTED) {
     return BCNOT_BT_STATE;
@@ -279,11 +284,11 @@ static enum serialMsg msgName1(String p1, String p2) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgCloseOk(String p1, String p2, String p3) {
-  if (p1.toInt() == BT_id_a2dp) {
+static enum serialMsg msgCloseOk(serialParams_t *p) {
+  if (p->p[0].toInt() == BT_id_a2dp) {
     if (working_state.bt_state != BTSTATE_OFF)
       working_state.bt_state = BTSTATE_REQ_DISC;
-  } else if (p1.toInt() == BLE_conn_id) {
+  } else if (p->p[0].toInt() == BLE_conn_id) {
     if (working_state.ble_state != BLESTATE_OFF)
       working_state.ble_state = BLESTATE_REQ_DISC;
   }
@@ -292,12 +297,12 @@ static enum serialMsg msgCloseOk(String p1, String p2, String p3) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgName2(String p1, String p2, String p3) {
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    int strlen = p3.length();
-    BT_peer_name = p2.substring(1) + "_" + p3.substring(0, (strlen - 1));
+static enum serialMsg msgName2(serialParams_t *p) {
+  if (p->p[1].substring(0, 1).equalsIgnoreCase("\"")) {
+    int strlen = p->p[2].length();
+    BT_peer_name = p->p[1].substring(1) + "_" + p->p[2].substring(0, (strlen - 1));
   } else {
-    BT_peer_name = p2 + "_" + p3;
+    BT_peer_name = p->p[1] + "_" + p->p[2];
   }
 
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -309,26 +314,26 @@ static enum serialMsg msgName2(String p1, String p2, String p3) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgOpenOk(String p1, String p2, String p3) {
-  if (p2.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p3;
+static enum serialMsg msgOpenOk(serialParams_t *p) {
+  if (p->p[1].equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p->p[0].toInt();
+    BT_peer_address = p->p[2];
     if (debug)
       snooze_usb.printf(
           "Info:    A2DP connection opened. Conn ID: %d, peer address = %s\n",
           BT_id_a2dp, BT_peer_address.c_str());
     working_state.bt_state = BTSTATE_REQ_CONN;
     return BCCMD_BT_NAME;
-  } else if (p2.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p3;
+  } else if (p->p[1].equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p->p[0].toInt();
+    BT_peer_address = p->p[2];
     if (debug)
       snooze_usb.printf("Info:    AVRCP connection opened. Conn ID: %d, peer "
                         "address (check) = %s\n",
                         BT_id_avrcp, BT_peer_address.c_str());
     return BCCMD__NOTHING;
-  } else if (p2.equalsIgnoreCase("BLE")) {
-    BLE_conn_id = p1.toInt();
+  } else if (p->p[1].equalsIgnoreCase("BLE")) {
+    BLE_conn_id = p->p[0].toInt();
     // if(debug) snooze_usb.printf("Info:    BLE connection opened. Conn ID:
     // %d\n", BLE_conn_id);
     working_state.ble_state = BLESTATE_REQ_CONN;
@@ -340,18 +345,18 @@ static enum serialMsg msgOpenOk(String p1, String p2, String p3) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgRecv1(String p1, String p2, String p3) {
+static enum serialMsg msgRecv1(serialParams_t *p) {
   // - "inq"
   // - "disc"
   // - "latlong"
   enum serialMsg ret = BCCMD__NOTHING;
 
-  if (p1.toInt() == BLE_conn_id) {
-    if (p3.equalsIgnoreCase("inq")) {
+  if (p->p[0].toInt() == BLE_conn_id) {
+    if (p->p[2].equalsIgnoreCase("inq")) {
       ret = BCCMD_INQUIRY;
-    } else if (p3.equalsIgnoreCase("disc")) {
+    } else if (p->p[2].equalsIgnoreCase("disc")) {
       working_state.bt_state = BTSTATE_REQ_DISC;
-    } else if (p3.equalsIgnoreCase("latlong")) {
+    } else if (p->p[2].equalsIgnoreCase("latlong")) {
       if (debug)
         snooze_usb.println("Info:    Receiving latlong without values");
     }
@@ -362,29 +367,29 @@ static enum serialMsg msgRecv1(String p1, String p2, String p3) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgInquiry1(String p1, String p2, String p3, String p4) {
-  String addr = p1;
+static enum serialMsg msgInquiry1(serialParams_t *p) {
+  String addr = p->p[0];
   String name;
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p2.substring(1, (p2.length() - 1));
+  if (p->p[1].substring(0, 1).equalsIgnoreCase("\"")) {
+    name = p->p[1].substring(1, (p->p[1].length() - 1));
   } else {
-    name = p2;
+    name = p->p[1];
   }
-  String caps = p3;
-  unsigned int stren = p4.substring(1, 3).toInt();
+  String caps = p->p[2];
+  unsigned int stren = p->p[3].substring(1, 3).toInt();
   populateDevlist(addr, name, caps, stren);
   return BCNOT_INQ_STATE;
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgName3(String p1, String p2, String p3, String p4) {
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    int strlen = p4.length();
+static enum serialMsg msgName3(serialParams_t *p) {
+  if (p->p[1].substring(0, 1).equalsIgnoreCase("\"")) {
+    int strlen = p->p[3].length();
     BT_peer_name =
-        p2.substring(1) + "_" + p3 + "_" + p4.substring(0, (strlen - 1));
+        p->p[1].substring(1) + "_" + p->p[2] + "_" + p->p[3].substring(0, (strlen - 1));
   } else {
-    BT_peer_name = p2 + "_" + p3 + "_" + p4;
+    BT_peer_name = p->p[1] + "_" + p->p[2] + "_" + p->p[3];
   }
 
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -396,8 +401,8 @@ static enum serialMsg msgName3(String p1, String p2, String p3, String p4) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgState(String p1, String p2, String p3, String p4) {
-  if (!p1.substring(p1.length() - 2, p1.length() - 1).toInt()) {
+static enum serialMsg msgState(serialParams_t *p) {
+  if (!p->p[0].substring(p->p[0].length() - 2, p->p[0].length() - 1).toInt()) {
     return BCNOT_BT_STATE;
   }
   return BCCMD__NOTHING;
@@ -405,7 +410,7 @@ static enum serialMsg msgState(String p1, String p2, String p3, String p4) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgRecv2(String p1, String p2, String p3, String p4) {
+static enum serialMsg msgRecv2(serialParams_t *p) {
   // - "bt {?}"
   // - "conn {address}"
   // - "filepath {?}"
@@ -419,12 +424,12 @@ static enum serialMsg msgRecv2(String p1, String p2, String p3, String p4) {
   // - "time {ts}"
   // - "vol {+/-/?}"
   enum serialMsg ret = BCCMD__NOTHING;
-  if (p1.toInt() == BLE_conn_id) {
-    if (p3.equalsIgnoreCase("conn")) {
-      BT_peer_name = p4;
+  if (p->p[0].toInt() == BLE_conn_id) {
+    if (p->p[2].equalsIgnoreCase("conn")) {
+      BT_peer_name = p->p[3];
       return BCCMD_DEV_CONNECT;
-    } else if (p3.equalsIgnoreCase("time")) {
-      unsigned long rec_time = p4.toInt();
+    } else if (p->p[2].equalsIgnoreCase("time")) {
+      unsigned long rec_time = p->p[3].toInt();
       if (rec_time > MIN_TIME_DEC) {
         setCurTime(rec_time, TSOURCE_PHONE);
         if (debug)
@@ -433,70 +438,70 @@ static enum serialMsg msgRecv2(String p1, String p2, String p3, String p4) {
         if (debug)
           snooze_usb.println("Error: Received time not correct!");
       }
-    } else if (p3.equalsIgnoreCase("rec")) {
-      if (p4.equalsIgnoreCase("start"))
+    } else if (p->p[2].equalsIgnoreCase("rec")) {
+      if (p->p[3].equalsIgnoreCase("start"))
         return BCCMD_REC_START;
-      else if (p4.equalsIgnoreCase("stop"))
+      else if (p->p[3].equalsIgnoreCase("stop"))
         return BCCMD_REC_STOP;
-      else if (p4.equalsIgnoreCase("?"))
+      else if (p->p[3].equalsIgnoreCase("?"))
         return BCNOT_REC_STATE;
-    } else if (p3.equalsIgnoreCase("rec_next")) {
-      if (p4.equalsIgnoreCase("?"))
+    } else if (p->p[3].equalsIgnoreCase("rec_next")) {
+      if (p->p[3].equalsIgnoreCase("?"))
         return BCNOT_REC_NEXT;
       else {
         if (debug)
           snooze_usb.println("Error: BLE rec_next command not listed");
       }
-    } else if (p3.equalsIgnoreCase("rec_nb")) {
-      if (p4.equalsIgnoreCase("?"))
+    } else if (p->p[2].equalsIgnoreCase("rec_nb")) {
+      if (p->p[3].equalsIgnoreCase("?"))
         return BCNOT_REC_NB;
       else {
         if (debug)
           snooze_usb.println("Error: BLE rec_nb command not listed");
       }
-    } else if (p3.equalsIgnoreCase("rec_ts")) {
-      if (p4.equalsIgnoreCase("?"))
+    } else if (p->p[2].equalsIgnoreCase("rec_ts")) {
+      if (p->p[3].equalsIgnoreCase("?"))
         return BCNOT_REC_TS;
       else {
         if (debug)
           snooze_usb.println("Error: BLE rec_ts command not listed");
       }
-    } else if (p3.equalsIgnoreCase("mon")) {
-      if (p4.equalsIgnoreCase("start"))
+    } else if (p->p[2].equalsIgnoreCase("mon")) {
+      if (p->p[3].equalsIgnoreCase("start"))
         working_state.mon_state = MONSTATE_REQ_ON;
-      else if (p4.equalsIgnoreCase("stop"))
+      else if (p->p[3].equalsIgnoreCase("stop"))
         working_state.mon_state = MONSTATE_REQ_OFF;
-      else if (p4.equalsIgnoreCase("?"))
+      else if (p->p[3].equalsIgnoreCase("?"))
         return BCNOT_MON_STATE;
-    } else if (p3.equalsIgnoreCase("vol")) {
+    } else if (p->p[2].equalsIgnoreCase("vol")) {
       if ((working_state.bt_state == BTSTATE_CONNECTED) ||
           (working_state.bt_state == BTSTATE_PLAY)) {
-        if (p4.equalsIgnoreCase("+")) {
+        if (p->p[3].equalsIgnoreCase("+")) {
           return BCCMD_VOL_UP;
-        } else if (p4.equalsIgnoreCase("-")) {
+        } else if (p->p[3].equalsIgnoreCase("-")) {
           return BCCMD_VOL_DOWN;
-        } else if (p4.equalsIgnoreCase("?")) {
+        } else if (p->p[3].equalsIgnoreCase("?")) {
           return BCNOT_VOL_LEVEL;
         }
       } else {
         return BCERR_VOL_BT_DIS;
       }
-    } else if (p3.equalsIgnoreCase("bt")) {
-      if (p4.equalsIgnoreCase("?")) {
+    } else if (p->p[2].equalsIgnoreCase("bt")) {
+      if (p->p[3].equalsIgnoreCase("?")) {
         return BCCMD_STATUS;
       }
-    } else if (p3.equalsIgnoreCase("rwin")) {
-      if (p4.equalsIgnoreCase("?")) {
+    } else if (p->p[2].equalsIgnoreCase("rwin")) {
+      if (p->p[3].equalsIgnoreCase("?")) {
         return BCNOT_RWIN_VALS;
       } else {
         return BCERR_RWIN_BAD_REQ;
       }
-    } else if (p3.equalsIgnoreCase("filepath")) {
-      if (p4.equalsIgnoreCase("?")) {
+    } else if (p->p[2].equalsIgnoreCase("filepath")) {
+      if (p->p[3].equalsIgnoreCase("?")) {
         return BCNOT_FILEPATH;
       }
-    } else if (p3.equalsIgnoreCase("latlong")) {
-      if (p4.equalsIgnoreCase("?")) {
+    } else if (p->p[2].equalsIgnoreCase("latlong")) {
+      if (p->p[3].equalsIgnoreCase("?")) {
         return BCNOT_LATLONG;
       }
     }
@@ -506,36 +511,34 @@ static enum serialMsg msgRecv2(String p1, String p2, String p3, String p4) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgInquiry2(String p1, String p2, String p3, String p4,
-                                  String p5) {
-  String addr = p1;
+static enum serialMsg msgInquiry2(serialParams_t *p) {
+  String addr = p->p[0];
   String name;
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p2.substring(1) + "_" + p3.substring(0, (p3.length() - 1));
+  if (p->p[1].substring(0, 1).equalsIgnoreCase("\"")) {
+    name = p->p[1].substring(1) + "_" + p->p[2].substring(0, (p->p[2].length() - 1));
   } else {
-    name = p2 + "_" + p3;
+    name = p->p[1] + "_" + p->p[2];
   }
-  String caps = p4;
-  unsigned int stren = p5.substring(1, 3).toInt();
+  String caps = p->p[3];
+  unsigned int stren = p->p[4].substring(1, 3).toInt();
   populateDevlist(addr, name, caps, stren);
   return BCNOT_INQ_STATE;
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgLink1(String p1, String p2, String p3, String p4,
-                               String p5) {
-  if (p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p4;
+static enum serialMsg msgLink1(serialParams_t *p) {
+  if (p->p[2].equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p->p[0].toInt();
+    BT_peer_address = p->p[3];
     if (debug)
       snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
                         BT_peer_address.c_str(), BT_id_a2dp);
     working_state.bt_state = BTSTATE_CONNECTED;
     return BCCMD_BT_NAME;
-  } else if (p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p4;
+  } else if (p->p[2].equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p->p[0].toInt();
+    BT_peer_address = p->p[3];
     if (debug)
       snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
                         BT_peer_address.c_str(), BT_id_avrcp);
@@ -546,14 +549,13 @@ static enum serialMsg msgLink1(String p1, String p2, String p3, String p4,
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgName4(String p1, String p2, String p3, String p4,
-                               String p5) {
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    int strlen = p5.length();
-    BT_peer_name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" +
-                   p5.substring(0, (strlen - 1));
+static enum serialMsg msgName4(serialParams_t *p) {
+  if (p->p[1].substring(0, 1).equalsIgnoreCase("\"")) {
+    int strlen = p->p[4].length();
+    BT_peer_name = p->p[1].substring(1) + "_" + p->p[2] + "_" + p->p[3] + "_" +
+                   p->p[4].substring(0, (strlen - 1));
   } else {
-    BT_peer_name = p2 + "_" + p3 + "_" + p4 + "_" + p5;
+    BT_peer_name = p->p[1] + "_" + p->p[2] + "_" + p->p[3] + "_" + p->p[4];
   }
 
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -565,20 +567,19 @@ static enum serialMsg msgName4(String p1, String p2, String p3, String p4,
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgRecv3(String p1, String p2, String p3, String p4,
-                               String p5) {
+static enum serialMsg msgRecv3(serialParams_t *p) {
   // - "latlong {lat long}"
-  if (p1.toInt() == BLE_conn_id) {
-    if (p3.equalsIgnoreCase("latlong")) {
-      snooze_usb.printf("Received latlong info: %f, %f", atof(p4.c_str()),
-                        atof(p5.c_str()));
-      if ((p4.c_str() == NULL) || (p5.c_str() == NULL)) {
+  if (p->p[0].toInt() == BLE_conn_id) {
+    if (p->p[2].equalsIgnoreCase("latlong")) {
+      snooze_usb.printf("Received latlong info: %f, %f", atof(p->p[3].c_str()),
+                        atof(p->p[4].c_str()));
+      if ((p->p[3].c_str() == NULL) || (p->p[4].c_str() == NULL)) {
         next_record.gps_source = GPS_NONE;
         next_record.gps_lat = 1000.0;
         next_record.gps_long = 1000.0;
       } else {
-        next_record.gps_lat = atof(p4.c_str());
-        next_record.gps_long = atof(p5.c_str());
+        next_record.gps_lat = atof(p->p[3].c_str());
+        next_record.gps_long = atof(p->p[4].c_str());
         next_record.gps_source = GPS_PHONE;
       }
     }
@@ -588,38 +589,36 @@ static enum serialMsg msgRecv3(String p1, String p2, String p3, String p4,
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgInquiry3(String p1, String p2, String p3, String p4,
-                                  String p5, String p6) {
-  String addr = p1;
+static enum serialMsg msgInquiry3(serialParams_t *p) {
+  String addr = p->p[0];
   String name;
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
+  if (p->p[1].substring(0, 1).equalsIgnoreCase("\"")) {
     name =
-        p2.substring(1) + "_" + p3 + "_" + p4.substring(0, (p4.length() - 1));
+        p->p[1].substring(1) + "_" + p->p[2] + "_" + p->p[3].substring(0, (p->p[3].length() - 1));
   } else {
-    name = p2 + "_" + p3 + "_" + p4;
+    name = p->p[1] + "_" + p->p[2] + "_" + p->p[3];
   }
-  String caps = p5;
-  unsigned int stren = p6.substring(1, 3).toInt();
+  String caps = p->p[4];
+  unsigned int stren = p->p[5].substring(1, 3).toInt();
   populateDevlist(addr, name, caps, stren);
   return BCNOT_INQ_STATE;
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgRecv4(String p1, String p2, String p3, String p4,
-                               String p5, String p6) {
+static enum serialMsg msgRecv4(serialParams_t *p) {
   enum serialMsg ret = BCCMD__NOTHING;
 
   // - "rwin {duration} {period} {occurences}"
-  if (p1.toInt() == BLE_conn_id) {
-    if (p3.equalsIgnoreCase("rwin")) {
-      unsigned int d, p;
-      d = p4.toInt();
-      p = p5.toInt();
-      if (d < p) {
-        breakTime(d, rec_window.duration);
-        breakTime(p, rec_window.period);
-        rec_window.occurences = p6.toInt();
+  if (p->p[0].toInt() == BLE_conn_id) {
+    if (p->p[2].equalsIgnoreCase("rwin")) {
+      unsigned int duration, period;
+      duration = p->p[3].toInt();
+      period = p->p[4].toInt();
+      if (duration < period) {
+        breakTime(duration, rec_window.duration);
+        breakTime(period, rec_window.period);
+        rec_window.occurences = p->p[5].toInt();
         return BCNOT_RWIN_OK;
       } else {
         return BCERR_RWIN_WRONG_PARAMS;
@@ -631,21 +630,20 @@ static enum serialMsg msgRecv4(String p1, String p2, String p3, String p4,
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgLink2(String p1, String p2, String p3, String p4,
-                               String p5, String p6) {
+static enum serialMsg msgLink2(serialParams_t *p) {
   enum serialMsg ret = BCCMD__NOTHING;
 
-  if (p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p4;
+  if (p->p[2].equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p->p[0].toInt();
+    BT_peer_address = p->p[3];
     if (debug)
       snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
                         BT_peer_address.c_str(), BT_id_a2dp);
     working_state.bt_state = BTSTATE_CONNECTED;
     return BCCMD_BT_NAME;
-  } else if (p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p4;
+  } else if (p->p[2].equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p->p[0].toInt();
+    BT_peer_address = p->p[3];
     if (debug)
       snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
                         BT_peer_address.c_str(), BT_id_avrcp);
@@ -656,39 +654,37 @@ static enum serialMsg msgLink2(String p1, String p2, String p3, String p4,
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgInquiry4(String p1, String p2, String p3, String p4,
-                                  String p5, String p6, String p7) {
-  String addr = p1;
+static enum serialMsg msgInquiry4(serialParams_t *p) {
+  String addr = p->p[0];
   String name;
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" +
-           p5.substring(0, (p5.length() - 1));
+  if (p->p[1].substring(0, 1).equalsIgnoreCase("\"")) {
+    name = p->p[1].substring(1) + "_" + p->p[2] + "_" + p->p[3] + "_" +
+           p->p[4].substring(0, (p->p[4].length() - 1));
   } else {
-    name = p2 + "_" + p3 + "_" + p4 + "_" + p5;
+    name = p->p[1] + "_" + p->p[2] + "_" + p->p[3] + "_" + p->p[4];
   }
-  String caps = p6;
-  unsigned int stren = p7.substring(1, 3).toInt();
+  String caps = p->p[5];
+  unsigned int stren = p->p[6].substring(1, 3).toInt();
   populateDevlist(addr, name, caps, stren);
   return BCNOT_INQ_STATE;
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgLink3(String p1, String p2, String p3, String p4,
-                               String p5, String p6, String p7) {
+static enum serialMsg msgLink3(serialParams_t *p) {
   enum serialMsg ret = BCCMD__NOTHING;
 
-  if (p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p4;
+  if (p->p[2].equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p->p[0].toInt();
+    BT_peer_address = p->p[3];
     if (debug)
       snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
                         BT_peer_address.c_str(), BT_id_a2dp);
     working_state.bt_state = BTSTATE_CONNECTED;
     return BCCMD_BT_NAME;
-  } else if (p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p4;
+  } else if (p->p[2].equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p->p[0].toInt();
+    BT_peer_address = p->p[3];
     if (debug)
       snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
                         BT_peer_address.c_str(), BT_id_avrcp);
@@ -699,39 +695,37 @@ static enum serialMsg msgLink3(String p1, String p2, String p3, String p4,
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgInquiry5(String p1, String p2, String p3, String p4,
-                                  String p5, String p6, String p7, String p8) {
-  String addr = p1;
+static enum serialMsg msgInquiry5(serialParams_t *p) {
+  String addr = p->p[0];
   String name;
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" + p5 + "_" +
-           p6.substring(0, (p6.length() - 1));
+  if (p->p[1].substring(0, 1).equalsIgnoreCase("\"")) {
+    name = p->p[1].substring(1) + "_" + p->p[2] + "_" + p->p[3] + "_" + p->p[4] + "_" +
+           p->p[5].substring(0, (p->p[5].length() - 1));
   } else {
-    name = p2 + "_" + p3 + "_" + p4 + "_" + p5 + "_" + p6;
+    name = p->p[1] + "_" + p->p[2] + "_" + p->p[3] + "_" + p->p[4] + "_" + p->p[5];
   }
-  String caps = p7;
-  unsigned int stren = p8.substring(1, 3).toInt();
+  String caps = p->p[6];
+  unsigned int stren = p->p[7].substring(1, 3).toInt();
   populateDevlist(addr, name, caps, stren);
   return BCNOT_INQ_STATE;
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgLink4(String p1, String p2, String p3, String p4,
-                               String p5, String p6, String p7, String p8) {
+static enum serialMsg msgLink4(serialParams_t *p) {
   enum serialMsg ret = BCCMD__NOTHING;
 
-  if (p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p4;
+  if (p->p[2].equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p->p[0].toInt();
+    BT_peer_address = p->p[3];
     if (debug)
       snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
                         BT_peer_address.c_str(), BT_id_a2dp);
     working_state.bt_state = BTSTATE_CONNECTED;
     return BCCMD_BT_NAME;
-  } else if (p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p4;
+  } else if (p->p[2].equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p->p[0].toInt();
+    BT_peer_address = p->p[3];
     if (debug)
       snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
                         BT_peer_address.c_str(), BT_id_avrcp);
@@ -742,22 +736,20 @@ static enum serialMsg msgLink4(String p1, String p2, String p3, String p4,
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgLink5(String p1, String p2, String p3, String p4,
-                               String p5, String p6, String p7, String p8,
-                               String p9) {
+static enum serialMsg msgLink5(serialParams_t *p) {
   enum serialMsg ret = BCCMD__NOTHING;
 
-  if (p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p4;
+  if (p->p[2].equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p->p[0].toInt();
+    BT_peer_address = p->p[3];
     if (debug)
       snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
                         BT_peer_address.c_str(), BT_id_a2dp);
     working_state.bt_state = BTSTATE_CONNECTED;
     return BCCMD_BT_NAME;
-  } else if (p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p4;
+  } else if (p->p[2].equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p->p[0].toInt();
+    BT_peer_address = p->p[3];
     if (debug)
       snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
                         BT_peer_address.c_str(), BT_id_avrcp);
@@ -1114,15 +1106,16 @@ enum serialMsg parseSerialIn(String input) {
   if (debug)
     snooze_usb.printf("<-BC127: %s\n", input.c_str());
 
-  unsigned int nb_params = countParams(input);
+  serialParams_t params;
+  unsigned int nb_params = countParams(input, &params);
 
   switch (nb_params) {
   // INQU_OK
   // READY
   case 0: {
-    if (notif.equalsIgnoreCase("INQU_OK"))
+    if (params.notif.equalsIgnoreCase("INQU_OK"))
       return BCNOT_INQ_DONE;
-    else if (notif.equalsIgnoreCase("READY"))
+    else if (params.notif.equalsIgnoreCase("READY"))
       BC127_ready = true;
     break;
   }
@@ -1130,9 +1123,9 @@ enum serialMsg parseSerialIn(String input) {
   // AVRCP_PLAY [link_ID]
   // AVRCP_PAUSE [link_ID]
   case 1: {
-    if (notif.equalsIgnoreCase("AVRCP_PLAY"))
+    if (params.notif.equalsIgnoreCase("AVRCP_PLAY"))
       return msgAvrcpPlay();
-    else if (notif.equalsIgnoreCase("AVRCP_PAUSE"))
+    else if (params.notif.equalsIgnoreCase("AVRCP_PAUSE"))
       return msgAvrcpPause();
     break;
   }
@@ -1141,12 +1134,12 @@ enum serialMsg parseSerialIn(String input) {
   // LINK_LOSS [link_ID] (status)
   // NAME [addr] {"name" || name}
   case 2: {
-    if (notif.equalsIgnoreCase("ABS_VOL"))
-      return msgAbsVol(param1, param2);
-    else if (notif.equalsIgnoreCase("LINK_LOSS"))
-      return msgLinkLoss(param1, param2);
-    else if (notif.equalsIgnoreCase("NAME"))
-      return msgName1(param1, param2);
+    if (params.notif.equalsIgnoreCase("ABS_VOL"))
+      return msgAbsVol(&params);
+    else if (params.notif.equalsIgnoreCase("LINK_LOSS"))
+      return msgLinkLoss(&params);
+    else if (params.notif.equalsIgnoreCase("NAME"))
+      return msgName1(&params);
     break;
   }
 
@@ -1155,14 +1148,14 @@ enum serialMsg parseSerialIn(String input) {
   // OPEN_OK [link_ID] (profile) (Bluetooth address)
   // RECV [link_ID] (size) (report data)
   case 3: {
-    if (notif.equalsIgnoreCase("CLOSE_OK"))
-      return msgCloseOk(param1, param2, param3);
-    else if (notif.equalsIgnoreCase("NAME"))
-      return msgName2(param1, param2, param3);
-    else if (notif.equalsIgnoreCase("OPEN_OK"))
-      return msgOpenOk(param1, param2, param3);
-    else if (notif.equalsIgnoreCase("RECV"))
-      return msgRecv1(param1, param2, param3);
+    if (params.notif.equalsIgnoreCase("CLOSE_OK"))
+      return msgCloseOk(&params);
+    else if (params.notif.equalsIgnoreCase("NAME"))
+      return msgName2(&params);
+    else if (params.notif.equalsIgnoreCase("OPEN_OK"))
+      return msgOpenOk(&params);
+    else if (params.notif.equalsIgnoreCase("RECV"))
+      return msgRecv1(&params);
     break;
   }
 
@@ -1171,14 +1164,14 @@ enum serialMsg parseSerialIn(String input) {
   // STATE (connected) (connectable) (discoverable) (ble)
   // RECV [link_ID] (size) (report data) <-- (report data) with 2 parameters
   case 4: {
-    if (notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry1(param1, param2, param3, param4);
-    else if (notif.equalsIgnoreCase("NAME"))
-      return msgName3(param1, param2, param3, param4);
-    else if (notif.equalsIgnoreCase("STATE"))
-      return msgState(param1, param2, param3, param4);
-    else if (notif.equalsIgnoreCase("RECV"))
-      return msgRecv2(param1, param2, param3, param4);
+    if (params.notif.equalsIgnoreCase("INQUIRY"))
+      return msgInquiry1(&params);
+    else if (params.notif.equalsIgnoreCase("NAME"))
+      return msgName3(&params);
+    else if (params.notif.equalsIgnoreCase("STATE"))
+      return msgState(&params);
+    else if (params.notif.equalsIgnoreCase("RECV"))
+      return msgRecv2(&params);
     break;
   }
 
@@ -1187,14 +1180,14 @@ enum serialMsg parseSerialIn(String input) {
   // NAME [addr] {"n1 n2 n3 n4" || n1 n2 n3 n4}
   // RECV [link_ID] (size) (report data) <-- (report data) with 3 parameters
   case 5: {
-    if (notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry2(param1, param2, param3, param4, param5);
-    else if (notif.equalsIgnoreCase("LINK"))
-      return msgLink1(param1, param2, param3, param4, param5);
-    else if (notif.equalsIgnoreCase("NAME"))
-      return msgName4(param1, param2, param3, param4, param5);
-    else if (notif.equalsIgnoreCase("RECV"))
-      return msgRecv3(param1, param2, param3, param4, param5);
+    if (params.notif.equalsIgnoreCase("INQUIRY"))
+      return msgInquiry2(&params);
+    else if (params.notif.equalsIgnoreCase("LINK"))
+      return msgLink1(&params);
+    else if (params.notif.equalsIgnoreCase("NAME"))
+      return msgName4(&params);
+    else if (params.notif.equalsIgnoreCase("RECV"))
+      return msgRecv3(&params);
     break;
   }
 
@@ -1202,44 +1195,40 @@ enum serialMsg parseSerialIn(String input) {
   // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2)
   // RECV [link_ID] (size) (report data) <-- (report data) with 4 parameters
   case 6: {
-    if (notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry3(param1, param2, param3, param4, param5, param6);
-    else if (notif.equalsIgnoreCase("RECV"))
-      return msgRecv4(param1, param2, param3, param4, param5, param6);
-    else if (notif.equalsIgnoreCase("LINK"))
-      return msgLink2(param1, param2, param3, param4, param5, param6);
+    if (params.notif.equalsIgnoreCase("INQUIRY"))
+      return msgInquiry3(&params);
+    else if (params.notif.equalsIgnoreCase("RECV"))
+      return msgRecv4(&params);
+    else if (params.notif.equalsIgnoreCase("LINK"))
+      return msgLink2(&params);
     break;
   }
 
   // INQUIRY [addr] {"n1 n2 n3 n4" || n1 n2 n3 n4} (COD) (RSSI)
   // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3)
   case 7: {
-    if (notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry4(param1, param2, param3, param4, param5, param6,
-                         param7);
-    else if (notif.equalsIgnoreCase("LINK"))
-      return msgLink3(param1, param2, param3, param4, param5, param6, param7);
+    if (params.notif.equalsIgnoreCase("INQUIRY"))
+      return msgInquiry4(&params);
+    else if (params.notif.equalsIgnoreCase("LINK"))
+      return msgLink3(&params);
     break;
   }
 
   // INQUIRY [addr] {"n1 n2 n3 n4 n5" || n1 n2 n3 n4 n5} (COD) (RSSI)
   // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3) (info4)
   case 8: {
-    if (notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry5(param1, param2, param3, param4, param5, param6, param7,
-                         param8);
-    else if (notif.equalsIgnoreCase("LINK"))
-      return msgLink4(param1, param2, param3, param4, param5, param6, param7,
-                      param8);
+    if (params.notif.equalsIgnoreCase("INQUIRY"))
+      return msgInquiry5(&params);
+    else if (params.notif.equalsIgnoreCase("LINK"))
+      return msgLink4(&params);
     break;
   }
 
   // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3) (info4)
   // (info5)
   case 9: {
-    if (notif.equalsIgnoreCase("LINK"))
-      return msgLink5(param1, param2, param3, param4, param5, param6, param7,
-                      param8, param9);
+    if (params.notif.equalsIgnoreCase("LINK"))
+      return msgLink5(&params);
     break;
   }
 
