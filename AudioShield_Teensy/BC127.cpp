@@ -32,7 +32,11 @@ typedef struct {
   String p8;
   String p9;
   String trash;
-}bc127Params_t;
+} serialParams_t;
+typedef struct {
+  String cmd;
+  String param;
+} serialAnswer_t;
 
 /*** Variables ***************************************************************/
 // Amount of found BT devices on inquiry
@@ -52,6 +56,11 @@ bool BC127_ready = false;
 //     param9, trash;
 
 /*** Function prototypes *****************************************************/
+static void populateDevlist(String addr, String name, String caps,
+                            unsigned int stren);
+static unsigned int sliceParams(String input, serialParams_t *output);
+static bool searchDevlist(String name);
+static enum serialMsgs readMsg(String notif);
 /*** Macros ******************************************************************/
 /*** Constant objects ********************************************************/
 /*** Functions implementation ************************************************/
@@ -98,7 +107,7 @@ static void populateDevlist(String addr, String name, String caps,
 /*****************************************************************************/
 
 /*****************************************************************************/
-static unsigned int countParams(String input, bc127Params_t *output) {
+static unsigned int sliceParams(String input, serialParams_t *output) {
   // ================================================================
   // Slicing input string.
   // Currently 3 usefull schemes:
@@ -232,36 +241,718 @@ static bool searchDevlist(String name) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgAvrcpPlay(void) {
-  working_state.mon_state = MONSTATE_REQ_ON;
-  return BCCMD__NOTHING;
+static enum serialMsgs readMsg(String in) {
+  if (in.equalsIgnoreCase("A2DP_STREAM_START"))
+    return BCNOT_A2DP_STREAM_START;
+  else if (in.equalsIgnoreCase("A2DP_STREAM_SUSPEND"))
+    return BCNOT_A2DP_STREAM_SUSPEND;
+  else if (in.equalsIgnoreCase("ABS_VOL"))
+    return BCNOT_ABS_VOL;
+  else if (in.equalsIgnoreCase("ASSOCIATION"))
+    return BCNOT_ASSOCIATION;
+  else if (in.equalsIgnoreCase("ASSOCIATION_IN_PROGRESS"))
+    return BCNOT_ASSOCIATION_IN_PROGRESS;
+  else if (in.equalsIgnoreCase("AT"))
+    return BCNOT_AT;
+  else if (in.equalsIgnoreCase("AVRCP_BACKWARD"))
+    return BCNOT_AVRCP_BACKWARD;
+  else if (in.equalsIgnoreCase("AVRCP_FORWARD"))
+    return BCNOT_AVRCP_FORWARD;
+  else if (in.equalsIgnoreCase("AVRCP_MEDIA"))
+    return BCNOT_AVRCP_MEDIA;
+  else if (in.equalsIgnoreCase("AVRCP_PAUSE"))
+    return BCNOT_AVRCP_PAUSE;
+  else if (in.equalsIgnoreCase("AVRCP_PLAY"))
+    return BCNOT_AVRCP_PLAY;
+  else if (in.equalsIgnoreCase("AVRCP_STOP"))
+    return BCNOT_AVRCP_STOP;
+  else if (in.equalsIgnoreCase("BA_BROADCASTER_START"))
+    return BCNOT_BA_BROADCASTER_START;
+  else if (in.equalsIgnoreCase("BA_BROADCASTER_STOP"))
+    return BCNOT_BA_BROADCASTER_STOP;
+  else if (in.equalsIgnoreCase("BA_RECEIVER_START"))
+    return BCNOT_BA_RECEIVER_START;
+  else if (in.equalsIgnoreCase("BA_RECEIVER_STOP"))
+    return BCNOT_BA_RECEIVER_STOP;
+  else if (in.equalsIgnoreCase("BC_SMART_CMD"))
+    return BCNOT_BC_SMART_CMD;
+  else if (in.equalsIgnoreCase("BC_SMART_CMD_RESP"))
+    return BCNOT_BC_SMART_CMD_RESP;
+  else if (in.equalsIgnoreCase("BLE_INDICATION"))
+    return BCNOT_BLE_INDICATION;
+  else if (in.equalsIgnoreCase("BLE_NOTIFICATION"))
+    return BCNOT_BLE_NOTIFICATION;
+  else if (in.equalsIgnoreCase("BLE_PAIR_ERROR"))
+    return BCNOT_BLE_PAIR_ERROR;
+  else if (in.equalsIgnoreCase("BLE_PAIR_OK"))
+    return BCNOT_BLE_PAIR_OK;
+  else if (in.equalsIgnoreCase("BLE_READ"))
+    return BCNOT_BLE_READ;
+  else if (in.equalsIgnoreCase("BLE_WRITE"))
+    return BCNOT_BLE_WRITE;
+  else if (in.equalsIgnoreCase("CALL_ACTIVE"))
+    return BCNOT_CALL_ACTIVE;
+  else if (in.equalsIgnoreCase("CALL_DIAL"))
+    return BCNOT_CALL_DIAL;
+  else if (in.equalsIgnoreCase("CALL_END"))
+    return BCNOT_CALL_END;
+  else if (in.equalsIgnoreCase("CALL_INCOMING"))
+    return BCNOT_CALL_INCOMING;
+  else if (in.equalsIgnoreCase("CALL_MEMORY"))
+    return BCNOT_CALL_MEMORY;
+  else if (in.equalsIgnoreCase("CALL_OUTGOING"))
+    return BCNOT_CALL_OUTGOING;
+  else if (in.equalsIgnoreCase("CALL_REDIAL"))
+    return BCNOT_CALL_REDIAL;
+  else if (in.equalsIgnoreCase("CALLER_NUMBER"))
+    return BCNOT_CALLER_NUMBER;
+  else if (in.equalsIgnoreCase("CHARGING_IN_PROGRESS"))
+    return BCNOT_CHARGING_IN_PROGRESS;
+  else if (in.equalsIgnoreCase("CHARGING_COMPLETE"))
+    return BCNOT_CHARGING_COMPLETE;
+  else if (in.equalsIgnoreCase("CHARGER_DISCONNECTED"))
+    return BCNOT_CHARGER_DISCONNECTED;
+  else if (in.equalsIgnoreCase("CLOSE_OK"))
+    return BCNOT_CLOSE_OK;
+  else if (in.equalsIgnoreCase("DTMF"))
+    return BCNOT_DTMF;
+  else if (in.equalsIgnoreCase("ERROR"))
+    return BCNOT_ERROR;
+  else if (in.equalsIgnoreCase("IAP_CLOSE_SESSION"))
+    return BCNOT_IAP_CLOSE_SESSION;
+  else if (in.equalsIgnoreCase("IAP_OPEN_SESSION"))
+    return BCNOT_IAP_OPEN_SESSION;
+  else if (in.equalsIgnoreCase("INBAND_RING"))
+    return BCNOT_INBAND_RING;
+  else if (in.equalsIgnoreCase("LINK_LOSS"))
+    return BCNOT_LINK_LOSS;
+  else if (in.equalsIgnoreCase("MAP_NEW_MSG"))
+    return BCNOT_MAP_NEW_MSG;
+  else if (in.equalsIgnoreCase("OPEN_OK"))
+    return BCNOT_OPEN_OK;
+  else if (in.equalsIgnoreCase("PAIR_ERROR"))
+    return BCNOT_PAIR_ERROR;
+  else if (in.equalsIgnoreCase("PAIR_OK"))
+    return BCNOT_PAIR_OK;
+  else if (in.equalsIgnoreCase("PAIR_PASSKEY"))
+    return BCNOT_PAIR_PASSKEY;
+  else if (in.equalsIgnoreCase("PAIR_PENDING"))
+    return BCNOT_PAIR_PENDING;
+  else if (in.equalsIgnoreCase("NOT_RECV"))
+    return BCNOT_RECV;
+  else if (in.equalsIgnoreCase("NOT_REMOTE_VOLUME"))
+    return BCNOT_REMOTE_VOLUME;
+  else if (in.equalsIgnoreCase("NOT_ROLE"))
+    return BCNOT_ROLE;
+  else if (in.equalsIgnoreCase("NOT_ROLE_OK"))
+    return BCNOT_ROLE_OK;
+  else if (in.equalsIgnoreCase("NOT_ROLE_NOT_ALLOWED"))
+    return BCNOT_ROLE_NOT_ALLOWED;
+  else if (in.equalsIgnoreCase("NOT_SCO_OPEN"))
+    return BCNOT_SCO_OPEN;
+  else if (in.equalsIgnoreCase("NOT_SCO_CLOSE"))
+    return BCNOT_SCO_CLOSE;
+  else if (in.equalsIgnoreCase("NOT_SR"))
+    return BCNOT_SR;
+  else
+    return BCNOT_UNKNOWN;
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgAvrcpPause(void) {
-  working_state.mon_state = MONSTATE_REQ_OFF;
-  return BCCMD__NOTHING;
+static enum serialMsgs readBle(String in) {
+  enum bc127Cmds ret = BLE_NOTHING;
+
+  if(in.equalsIgnoreCase("inq"))
+    ret = BLECMD_INQUIRY;
+  else if(in.equalsIgnoreCase("disc"))
+    ret = BLECMD_DISC;
+  else if(in.equalsIgnoreCase("latlong"))
+    ret = BLECMD_LATLONG;
+  else if(in.equalsIgnoreCase("conn"))
+    ret = BLECMD_CONN;
+  else if(in.equalsIgnoreCase("time"))
+    ret = BLECMD_TIME;
+  else if(in.equalsIgnoreCase("rec"))
+    ret = BLECMD_REC;
+  else if(in.equalsIgnoreCase("rec_next"))
+    ret = BLECMD_REC_NEXT;
+  else if(in.equalsIgnoreCase("rec_nb"))
+    ret = BLECMD_REC_NB;
+  else if(in.equalsIgnoreCase("rec_ts"))
+    ret = BLECMD_REC_TS;
+  else if(in.equalsIgnoreCase("mon"))
+    ret = BLECMD_MON;
+  else if(in.equalsIgnoreCase("vol"))
+    ret = BLECMD_VOL;
+  else if(in.equalsIgnoreCase("bt"))
+    ret = BLECMD_BT;
+  else if(in.equalsIgnoreCase("rwin"))
+    ret = BLECMD_RWIN;
+  else if(in.equalsIgnoreCase("filepath"))
+    ret = BLECMD_FILEPATH;
+  else
+    ret = BLECMD_UNKNOWN;
+
+  return ret;
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-// static enum serialMsg msgAbsVol(String p1, String p2) {
-static enum serialMsg msgAbsVol(bc127Params_t *p) {
-  vol_value = (float)p->p2.toInt() / ABS_VOL_MAX_VAL;
+static enum serialMsgs msgName(serialParams_t *p, unsigned int len) {
+  int strlen;
+  switch (len) {
+  case 2: {
+    if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
+      strlen = p->p2.length();
+      BT_peer_name = p->p2.substring(1, (strlen - 1));
+    } else {
+      BT_peer_name = p->p2;
+    }
+    break;
+  }
+  case 3: {
+    if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
+      strlen = p->p3.length();
+      BT_peer_name =
+          p->p2.substring(1) + "_" + p->p3.substring(0, (strlen - 1));
+    } else {
+      BT_peer_name = p->p2 + "_" + p->p3;
+    }
+    break;
+  }
+  case 4: {
+    if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
+      strlen = p->p4.length();
+      BT_peer_name = p->p2.substring(1) + "_" + p->p3 + "_" +
+                     p->p4.substring(0, (strlen - 1));
+    } else {
+      BT_peer_name = p->p2 + "_" + p->p3 + "_" + p->p4;
+    }
+    break;
+  }
+  case 5: {
+    if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
+      strlen = p->p5.length();
+      BT_peer_name = p->p2.substring(1) + "_" + p->p3 + "_" + p->p4 + "_" +
+                     p->p5.substring(0, (strlen - 1));
+    } else {
+      BT_peer_name = p->p2 + "_" + p->p3 + "_" + p->p4 + "_" + p->p5;
+    }
+    break;
+  }
+  default:
+    break;
+  }
+
   if (working_state.ble_state == BLESTATE_CONNECTED) {
-    return BCNOT_VOL_LEVEL;
+    return BCNOT_BT_STATE;
   } else {
-    return BCCMD__NOTHING;
+    return BCCMD_NOTHING;
   }
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgLinkLoss(bc127Params_t *p) {
+static enum serialMsgs bcnotRecv(serialParams_t *p, unsigned int len, serialAnswer_t *answer) {
+  enum serialMsgs ret = BLENOT_NOTHING;
+  if (p->p1.toInt() == BLE_conn_id) {
+    enum bc127Ble cmd = readBle(p->p3);
+    switch(cmd) {
+      case BLECMD_INQUIRY: {
+        ret = BCCMD_INQUIRY;
+        break;
+      }
+      case BLECMD_DISC: {
+        working_state.bt_state = BTSTATE_REQ_DISC;
+        ret = BLENOT_OK;
+        break;
+      }
+      case BLECMD_CONN: {
+        BT_peer_name = p->p4;
+        ret = BCCMD_OPEN;
+        break;
+      }
+      case BLECMD_LATLONG: {
+        if ((len == 4) && (p->p4.equalsIgnoreCase("?"))) {
+          ret = BLENOT_LATLONG;
+        }
+        else if(len == 5) {
+          if((p->p4.c_str() != NULL) && (p->p5.c_str() != NULL)) {
+            next_record.gps_lat = atof(p->p4.c_str());
+            next_record.gps_long = atof(p->p5.c_str());
+            next_record.gps_source = GPS_PHONE;
+            ret = BLENOT_OK;
+          }
+          else {
+            next_record.gps_lat = 1000.0;
+            next_record.gps_long = 1000.0;
+            next_record.gps_source = GPS_NONE;
+            ret = BLEERR_WRONG_PARAMS;
+          }
+        }
+        else {
+          ret = BLEERR_WRONG_PARAMS;
+        }
+        break;
+      }
+      case BLECMD_TIME: {
+        unsigned long rec_time = p->p4.toInt();
+        if (rec_time > MIN_TIME_DEC) {
+          setCurTime(rec_time, TSOURCE_PHONE);
+          if (debug)
+            snooze_usb.printf("Info:    Timestamp received: %ld\n", rec_time);
+        } else {
+          if (debug)
+            snooze_usb.println("Error: Received time not correct!");
+        }
+        ret = BLENOT_OK;
+        break;
+      }
+      case BLECMD_REC: {
+        if(p->p4.equalsIgnoreCase("start")) {
+          working_state.rec_state = RECSTATE_REQ_ON;
+          ret = BLENOT_OK;
+        }
+        else if(p->p4.equalsIgnoreCase("stop")) {
+          working_state.rec_state = RECSTATE_REQ_OFF;
+          ret = BLENOT_OK;
+        }
+        else if(p->p4.equalsIgnoreCase("?")) {
+          ret = BLENOT_REC_STATE;
+        }
+        else {
+          ret = BLEERR_WRONG_PARAMS;
+        }
+        break;
+      }
+      case BLECMD_REC_NB: {
+        if(p->p4.equalsIgnoreCase("?")) ret = BLENOT_REC_NB;
+        else ret = BLEERR_WRONG_PARAMS;
+        break;
+      }
+      case BLECMD_REC_NEXT: {
+        if(p->p4.equalsIgnoreCase("?")) ret = BLENOT_REC_NEXT;
+        else ret = BLEERR_WRONG_PARAMS;
+        break;
+      }
+      case BLECMD_REC_TS: {
+        if(p->p4.equalsIgnoreCase("?")) ret = BLENOT_REC_TS;
+        else ret = BLEERR_WRONG_PARAMS;
+        break;
+      }
+      case BLECMD_MON: {
+        if(p->p4.equalsIgnoreCase("start")) {
+          working_state.mon_state = MONSTATE_REQ_ON;
+          ret = BLENOT_OK;
+        }
+        else if(p->p4.equalsIgnoreCase("stop")) {
+          working_state.mon_state = MONSTATE_REQ_OFF;
+          ret = BLENOT_OK;
+        }
+        else if(p->p4.equalsIgnoreCase("?")) {
+          ret = BLENOT_MON_STATE;
+        }
+        else {
+          ret = BLEERR_WRONG_PARAMS;
+        }
+        break;
+      }
+      case BLECMD_VOL: {
+        if ((working_state.bt_state == BTSTATE_CONNECTED) ||
+            (working_state.bt_state == BTSTATE_PLAY)) {
+          if (p->p4.equalsIgnoreCase("+")) ret = BCCMD_VOLUME;
+          else if (p->p4.equalsIgnoreCase("-")) ret = BCCMD_VOLUME;
+          else if (p->p4.equalsIgnoreCase("?")) ret = BLENOT_VOL;
+          else ret = BLEERR_WRONG_PARAMS;
+        } else {
+          ret = BLEERR_VOL_BT_DIS;
+        }
+        break;
+      }
+      case BLECMD_BT: {
+        if (p->p4.equalsIgnoreCase("?")) ret = BCCMD_STATUS;
+        else ret = BLEERR_WRONG_PARAMS;
+        break;
+      }
+      case BLECMD_RWIN: {
+        if (p->p4.equalsIgnoreCase("?")) {
+          ret = BLENOT_RWIN;
+        }
+        else if(len == 6) {
+          unsigned int duration, period;
+          duration = p->p4.toInt();
+          period = p->p5.toInt();
+          if (duration < period) {
+            breakTime(duration, rec_window.duration);
+            breakTime(period, rec_window.period);
+            rec_window.occurences = p->p6.toInt();
+            ret = BLENOT_OK;
+          } else {
+            ret = BLEERR_RWIN_BAD_REQ;
+          }
+        }
+        else {
+          ret = BLEERR_RWIN_WRONG_PARAMS;
+        }
+        break;
+      }
+      case BLECMD_FILEPATH: {
+        if (p->p4.equalsIgnoreCase("?")) ret = BLENOT_FILEPATH;
+        else ret = BLEERR_WRONG_PARAMS;
+        break;
+      }
+      case BLECMD_NOTHING:
+      case BLECMD_UNKNOWN:
+      default:
+        break;
+    }
+
+    return ret;
+  }
+}
+    // switch (len) {
+    // case 3: {
+    //   if (p->p3.equalsIgnoreCase("inq")) {
+    //     ret = BCCMD_INQUIRY;
+    //   } else if (p->p3.equalsIgnoreCase("disc")) {
+    //     working_state.bt_state = BTSTATE_REQ_DISC;
+    //   } else if (p->p3.equalsIgnoreCase("latlong")) {
+    //     if (debug)
+    //       snooze_usb.println("Info:    Receiving latlong without values");
+    //   }
+    //   break;
+    // }
+    // case 4: {
+    //   if (p->p3.equalsIgnoreCase("conn")) {
+    //     BT_peer_name = p->p4;
+    //     return BCCMD_DEV_CONNECT;
+      // } else if (p->p3.equalsIgnoreCase("time")) {
+      //   unsigned long rec_time = p->p4.toInt();
+      //   if (rec_time > MIN_TIME_DEC) {
+      //     setCurTime(rec_time, TSOURCE_PHONE);
+      //     if (debug)
+      //       snooze_usb.printf("Info:    Timestamp received: %ld\n", rec_time);
+      //   } else {
+      //     if (debug)
+      //       snooze_usb.println("Error: Received time not correct!");
+      //   }
+      // } else if (p->p3.equalsIgnoreCase("rec")) {
+      //   if (p->p4.equalsIgnoreCase("start"))
+      //     return BCCMD_REC_START;
+      //   else if (p->p4.equalsIgnoreCase("stop"))
+      //     return BCCMD_REC_STOP;
+      //   else if (p->p4.equalsIgnoreCase("?"))
+      //     return BCNOT_REC_STATE;
+      // } else if (p->p3.equalsIgnoreCase("rec_next")) {
+      //   if (p->p4.equalsIgnoreCase("?"))
+      //     return BCNOT_REC_NEXT;
+      //   else {
+      //     if (debug)
+      //       snooze_usb.println("Error: BLE rec_next command not listed");
+      //   }
+      // } else if (p->p3.equalsIgnoreCase("rec_nb")) {
+      //   if (p->p4.equalsIgnoreCase("?"))
+      //     return BCNOT_REC_NB;
+      //   else {
+      //     if (debug)
+      //       snooze_usb.println("Error: BLE rec_nb command not listed");
+      //   }
+      // } else if (p->p3.equalsIgnoreCase("rec_ts")) {
+      //   if (p->p4.equalsIgnoreCase("?"))
+      //     return BCNOT_REC_TS;
+      //   else {
+      //     if (debug)
+      //       snooze_usb.println("Error: BLE rec_ts command not listed");
+      //   }
+      // } else if (p->p3.equalsIgnoreCase("mon")) {
+      //   if (p->p4.equalsIgnoreCase("start"))
+      //     working_state.mon_state = MONSTATE_REQ_ON;
+      //   else if (p->p4.equalsIgnoreCase("stop"))
+      //     working_state.mon_state = MONSTATE_REQ_OFF;
+      //   else if (p->p4.equalsIgnoreCase("?"))
+      //     return BCNOT_MON_STATE;
+      // } else if (p->p3.equalsIgnoreCase("vol")) {
+      //   if ((working_state.bt_state == BTSTATE_CONNECTED) ||
+      //       (working_state.bt_state == BTSTATE_PLAY)) {
+      //     if (p->p4.equalsIgnoreCase("+")) {
+      //       return BCCMD_VOL_UP;
+      //     } else if (p->p4.equalsIgnoreCase("-")) {
+      //       return BCCMD_VOL_DOWN;
+      //     } else if (p->p4.equalsIgnoreCase("?")) {
+      //       return BCNOT_VOL_LEVEL;
+      //     }
+      //   } else {
+      //     return BCERR_VOL_BT_DIS;
+      //   }
+      // } else if (p->p3.equalsIgnoreCase("bt")) {
+      //   if (p->p4.equalsIgnoreCase("?")) {
+      //     return BCCMD_STATUS;
+      //   }
+      // } else if (p->p3.equalsIgnoreCase("rwin")) {
+      //   if (p->p4.equalsIgnoreCase("?")) {
+      //     return BCNOT_RWIN_VALS;
+      //   } else {
+      //     return BCERR_RWIN_BAD_REQ;
+      //   }
+      // } else if (p->p3.equalsIgnoreCase("filepath")) {
+      //   if (p->p4.equalsIgnoreCase("?")) {
+      //     return BCNOT_FILEPATH;
+      //   }
+      // } else if (p->p3.equalsIgnoreCase("latlong")) {
+      //   if (p->p4.equalsIgnoreCase("?")) {
+      //     return BCNOT_LATLONG;
+      //   }
+      // }
+      // break;
+    // }
+    // case 5: {
+    //   if (p->p3.equalsIgnoreCase("latlong")) {
+    //     snooze_usb.printf("Received latlong info: %f, %f", atof(p->p4.c_str()),
+    //                       atof(p->p5.c_str()));
+    //     if ((p->p4.c_str() == NULL) || (p->p5.c_str() == NULL)) {
+    //       next_record.gps_source = GPS_NONE;
+    //       next_record.gps_lat = 1000.0;
+    //       next_record.gps_long = 1000.0;
+    //     } else {
+    //       next_record.gps_lat = atof(p->p4.c_str());
+    //       next_record.gps_long = atof(p->p5.c_str());
+    //       next_record.gps_source = GPS_PHONE;
+    //     }
+    //   }
+    //   break;
+    // }
+    // case 6: {
+    //   if (p->p3.equalsIgnoreCase("rwin")) {
+    //     unsigned int dur, per;
+    //     dur = p->p4.toInt();
+    //     per = p->p5.toInt();
+    //     if (dur < per) {
+    //       breakTime(dur, rec_window.duration);
+    //       breakTime(per, rec_window.period);
+    //       rec_window.occurences = p->p6.toInt();
+    //       ret = BCNOT_RWIN_OK;
+    //     } else {
+    //       ret = BCERR_RWIN_WRONG_PARAMS;
+    //     }
+    //   }
+    //   break;
+    // }
+    // default:
+    //   break;
+    // }
+  //   return ret;
+  // }
+// }
+/*****************************************************************************/
+
+/*****************************************************************************/
+static enum serialMsgs msgInquiry(serialParams_t *p, unsigned int len) {
+  String addr = p->p1;
+  String name, caps;
+  unsigned int stren;
+  switch (len) {
+  case 4: {
+    if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
+      name = p->p2.substring(1, (p->p2.length() - 1));
+    } else {
+      name = p->p2;
+    }
+    caps = p->p3;
+    stren = p->p4.substring(1, 3).toInt();
+    break;
+  }
+  case 5: {
+    if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
+      name =
+          p->p2.substring(1) + "_" + p->p3.substring(0, (p->p3.length() - 1));
+    } else {
+      name = p->p2 + "_" + p->p3;
+    }
+    caps = p->p4;
+    stren = p->p5.substring(1, 3).toInt();
+    break;
+  }
+  case 6: {
+    if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
+      name = p->p2.substring(1) + "_" + p->p3 + "_" +
+             p->p4.substring(0, (p->p4.length() - 1));
+    } else {
+      name = p->p2 + "_" + p->p3 + "_" + p->p4;
+    }
+    caps = p->p5;
+    stren = p->p6.substring(1, 3).toInt();
+    break;
+  }
+  case 7: {
+    if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
+      name = p->p2.substring(1) + "_" + p->p3 + "_" + p->p4 + "_" +
+             p->p5.substring(0, (p->p5.length() - 1));
+    } else {
+      name = p->p2 + "_" + p->p3 + "_" + p->p4 + "_" + p->p5;
+    }
+    caps = p->p6;
+    stren = p->p7.substring(1, 3).toInt();
+    break;
+  }
+  case 8: {
+    if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
+      name = p->p2.substring(1) + "_" + p->p3 + "_" + p->p4 + "_" + p->p5 +
+             "_" + p->p6.substring(0, (p->p6.length() - 1));
+    } else {
+      name = p->p2 + "_" + p->p3 + "_" + p->p4 + "_" + p->p5 + "_" + p->p6;
+    }
+    caps = p->p7;
+    stren = p->p8.substring(1, 3).toInt();
+    break;
+  }
+  default:
+    break;
+  }
+  populateDevlist(addr, name, caps, stren);
+  return BCNOT_INQ_STATE;
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
+static enum serialMsgs msgLink(serialParams_t *p, unsigned int len) {
+  enum serialMsgs ret = BCCMD_NOTHING;
+
+  switch (len) {
+  case 4: {
+    if (p->p3.equalsIgnoreCase("A2DP")) {
+      BT_id_a2dp = p->p1.toInt();
+      BT_peer_address = p->p4;
+      if (debug)
+        snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
+                          BT_peer_address.c_str(), BT_id_a2dp);
+      working_state.bt_state = BTSTATE_CONNECTED;
+      return CMD_NAME;
+    } else if (p->p3.equalsIgnoreCase("AVRCP")) {
+      BT_id_avrcp = p->p1.toInt();
+      BT_peer_address = p->p4;
+      if (debug)
+        snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
+                          BT_peer_address.c_str(), BT_id_avrcp);
+      working_state.bt_state = BTSTATE_CONNECTED;
+    }
+    break;
+  }
+  case 5: {
+    if (p->p3.equalsIgnoreCase("A2DP")) {
+      BT_id_a2dp = p->p1.toInt();
+      BT_peer_address = p->p4;
+      if (debug)
+        snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
+                          BT_peer_address.c_str(), BT_id_a2dp);
+      working_state.bt_state = BTSTATE_CONNECTED;
+      return CMD_NAME;
+    } else if (p->p3.equalsIgnoreCase("AVRCP")) {
+      BT_id_avrcp = p->p1.toInt();
+      BT_peer_address = p->p4;
+      if (debug)
+        snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
+                          BT_peer_address.c_str(), BT_id_avrcp);
+      working_state.bt_state = BTSTATE_CONNECTED;
+    }
+    break;
+  }
+  case 6: {
+    if (p->p3.equalsIgnoreCase("A2DP")) {
+      BT_id_a2dp = p->p1.toInt();
+      BT_peer_address = p->p4;
+      if (debug)
+        snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
+                          BT_peer_address.c_str(), BT_id_a2dp);
+      working_state.bt_state = BTSTATE_CONNECTED;
+      return CMD_NAME;
+    } else if (p->p3.equalsIgnoreCase("AVRCP")) {
+      BT_id_avrcp = p->p1.toInt();
+      BT_peer_address = p->p4;
+      if (debug)
+        snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
+                          BT_peer_address.c_str(), BT_id_avrcp);
+      working_state.bt_state = BTSTATE_CONNECTED;
+    }
+    break;
+  }
+  case 7: {
+    if (p->p3.equalsIgnoreCase("A2DP")) {
+      BT_id_a2dp = p->p1.toInt();
+      BT_peer_address = p->p4;
+      if (debug)
+        snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
+                          BT_peer_address.c_str(), BT_id_a2dp);
+      working_state.bt_state = BTSTATE_CONNECTED;
+      return CMD_NAME;
+    } else if (p->p3.equalsIgnoreCase("AVRCP")) {
+      BT_id_avrcp = p->p1.toInt();
+      BT_peer_address = p->p4;
+      if (debug)
+        snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
+                          BT_peer_address.c_str(), BT_id_avrcp);
+      working_state.bt_state = BTSTATE_CONNECTED;
+    }
+    break;
+  }
+  case 8: {
+    if (p->p3.equalsIgnoreCase("A2DP")) {
+      BT_id_a2dp = p->p1.toInt();
+      BT_peer_address = p->p4;
+      if (debug)
+        snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
+                          BT_peer_address.c_str(), BT_id_a2dp);
+      working_state.bt_state = BTSTATE_CONNECTED;
+      return CMD_NAME;
+    } else if (p->p3.equalsIgnoreCase("AVRCP")) {
+      BT_id_avrcp = p->p1.toInt();
+      BT_peer_address = p->p4;
+      if (debug)
+        snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
+                          BT_peer_address.c_str(), BT_id_avrcp);
+      working_state.bt_state = BTSTATE_CONNECTED;
+    }
+    break;
+  }
+  default: {
+    break;
+  }
+  }
+  return ret;
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
+static enum serialMsgs bcnotAvrcpPlay(void) {
+  working_state.mon_state = MONSTATE_REQ_ON;
+  return BLENOT_NOTHING;
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
+static enum serialMsgs bcnotAvrcpPause(void) {
+  working_state.mon_state = MONSTATE_REQ_OFF;
+  return BLENOT_NOTHING;
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
+static enum serialMsgs bcnotAbsVol(serialParams_t *p) {
+  vol_value = (float)p->p2.toInt() / ABS_VOL_MAX_VAL;
+  if (working_state.ble_state == BLESTATE_CONNECTED) {
+    return BLENOT_VOL;
+  } else {
+    return BLENOT_NOTHING;
+  }
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
+static enum serialMsgs msgLinkLoss(serialParams_t *p) {
   if (debug)
     snooze_usb.printf("Info:    link_ID: %s, status: %s\n", p->p1.c_str(),
                       p->p2.c_str());
+
   if (p->p1.toInt() == BT_id_a2dp) {
     if (p->p2.toInt() == 1) {
       working_state.mon_state = MONSTATE_REQ_OFF;
@@ -271,29 +962,13 @@ static enum serialMsg msgLinkLoss(bc127Params_t *p) {
     }
     return BCNOT_BT_STATE;
   } else {
-    return BCCMD__NOTHING;
+    return BCCMD_NOTHING;
   }
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgName1(bc127Params_t *p) {
-  if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    int strlen = p->p2.length();
-    BT_peer_name = p->p2.substring(1, (strlen - 1));
-  } else {
-    BT_peer_name = p->p2;
-  }
-  if (working_state.ble_state == BLESTATE_CONNECTED) {
-    return BCNOT_BT_STATE;
-  } else {
-    return BCCMD__NOTHING;
-  }
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgCloseOk(bc127Params_t *p) {
+static enum serialMsgs bcnotCloseOk(serialParams_t *p) {
   if (p->p1.toInt() == BT_id_a2dp) {
     if (working_state.bt_state != BTSTATE_OFF)
       working_state.bt_state = BTSTATE_REQ_DISC;
@@ -301,29 +976,12 @@ static enum serialMsg msgCloseOk(bc127Params_t *p) {
     if (working_state.ble_state != BLESTATE_OFF)
       working_state.ble_state = BLESTATE_REQ_DISC;
   }
-  return BCCMD__NOTHING;
+  return BLENOT_NOTHING;
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgName2(bc127Params_t *p) {
-  if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    int strlen = p->p3.length();
-    BT_peer_name = p->p2.substring(1) + "_" + p->p3.substring(0, (strlen - 1));
-  } else {
-    BT_peer_name = p->p2 + "_" + p->p3;
-  }
-
-  if (working_state.ble_state == BLESTATE_CONNECTED) {
-    return BCNOT_BT_STATE;
-  } else {
-    return BCCMD__NOTHING;
-  }
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgOpenOk(bc127Params_t *p) {
+static enum serialMsgs msgOpenOk(serialParams_t *p) {
   if (p->p2.equalsIgnoreCase("A2DP")) {
     BT_id_a2dp = p->p1.toInt();
     BT_peer_address = p->p3;
@@ -332,7 +990,7 @@ static enum serialMsg msgOpenOk(bc127Params_t *p) {
           "Info:    A2DP connection opened. Conn ID: %d, peer address = %s\n",
           BT_id_a2dp, BT_peer_address.c_str());
     working_state.bt_state = BTSTATE_REQ_CONN;
-    return BCCMD_BT_NAME;
+    return CMD_NAME;
   } else if (p->p2.equalsIgnoreCase("AVRCP")) {
     BT_id_avrcp = p->p1.toInt();
     BT_peer_address = p->p3;
@@ -340,433 +998,40 @@ static enum serialMsg msgOpenOk(bc127Params_t *p) {
       snooze_usb.printf("Info:    AVRCP connection opened. Conn ID: %d, peer "
                         "address (check) = %s\n",
                         BT_id_avrcp, BT_peer_address.c_str());
-    return BCCMD__NOTHING;
+    return BCCMD_NOTHING;
   } else if (p->p2.equalsIgnoreCase("BLE")) {
     BLE_conn_id = p->p1.toInt();
     // if(debug) snooze_usb.printf("Info:    BLE connection opened. Conn ID:
     // %d\n", BLE_conn_id);
     working_state.ble_state = BLESTATE_REQ_CONN;
-    return BCCMD__NOTHING;
+    return BCCMD_NOTHING;
   } else {
-    return BCCMD__NOTHING;
+    return BCCMD_NOTHING;
   }
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-static enum serialMsg msgRecv1(bc127Params_t *p) {
-  // - "inq"
-  // - "disc"
-  // - "latlong"
-  enum serialMsg ret = BCCMD__NOTHING;
-
-  if (p->p1.toInt() == BLE_conn_id) {
-    if (p->p3.equalsIgnoreCase("inq")) {
-      ret = BCCMD_INQUIRY;
-    } else if (p->p3.equalsIgnoreCase("disc")) {
-      working_state.bt_state = BTSTATE_REQ_DISC;
-    } else if (p->p3.equalsIgnoreCase("latlong")) {
-      if (debug)
-        snooze_usb.println("Info:    Receiving latlong without values");
-    }
-  }
-
-  return ret;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgInquiry1(bc127Params_t *p) {
-  String addr = p->p1;
-  String name;
-  if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p->p2.substring(1, (p->p2.length() - 1));
-  } else {
-    name = p->p2;
-  }
-  String caps = p->p3;
-  unsigned int stren = p->p4.substring(1, 3).toInt();
-  populateDevlist(addr, name, caps, stren);
-  return BCNOT_INQ_STATE;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgName3(bc127Params_t *p) {
-  if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    int strlen = p->p4.length();
-    BT_peer_name =
-        p->p2.substring(1) + "_" + p->p3 + "_" + p->p4.substring(0, (strlen - 1));
-  } else {
-    BT_peer_name = p->p2 + "_" + p->p3 + "_" + p->p4;
-  }
-
-  if (working_state.ble_state == BLESTATE_CONNECTED) {
-    return BCNOT_BT_STATE;
-  } else {
-    return BCCMD__NOTHING;
-  }
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgState(bc127Params_t *p) {
+static enum serialMsgs msgState(serialParams_t *p) {
   if (!p->p1.substring(p->p1.length() - 2, p->p1.length() - 1).toInt()) {
     return BCNOT_BT_STATE;
   }
-  return BCCMD__NOTHING;
+  return BCCMD_NOTHING;
 }
 /*****************************************************************************/
 
-/*****************************************************************************/
-static enum serialMsg msgRecv2(bc127Params_t *p) {
-  // - "bt {?}"
-  // - "conn {address}"
-  // - "filepath {?}"
-  // - "latlong {?}"
-  // - "mon {start/stop/?}"
-  // - "rec {start/stop/?}"
-  // - "rec_nb {?}"
-  // - "rec_next {?}"
-  // - "rec_ts {?}"
-  // - "rwin {?}"
-  // - "time {ts}"
-  // - "vol {+/-/?}"
-  enum serialMsg ret = BCCMD__NOTHING;
-  if (p->p1.toInt() == BLE_conn_id) {
-    if (p->p3.equalsIgnoreCase("conn")) {
-      BT_peer_name = p->p4;
-      return BCCMD_DEV_CONNECT;
-    } else if (p->p3.equalsIgnoreCase("time")) {
-      unsigned long rec_time = p->p4.toInt();
-      if (rec_time > MIN_TIME_DEC) {
-        setCurTime(rec_time, TSOURCE_PHONE);
-        if (debug)
-          snooze_usb.printf("Info:    Timestamp received: %ld\n", rec_time);
-      } else {
-        if (debug)
-          snooze_usb.println("Error: Received time not correct!");
-      }
-    } else if (p->p3.equalsIgnoreCase("rec")) {
-      if (p->p4.equalsIgnoreCase("start"))
-        return BCCMD_REC_START;
-      else if (p->p4.equalsIgnoreCase("stop"))
-        return BCCMD_REC_STOP;
-      else if (p->p4.equalsIgnoreCase("?"))
-        return BCNOT_REC_STATE;
-    } else if (p->p3.equalsIgnoreCase("rec_next")) {
-      if (p->p4.equalsIgnoreCase("?"))
-        return BCNOT_REC_NEXT;
-      else {
-        if (debug)
-          snooze_usb.println("Error: BLE rec_next command not listed");
-      }
-    } else if (p->p3.equalsIgnoreCase("rec_nb")) {
-      if (p->p4.equalsIgnoreCase("?"))
-        return BCNOT_REC_NB;
-      else {
-        if (debug)
-          snooze_usb.println("Error: BLE rec_nb command not listed");
-      }
-    } else if (p->p3.equalsIgnoreCase("rec_ts")) {
-      if (p->p4.equalsIgnoreCase("?"))
-        return BCNOT_REC_TS;
-      else {
-        if (debug)
-          snooze_usb.println("Error: BLE rec_ts command not listed");
-      }
-    } else if (p->p3.equalsIgnoreCase("mon")) {
-      if (p->p4.equalsIgnoreCase("start"))
-        working_state.mon_state = MONSTATE_REQ_ON;
-      else if (p->p4.equalsIgnoreCase("stop"))
-        working_state.mon_state = MONSTATE_REQ_OFF;
-      else if (p->p4.equalsIgnoreCase("?"))
-        return BCNOT_MON_STATE;
-    } else if (p->p3.equalsIgnoreCase("vol")) {
-      if ((working_state.bt_state == BTSTATE_CONNECTED) ||
-          (working_state.bt_state == BTSTATE_PLAY)) {
-        if (p->p4.equalsIgnoreCase("+")) {
-          return BCCMD_VOL_UP;
-        } else if (p->p4.equalsIgnoreCase("-")) {
-          return BCCMD_VOL_DOWN;
-        } else if (p->p4.equalsIgnoreCase("?")) {
-          return BCNOT_VOL_LEVEL;
-        }
-      } else {
-        return BCERR_VOL_BT_DIS;
-      }
-    } else if (p->p3.equalsIgnoreCase("bt")) {
-      if (p->p4.equalsIgnoreCase("?")) {
-        return BCCMD_STATUS;
-      }
-    } else if (p->p3.equalsIgnoreCase("rwin")) {
-      if (p->p4.equalsIgnoreCase("?")) {
-        return BCNOT_RWIN_VALS;
-      } else {
-        return BCERR_RWIN_BAD_REQ;
-      }
-    } else if (p->p3.equalsIgnoreCase("filepath")) {
-      if (p->p4.equalsIgnoreCase("?")) {
-        return BCNOT_FILEPATH;
-      }
-    } else if (p->p3.equalsIgnoreCase("latlong")) {
-      if (p->p4.equalsIgnoreCase("?")) {
-        return BCNOT_LATLONG;
-      }
-    }
-  }
-  return ret;
-}
-/*****************************************************************************/
+
 
 /*****************************************************************************/
-static enum serialMsg msgInquiry2(bc127Params_t *p) {
-  String addr = p->p1;
-  String name;
-  if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p->p2.substring(1) + "_" + p->p3.substring(0, (p->p3.length() - 1));
-  } else {
-    name = p->p2 + "_" + p->p3;
-  }
-  String caps = p->p4;
-  unsigned int stren = p->p5.substring(1, 3).toInt();
-  populateDevlist(addr, name, caps, stren);
-  return BCNOT_INQ_STATE;
-}
+/*****************************************************************************/
 /*****************************************************************************/
 
-/*****************************************************************************/
-static enum serialMsg msgLink1(bc127Params_t *p) {
-  if (p->p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p->p1.toInt();
-    BT_peer_address = p->p4;
-    if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-    return BCCMD_BT_NAME;
-  } else if (p->p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p->p1.toInt();
-    BT_peer_address = p->p4;
-    if (debug)
-      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_avrcp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-  }
-  return BCCMD__NOTHING;
-}
-/*****************************************************************************/
 
-/*****************************************************************************/
-static enum serialMsg msgName4(bc127Params_t *p) {
-  if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    int strlen = p->p5.length();
-    BT_peer_name = p->p2.substring(1) + "_" + p->p3 + "_" + p->p4 + "_" +
-                   p->p5.substring(0, (strlen - 1));
-  } else {
-    BT_peer_name = p->p2 + "_" + p->p3 + "_" + p->p4 + "_" + p->p5;
-  }
 
-  if (working_state.ble_state == BLESTATE_CONNECTED) {
-    return BCNOT_BT_STATE;
-  } else {
-    return BCCMD__NOTHING;
-  }
-}
-/*****************************************************************************/
 
-/*****************************************************************************/
-static enum serialMsg msgRecv3(bc127Params_t *p) {
-  // - "latlong {lat long}"
-  if (p->p1.toInt() == BLE_conn_id) {
-    if (p->p3.equalsIgnoreCase("latlong")) {
-      snooze_usb.printf("Received latlong info: %f, %f", atof(p->p4.c_str()),
-                        atof(p->p5.c_str()));
-      if ((p->p4.c_str() == NULL) || (p->p5.c_str() == NULL)) {
-        next_record.gps_source = GPS_NONE;
-        next_record.gps_lat = 1000.0;
-        next_record.gps_long = 1000.0;
-      } else {
-        next_record.gps_lat = atof(p->p4.c_str());
-        next_record.gps_long = atof(p->p5.c_str());
-        next_record.gps_source = GPS_PHONE;
-      }
-    }
-  }
-  return BCCMD__NOTHING;
-}
-/*****************************************************************************/
 
-/*****************************************************************************/
-static enum serialMsg msgInquiry3(bc127Params_t *p) {
-  String addr = p->p1;
-  String name;
-  if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name =
-        p->p2.substring(1) + "_" + p->p3 + "_" + p->p4.substring(0, (p->p4.length() - 1));
-  } else {
-    name = p->p2 + "_" + p->p3 + "_" + p->p4;
-  }
-  String caps = p->p5;
-  unsigned int stren = p->p6.substring(1, 3).toInt();
-  populateDevlist(addr, name, caps, stren);
-  return BCNOT_INQ_STATE;
-}
-/*****************************************************************************/
 
-/*****************************************************************************/
-static enum serialMsg msgRecv4(bc127Params_t *p) {
-  enum serialMsg ret = BCCMD__NOTHING;
 
-  // - "rwin {duration} {period} {occurences}"
-  if (p->p1.toInt() == BLE_conn_id) {
-    if (p->p3.equalsIgnoreCase("rwin")) {
-      unsigned int dur, per;
-      dur = p->p4.toInt();
-      per = p->p5.toInt();
-      if (dur < per) {
-        breakTime(dur, rec_window.duration);
-        breakTime(per, rec_window.period);
-        rec_window.occurences = p->p6.toInt();
-        ret = BCNOT_RWIN_OK;
-      } else {
-        ret = BCERR_RWIN_WRONG_PARAMS;
-      }
-    }
-  }
-  return ret;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgLink2(bc127Params_t *p) {
-  enum serialMsg ret = BCCMD__NOTHING;
-
-  if (p->p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p->p1.toInt();
-    BT_peer_address = p->p4;
-    if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-    return BCCMD_BT_NAME;
-  } else if (p->p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p->p1.toInt();
-    BT_peer_address = p->p4;
-    if (debug)
-      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_avrcp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-  }
-  return ret;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgInquiry4(bc127Params_t *p) {
-  String addr = p->p1;
-  String name;
-  if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p->p2.substring(1) + "_" + p->p3 + "_" + p->p4 + "_" +
-           p->p5.substring(0, (p->p5.length() - 1));
-  } else {
-    name = p->p2 + "_" + p->p3 + "_" + p->p4 + "_" + p->p5;
-  }
-  String caps = p->p6;
-  unsigned int stren = p->p7.substring(1, 3).toInt();
-  populateDevlist(addr, name, caps, stren);
-  return BCNOT_INQ_STATE;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgLink3(bc127Params_t *p) {
-  enum serialMsg ret = BCCMD__NOTHING;
-
-  if (p->p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p->p1.toInt();
-    BT_peer_address = p->p4;
-    if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-    return BCCMD_BT_NAME;
-  } else if (p->p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p->p1.toInt();
-    BT_peer_address = p->p4;
-    if (debug)
-      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_avrcp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-  }
-  return ret;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgInquiry5(bc127Params_t *p) {
-  String addr = p->p1;
-  String name;
-  if (p->p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p->p2.substring(1) + "_" + p->p3 + "_" + p->p4 + "_" + p->p5 + "_" +
-           p->p6.substring(0, (p->p6.length() - 1));
-  } else {
-    name = p->p2 + "_" + p->p3 + "_" + p->p4 + "_" + p->p5 + "_" + p->p6;
-  }
-  String caps = p->p7;
-  unsigned int stren = p->p8.substring(1, 3).toInt();
-  populateDevlist(addr, name, caps, stren);
-  return BCNOT_INQ_STATE;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgLink4(bc127Params_t *p) {
-  enum serialMsg ret = BCCMD__NOTHING;
-
-  if (p->p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p->p1.toInt();
-    BT_peer_address = p->p4;
-    if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-    return BCCMD_BT_NAME;
-  } else if (p->p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p->p1.toInt();
-    BT_peer_address = p->p4;
-    if (debug)
-      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_avrcp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-  }
-  return ret;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgLink5(bc127Params_t *p) {
-  enum serialMsg ret = BCCMD__NOTHING;
-
-  if (p->p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p->p1.toInt();
-    BT_peer_address = p->p4;
-    if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-    return BCCMD_BT_NAME;
-  } else if (p->p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p->p1.toInt();
-    BT_peer_address = p->p4;
-    if (debug)
-      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_avrcp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-  }
-  return ret;
-}
-/*****************************************************************************/
 
 /*****************************************************************************/
 static String cmdDevConnect(void) {
@@ -774,6 +1039,7 @@ static String cmdDevConnect(void) {
     if (debug)
       snooze_usb.printf("Info:    Opening BT connection @%s (%s)\n",
                         BT_peer_address.c_str(), BT_peer_name.c_str());
+
     return ("OPEN " + BT_peer_address + " A2DP\r");
   } else {
     return ("SEND " + String(BLE_conn_id) + " CONN ERR NO BT DEVICE!\r");
@@ -1022,6 +1288,7 @@ static String errVolBtDis(void) {
 }
 /*****************************************************************************/
 
+
 /*** EXPORTED OBJECTS ********************************************************/
 /*****************************************************************************/
 /*** Functions ***************************************************************/
@@ -1041,7 +1308,8 @@ void initBc127(void) {
   while (!BC127_ready) {
     if (BLUEPORT.available()) {
       String inMsg = BLUEPORT.readStringUntil('\r');
-      parseSerialIn(inMsg);
+      serialAnswer_t *answ;
+      parseSerialIn(inMsg, &answ);
     }
   };
   bc127BlueOff();
@@ -1055,7 +1323,7 @@ void initBc127(void) {
  * IN:	- none
  * OUT:	- none
  */
-void bc127BlueOn(void) { sendCmdOut(BCCMD_BLUE_ON); }
+void bc127BlueOn(void) { sendCmdOut(CMD_POWER, "ON"); }
 /*****************************************************************************/
 
 /*****************************************************************************/
@@ -1065,7 +1333,7 @@ void bc127BlueOn(void) { sendCmdOut(BCCMD_BLUE_ON); }
  * IN:	- none
  * OUT:	- none
  */
-void bc127BlueOff(void) { sendCmdOut(BCCMD_BLUE_OFF); }
+void bc127BlueOff(void) { sendCmdOut(CMD_POWER, "OFF"); }
 /*****************************************************************************/
 
 /*****************************************************************************/
@@ -1111,151 +1379,281 @@ void bc127AdvStop(void) { sendCmdOut(BCCMD_ADV_OFF); }
  * IN:	- received input (String)
  * OUT:	- message to send back (int)
  */
-enum serialMsg parseSerialIn(String input) {
+void parseSerialIn(String input, serialAnswer_t *answer) {
   if (debug)
     snooze_usb.printf("<-BC127: %s\n", input.c_str());
 
-  bc127Params_t params;
-  unsigned int nb_params = countParams(input, &params);
+  enum serialMsgs ret = BCCMD_NOTHING;
+  serialParams_t params;
+  unsigned int nb_params = sliceParams(input, &params);
+  enum serialMsgs notif = readMsg(params.notif);
 
-  switch (nb_params) {
-  // INQU_OK
-  // READY
-  case 0: {
-    if (params.notif.equalsIgnoreCase("INQU_OK"))
-      return BCNOT_INQ_DONE;
-    else if (params.notif.equalsIgnoreCase("READY"))
+  switch (notif) {
+    case BCNOT_ABS_VOL: {
+      ret = bcnotAbsVol(&params);
+      break;
+    }
+    case BCNOT_AVRCP_PAUSE: {
+      ret = bcnotAvrcpPause();
+      break;
+    }
+    case BCNOT_AVRCP_PLAY: {
+      ret = bcnotAvrcpPlay();
+      break;
+    }
+    case BCNOT_CLOSE_OK: {
+      ret = bcnotCloseOk(&params);
+      break;
+    }
+    case BCNOT_INQUIRY: {
+      return msgInquiry(&params, nb_params);
+      break;
+    }
+    case BCNOT_INQ_OK: {
+      ret = BCNOT_INQ_DONE;
+      break;
+    }
+    case BCNOT_LINK: {
+      return msgLink(&params, nb_params);
+      break;
+    }
+    case BCNOT_LINK_LOSS: {
+      ret = msgLinkLoss(&params);
+      break;
+    }
+    case BCNOT_NAME: {
+      ret = msgName(&params, nb_params);
+      break;
+    }
+    case BCNOT_OPEN_OK: {
+      ret = msgOpenOk(&params);
+      break;
+    }
+    case BCNOT_READY: {
       BC127_ready = true;
-    break;
+      break;
+    }
+    case BCNOT_RECV: {
+      return bcnotRecv(&params, nb_params, answer);
+      break;
+    }
+    case BCNOT_STATE: {
+      return msgState(&params, nb_params);
+      break;
+    }
+
+    case BCNOT_A2DP_STREAM_START:
+    case BCNOT_A2DP_STREAM_SUSPEND:
+    case BCNOT_ASSOCIATION:
+    case BCNOT_ASSOCIATION_IN_PROGRESS:
+    case BCNOT_AT:
+    case BCNOT_AVRCP_BACKWARD:
+    case BCNOT_AVRCP_FORWARD:
+    case BCNOT_AVRCP_MEDIA:
+    case BCNOT_AVRCP_STOP:
+    case BCNOT_BA_BROADCASTER_START:
+    case BCNOT_BA_BROADCASTER_STOP:
+    case BCNOT_BA_RECEIVER_START:
+    case BCNOT_BA_RECEIVER_STOP:
+    case BCNOT_BC_SMART_CMD:
+    case BCNOT_BC_SMART_CMD_RESP:
+    case BCNOT_BLE_INDICATION:
+    case BCNOT_BLE_NOTIFICATION:
+    case BCNOT_BLE_PAIR_ERROR:
+    case BCNOT_BLE_PAIR_OK:
+    case BCNOT_BLE_READ:
+    case BCNOT_BLE_WRITE:
+    case BCNOT_CALL_ACTIVE:
+    case BCNOT_CALL_DIAL:
+    case BCNOT_CALL_END:
+    case BCNOT_CALL_INCOMING:
+    case BCNOT_CALL_MEMORY:
+    case BCNOT_CALL_OUTGOING:
+    case BCNOT_CALL_REDIAL:
+    case BCNOT_CALLER_NUMBER:
+    case BCNOT_CHARGING_IN_PROGRESS:
+    case BCNOT_CHARGING_COMPLETE:
+    case BCNOT_CHARGER_DISCONNECTED:
+    case BCNOT_DTMF:
+    case BCNOT_ERROR:
+    case BCNOT_IAP_CLOSE_SESSION:
+    case BCNOT_IAP_OPEN_SESSION:
+    case BCNOT_INBAND_RING:
+    case BCNOT_MAP_NEW_MSG:
+    case BCNOT_PAIR_ERROR:
+    case BCNOT_PAIR_OK:
+    case BCNOT_PAIR_PASSKEY:
+    case BCNOT_PAIR_PENDING:
+    case BCNOT_REMOTE_VOLUME:
+    case BCNOT_ROLE:
+    case BCNOT_ROLE_OK:
+    case BCNOT_ROLE_NOT_ALLOWED:
+    case BCNOT_SCO_OPEN:
+    case BCNOT_SCO_CLOSE:
+    case BCNOT_SR:
+    case NBCOT_UNKNOWN:
+    default: {
+      break;
+    }
   }
 
-  // AVRCP_PLAY [link_ID]
-  // AVRCP_PAUSE [link_ID]
-  case 1: {
-    if (params.notif.equalsIgnoreCase("AVRCP_PLAY"))
-      return msgAvrcpPlay();
-    else if (params.notif.equalsIgnoreCase("AVRCP_PAUSE"))
-      return msgAvrcpPause();
-    break;
-  }
-
-  // ABS_VOL [link_ID](value)
-  // LINK_LOSS [link_ID] (status)
-  // NAME [addr] {"name" || name}
-  case 2: {
-    if (params.notif.equalsIgnoreCase("ABS_VOL"))
-      return msgAbsVol(&params);
-    else if (params.notif.equalsIgnoreCase("LINK_LOSS"))
-      return msgLinkLoss(&params);
-    else if (params.notif.equalsIgnoreCase("NAME"))
-      return msgName1(&params);
-    break;
-  }
-
-  // CLOSE_OK [link_ID] (profile) (Bluetooth address)
-  // NAME [addr] {"n1 n2" || n1 n2}
-  // OPEN_OK [link_ID] (profile) (Bluetooth address)
-  // RECV [link_ID] (size) (report data)
-  case 3: {
-    if (params.notif.equalsIgnoreCase("CLOSE_OK"))
-      return msgCloseOk(&params);
-    else if (params.notif.equalsIgnoreCase("NAME"))
-      return msgName2(&params);
-    else if (params.notif.equalsIgnoreCase("OPEN_OK"))
-      return msgOpenOk(&params);
-    else if (params.notif.equalsIgnoreCase("RECV"))
-      return msgRecv1(&params);
-    break;
-  }
-
-  // INQUIRY(BTADDR) {"name" || name} (COD) (RSSI)
-  // NAME [addr] {"n1 n2 n3" || n1 n2 n3}
-  // STATE (connected) (connectable) (discoverable) (ble)
-  // RECV [link_ID] (size) (report data) <-- (report data) with 2 parameters
-  case 4: {
-    if (params.notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry1(&params);
-    else if (params.notif.equalsIgnoreCase("NAME"))
-      return msgName3(&params);
-    else if (params.notif.equalsIgnoreCase("STATE"))
-      return msgState(&params);
-    else if (params.notif.equalsIgnoreCase("RECV"))
-      return msgRecv2(&params);
-    break;
-  }
-
-  // INQUIRY (BTADDR) {"n1 n2" || n1 n2} (COD) (RSSI)
-  // LINK [link_ID] (STATE) (PROFILE) (BTADDR) (INFO)
-  // NAME [addr] {"n1 n2 n3 n4" || n1 n2 n3 n4}
-  // RECV [link_ID] (size) (report data) <-- (report data) with 3 parameters
-  case 5: {
-    if (params.notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry2(&params);
-    else if (params.notif.equalsIgnoreCase("LINK"))
-      return msgLink1(&params);
-    else if (params.notif.equalsIgnoreCase("NAME"))
-      return msgName4(&params);
-    else if (params.notif.equalsIgnoreCase("RECV"))
-      return msgRecv3(&params);
-    break;
-  }
-
-  // INQUIRY [addr] {"n1 n2 n3" || n1 n2 n3} (COD) (RSSI)
-  // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2)
-  // RECV [link_ID] (size) (report data) <-- (report data) with 4 parameters
-  case 6: {
-    if (params.notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry3(&params);
-    else if (params.notif.equalsIgnoreCase("RECV"))
-      return msgRecv4(&params);
-    else if (params.notif.equalsIgnoreCase("LINK"))
-      return msgLink2(&params);
-    break;
-  }
-
-  // INQUIRY [addr] {"n1 n2 n3 n4" || n1 n2 n3 n4} (COD) (RSSI)
-  // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3)
-  case 7: {
-    if (params.notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry4(&params);
-    else if (params.notif.equalsIgnoreCase("LINK"))
-      return msgLink3(&params);
-    break;
-  }
-
-  // INQUIRY [addr] {"n1 n2 n3 n4 n5" || n1 n2 n3 n4 n5} (COD) (RSSI)
-  // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3) (info4)
-  case 8: {
-    if (params.notif.equalsIgnoreCase("INQUIRY"))
-      return msgInquiry5(&params);
-    else if (params.notif.equalsIgnoreCase("LINK"))
-      return msgLink4(&params);
-    break;
-  }
-
-  // LINK [link_ID] (state) (profile) (btaddr) (info1) (info2) (info3) (info4)
-  // (info5)
-  case 9: {
-    if (params.notif.equalsIgnoreCase("LINK"))
-      return msgLink5(&params);
-    break;
-  }
-
-  default:
-    break;
-  }
-
-  return BCCMD__NOTHING;
+  return ret;
 }
 /*****************************************************************************/
 
 /*****************************************************************************/
-/* sendCmdOut(int)
+/* sendCmdOut(enum bc127Cmds, String)
  * ---------------
  * Send specific commands to the BC127 UART
  * IN:	- message (int)
  * OUT:	- command confirmation (bool)
  */
+bool sendCmdOut(enum bc127Cmds cmd, String param) {
+  String devStr = "";
+  String cmdLine = "";
+  bool cmdErr = false;
+
+  switch (cmd) {
+  case CMD_ADVERTISING: {
+    if (param.equalsIgnoreCase("ON")) cmdLine = "ADVERTISING ON";
+    else if (param.equalsIgnoreCase("OFF")) cmdLine = "ADVERTISING OFF";
+    else cmdErr = true;
+    break;
+  }
+  case CMD_POWER: {
+    if (param.equalsIgnoreCase("ON")) cmdLine = "POWER ON";
+    else if (param.equalsIgnoreCase("OFF")) cmdLine = "POWER OFF";
+    else cmdErr = true;
+    break;
+  }
+  case CMD_NAME: {
+    cmdLine = "NAME " + String(BT_peer_address);
+    break;
+  }
+  case CMD_OPEN: {
+    if (searchDevlist(BT_peer_name)) {
+      if (debug)
+        snooze_usb.printf("Info:    Opening BT connection @%s (%s)\n",
+                          BT_peer_address.c_str(), BT_peer_name.c_str());
+
+      cmdLine = "OPEN " + BT_peer_address + " A2DP";
+    } else {
+      cmdLine = "SEND " + String(BLE_conn_id) + " CONN ERR NO BT DEVICE!";
+    }
+    break;
+  }
+  case CMD_CLOSE: {
+    if(param.equalsIgnoreCase("A2DP")) cmdLine = "CLOSE " + String(BT_id_a2dp);
+    else if(param.equalsIgnoreCase("AVRCP")) cmdLine = "CLOSE " + String(BT_id_avrcp);
+    break;
+  }
+  case CMD_INQUIRY: {
+    for (int i = 0; i < DEVLIST_MAXLEN; i++) {
+      dev_list[i].address = "";
+      dev_list[i].capabilities = "";
+      dev_list[i].strength = 0;
+    }
+    found_dev = 0;
+    BT_peer_address = "";
+    devStr = "";
+    cmdLine = "SEND " + String(BLE_conn_id) + " INQ START" + "\r";
+    BLUEPORT.print(cmdLine);
+    Alarm.delay(80);
+    cmdLine = "INQUIRY 10";
+  }
+  case CMD_MUSIC: {
+    if(param.equalsIgnoreCase("PAUSE")) {
+      working_state.mon_state = MONSTATE_REQ_OFF;
+      if (working_state.bt_state == BTSTATE_CONNECTED) {
+        cmdLine = "MUSIC " + String(BT_id_a2dp) + " PAUSE";
+      } else
+        cmdLine = "";
+    }
+    else if(param.equalsIgnoreCase("STOP")) {
+      if ((working_state.bt_state == BTSTATE_CONNECTED) ||
+          (working_state.bt_state == BTSTATE_PLAY)) {
+        cmdLine = "MUSIC " + String(BT_id_a2dp) + " STOP");
+      } else
+        cmdLine = "";
+    }
+    else if(param.equalsIgnoreCase("START")) {
+      // working_state.mon_state = MONSTATE_REQ_ON;
+      // if(working_state.bt_state == BTSTATE_CONNECTED) {
+      cmdLine = "MUSIC " + String(BT_id_a2dp) + " PLAY";
+      // }
+      // else cmdLine = "";
+    }
+  }
+
+
+
+  case CMD_AFH_MAP:
+  case CMD_ASSOCIATION:
+  case CMD_AT:
+  case CMD_AVRCP_META_DATA:
+  case CMD_BATTERY_STATUS:
+  case CMD_BC_SMART_COMMAND:
+  case CMD_BC_SMART_NOTIF:
+  case CMD_BLE_GET_CHAR:
+  case CMD_BLE_GET_SERV:
+  case CMD_BLE_INDICATION:
+  case CMD_BLE_NOTIFICATION:
+  case CMD_BLE_READ:
+  case CMD_BLE_READ_RES:
+  case CMD_BLE_SECURITY:
+  case CMD_BLE_SET_DB:
+  case CMD_BLE_WRITE:
+  case CMD_BROADCAST:
+  case CMD_BT_STATE:
+  case CMD_CALL:
+  case CMD_CONFIG:
+  case CMD_CVC_CFG:
+  case CMD_DFU:
+  case CMD_ENTER_DATA_MODE:
+  case CMD_GET:
+  case CMD_HELP:
+  case CMD_HID_DESC:
+  case CMD_HID_READ:
+  case CMD_IAP:
+  case CMD_IAP_APP_REQ:
+
+  case CMD_LICENSE:
+  case CMD_LINK_POLICY:
+  case CMD_LIST:
+  case CMD_MAP_GET_MSG:
+  case CMD_MM_CFG:
+  case CMD_PAIR:
+  case CMD_PASSKEY:
+  case CMD_PB_ABORT:
+  case CMD_PB_PULL:
+  case CMD_PIO:
+  case CMD_REMOTE_VOLUME:
+  case CMD_RESET:
+  case CMD_RESTORE:
+  case CMD_ROLE:
+  case CMD_ROUTE:
+  case CMD_RSSI:
+  case CMD_SCAN:
+  case CMD_SEND:
+  case CMD_SEND_RAW:
+  case CMD_SET:
+  case CMD_SPEECH_REC:
+  case CMD_SSRD:
+  case CMD_STATUS:
+  case CMD_TOGGLE_VR:
+  case CMD_TONE:
+  case CMD_TX_POWER:
+  case CMD_UNPAIR:
+  case CMD_VERSION:
+  case CMD_VOLUME:
+  case CMD_WRITE:
+  case CMD_UNKNOWN:
+  default:
+    break;
+  }
+  return true;
+}
+
 bool sendCmdOut(int msg) {
   String devString = "";
   String cmdLine = "";
@@ -1264,56 +1662,56 @@ bool sendCmdOut(int msg) {
   /* --------
    * COMMANDS
    * -------- */
-  case BCCMD__NOTHING:
+  case BCCMD_NOTHING:
     break;
   // Start BLE advertising
-  case BCCMD_ADV_ON:
-    cmdLine = "ADVERTISING ON\r";
-    break;
+  // case BCCMD_ADV_ON:
+  //   cmdLine = "ADVERTISING ON\r";
+  //   break;
   // Stop BLE advertising
-  case BCCMD_ADV_OFF:
-    cmdLine = "ADVERTISING OFF\r";
-    break;
+  // case BCCMD_ADV_OFF:
+  //   cmdLine = "ADVERTISING OFF\r";
+  //   break;
   // Switch off device (serial)
-  case BCCMD_BLUE_OFF:
-    cmdLine = "POWER OFF\r";
-    break;
-  // Switch on device (serial)
-  case BCCMD_BLUE_ON:
-    cmdLine = "POWER ON\r";
-    break;
+  // case BCCMD_BLUE_OFF:
+  //   cmdLine = "POWER OFF\r";
+  //   break;
+  // // Switch on device (serial)
+  // case BCCMD_BLUE_ON:
+  //   cmdLine = "POWER ON\r";
+  //   break;
   // Ask for friendly name of connected BT device
-  case BCCMD_BT_NAME:
-    cmdLine = "NAME " + String(BT_peer_address) + "\r";
-    break;
+  // case BCCMD_BT_NAME:
+  //   cmdLine = "NAME " + String(BT_peer_address) + "\r";
+  //   break;
   // Open A2DP connection with 'BT_peer_address'
-  case BCCMD_DEV_CONNECT:
-    cmdLine = cmdDevConnect();
-    break;
+  // case BCCMD_DEV_CONNECT:
+  //   cmdLine = cmdDevConnect();
+  //   break;
   // Close A2DP connection with BT device
-  case BCCMD_DEV_A2DP_DISCONNECT:
-    cmdLine = "CLOSE " + String(BT_id_a2dp) + "\r";
-    break;
-  // Close AVRCP connection with BT device
-  case BCCMD_DEV_AVRCP_DISCONNECT:
-    cmdLine = "CLOSE " + String(BT_id_avrcp) + "\r";
-    break;
+  // case BCCMD_DEV_A2DP_DISCONNECT:
+  //   cmdLine = "CLOSE " + String(BT_id_a2dp) + "\r";
+  //   break;
+  // // Close AVRCP connection with BT device
+  // case BCCMD_DEV_AVRCP_DISCONNECT:
+  //   cmdLine = "CLOSE " + String(BT_id_avrcp) + "\r";
+  //   break;
   // Start inquiry on BT for 10 s, clearing the device list first
-  case BCCMD_INQUIRY:
-    cmdLine = cmdInquiry();
-    break;
+  // case BCCMD_INQUIRY:
+  //   cmdLine = cmdInquiry();
+  //   break;
   // Pause monitoring -> AVRCP pause
-  case BCCMD_MON_PAUSE:
-    cmdLine = cmdMonPause();
-    break;
+  // case BCCMD_MON_PAUSE:
+  //   cmdLine = cmdMonPause();
+  //   break;
   // Start monitoring -> AVRCP play
-  case BCCMD_MON_START:
-    cmdLine = cmdMonStart();
-    break;
-  // Stop monitoring -> AVRCP pause
-  case BCCMD_MON_STOP:
-    cmdLine = cmdMonStop();
-    break;
+  // case BCCMD_MON_START:
+  //   cmdLine = cmdMonStart();
+  //   break;
+  // // Stop monitoring -> AVRCP pause
+  // case BCCMD_MON_STOP:
+  //   cmdLine = cmdMonStop();
+  //   break;
   // Start recording
   case BCCMD_REC_START:
     working_state.rec_state = RECSTATE_REQ_ON;

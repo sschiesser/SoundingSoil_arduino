@@ -695,8 +695,8 @@ WORK : {
                         working_state.rec_state, working_state.mon_state);
 
     if (working_state.ble_state == BLESTATE_CONNECTED) {
-      sendCmdOut(BCCMD_DEV_A2DP_DISCONNECT);
-      sendCmdOut(BCCMD_DEV_AVRCP_DISCONNECT);
+      sendCmdOut(CMD_CLOSE, "A2DP");
+      sendCmdOut(CMD_CLOSE, "AVRCP");
       startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_SLOW);
       sendCmdOut(BCNOT_BT_STATE);
       sleep_flags.ble_ready = false;
@@ -738,7 +738,8 @@ WORK : {
   // BLUEPORT
   if (BLUEPORT.available()) {
     String inMsg = BLUEPORT.readStringUntil('\r');
-    int outMsg = parseSerialIn(inMsg);
+    serialAnswer_t answ;
+    parseSerialIn(inMsg, &answ);
     if (!sendCmdOut(outMsg)) {
       if (debug)
         snooze_usb.println("Error: Sending command error!!");
