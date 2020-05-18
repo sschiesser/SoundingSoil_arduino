@@ -263,6 +263,9 @@ WORK : {
 
     // Doing things
     next_record.cnt = 0;
+    if (debug)
+      snooze_usb.printf("Info:    Current GPS source -> %d\n",
+                        next_record.gps_source);
     if (next_record.gps_source == GPS_PHONE)
       prepareRecording(false);
     else
@@ -348,7 +351,13 @@ WORK : {
                         working_state.rec_state, working_state.mon_state);
 
     // Doing things
-    prepareRecording(true);
+    if (debug)
+      snooze_usb.printf("Info:    Current GPS source -> %d\n",
+                        next_record.gps_source);
+    if (next_record.gps_source == GPS_PHONE)
+      prepareRecording(false);
+    else
+      prepareRecording(true);
     working_state.rec_state = RECSTATE_ON;
     startRecording(next_record.rpath);
 
