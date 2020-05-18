@@ -47,13 +47,13 @@ const bool sleeping_permitted = true;
  * -----------------------
  * - working_state -> struct keeping the current state of each working element
  * - sleep_flags   -> struct keeping the authorization to sleep (or not) for
- * each element
+ *                    each element
  * - rts           -> 'ready-to-sleep' flag
  * - rec_window    -> struct keeping the current rec window settings
- * (duration/period/occurences)
+ *                    (duration/period/occurences)
  * - last_record   -> struct keeping the information for the last recording
  * - next_record   -> struct keeping the information for the next (current)
- * recording
+ *                    recording
  */
 volatile struct wState working_state;
 struct sfState sleep_flags;
@@ -711,10 +711,14 @@ WORK : {
     working_state.bt_state = BTSTATE_OFF;
     sleep_flags.bt_ready = true;
 
-    BT_id_a2dp = 0;
-    BT_id_avrcp = 0;
-    BT_peer_address = "";
-    BT_peer_name = "auto";
+    bt_peer.address = "";
+    bt_peer.name = "auto";
+    bt_peer.a2dpId = 0;
+    bt_peer.avrcpId = 0;
+    // BT_id_a2dp = 0;
+    // BT_id_avrcp = 0;
+    // BT_peer_address = "";
+    // BT_peer_name = "auto";
 
     sleep_flags.rec_ready =
         (working_state.rec_state == RECSTATE_OFF ? true : false);
@@ -759,6 +763,7 @@ WORK : {
 #else
   rts = setRts(sleep_flags);
 #endif // ALWAYS_ON_MODE
+
   if (rts)
     goto SLEEP;
   else
