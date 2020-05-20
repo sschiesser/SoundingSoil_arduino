@@ -32,7 +32,7 @@
 /*** Constants ***************************************************************/
 // Debugging values
 #define ALWAYS_ON_MODE 0
-const bool debug = true;
+const bool debug = false;
 
 // Still needed?
 #if (ALWAYS_ON_MODE == 1)
@@ -532,7 +532,7 @@ WORK : {
       startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
     } else {
       bc127BlueOn();
-      delay(500);
+      Alarm.delay(200);
       startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
       alarm_adv_id = Alarm.timerOnce(BLEADV_TIMEOUT_S, alarmAdvTimeout);
     }

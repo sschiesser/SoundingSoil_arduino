@@ -1043,7 +1043,9 @@ void initBc127(void) {
       parseSerialIn(inMsg);
     }
   };
-  bc127BlueOff();
+  // Alarm.delay(200);
+  // bc127BlueOff();
+  // Alarm.delay(500);
 }
 /*****************************************************************************/
 
