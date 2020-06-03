@@ -920,23 +920,22 @@ static String notRecNb(void) {
 /*****************************************************************************/
 
 /*****************************************************************************/
-static String notRecRem(void) {
-  if (working_state.ble_state == BLESTATE_CONNECTED) {
-    rec_rem = next_record.tss - now();
-    return ("SEND " + String(BLE_conn_id) + " REC_REM " + rec_rem + "\r");
-  } else {
-    return "";
-  }
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
 static String notRecNext(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
     return ("SEND " + String(BLE_conn_id) + " REC_NEXT " + next_record.tss +
             "\r");
   } else
     return "";
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
+static String notRecRem(void) {
+  if (working_state.ble_state == BLESTATE_CONNECTED) {
+    return ("SEND " + String(BLE_conn_id) + " REC_REM " + rec_rem + "\r");
+  } else {
+    return "";
+  }
 }
 /*****************************************************************************/
 

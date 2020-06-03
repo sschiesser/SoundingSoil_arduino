@@ -99,7 +99,9 @@ void prepareRecording(bool sync) {
                       next_record.gps_source);
   if (dur != 0) {
     alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
-    alarm_rem_id = Alarm.timerRepeat(2, timerRemDone);
+    rec_rem = dur;
+    sendCmdOut(BCNOT_REC_REM);
+    alarm_rem_id = Alarm.timerRepeat(REC_REM_INTERVAL_SEC, timerRemDone);
   }
 }
 /*****************************************************************************/

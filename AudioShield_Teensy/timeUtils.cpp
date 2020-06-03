@@ -228,8 +228,10 @@ void timerRecDone(void) {
 void timerRemDone(void) {
   int dur_sec = (next_record.dur.Hour * SECS_PER_HOUR) + (next_record.dur.Minute * SECS_PER_MIN) + next_record.dur.Second;
   rec_rem = dur_sec - (now() - next_record.tss);
-  if(debug)
-    snooze_usb.printf("Time:    Sending remaining time, %d\n", rec_rem);
+
+  if(working_state.ble_state == BLESTATE_CONNECTED) {
+    sendCmdOut(BCNOT_REC_REM);
+  }
 }
 /*****************************************************************************/
 
