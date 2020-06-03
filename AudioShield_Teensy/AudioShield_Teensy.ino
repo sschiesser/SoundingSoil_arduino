@@ -32,7 +32,7 @@
 /*** Constants ***************************************************************/
 // Debugging values
 #define ALWAYS_ON_MODE 0
-const bool debug = false;
+const bool debug = true;
 
 // Still needed?
 #if (ALWAYS_ON_MODE == 1)
@@ -260,12 +260,12 @@ WORK : {
           "Info:    Requesting REC ON. States: BT %d, BLE %d, REC %d, MON %d\n",
           working_state.bt_state, working_state.ble_state,
           working_state.rec_state, working_state.mon_state);
+      snooze_usb.printf("Info:    Current GPS source -> %d\n",
+                            next_record.gps_source);
 
     // Doing things
+    toggleBatMan(BM_DISABLED);
     next_record.cnt = 0;
-    if (debug)
-      snooze_usb.printf("Info:    Current GPS source -> %d\n",
-                        next_record.gps_source);
     if (next_record.gps_source == GPS_PHONE)
       prepareRecording(false);
     else
@@ -307,6 +307,10 @@ WORK : {
     // Doing things
     stopRecording(next_record.rpath);
     pauseRecording();
+    if(working_state.mon_state != MONSTATE_ON) {
+      toggleBatMan(BM_ENABLED);
+    }
+
     if ((working_state.mon_state != MONSTATE_OFF) ||
         (working_state.ble_state != BLESTATE_OFF) ||
         (working_state.bt_state != BTSTATE_OFF) ||
@@ -349,11 +353,11 @@ WORK : {
                         "%d, REC %d, MON %d\n",
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
+      snooze_usb.printf("Info:    Current GPS source -> %d\n",
+                                          next_record.gps_source);
 
     // Doing things
-    if (debug)
-      snooze_usb.printf("Info:    Current GPS source -> %d\n",
-                        next_record.gps_source);
+    toggleBatMan(BM_DISABLED);
     if (next_record.gps_source == GPS_PHONE)
       prepareRecording(false);
     else
@@ -397,6 +401,9 @@ WORK : {
                         next_record.dur.Second);
     stopRecording(next_record.rpath);
     finishRecording();
+    if(working_state.mon_state != MONSTATE_ON) {
+      toggleBatMan(BM_ENABLED);
+    }
     stopLED(&leds[LED_PEAK]);
     working_state.rec_state = RECSTATE_OFF;
     sleep_flags.rec_ready = true;
@@ -434,6 +441,7 @@ WORK : {
           working_state.rec_state, working_state.mon_state);
 
     // Doing things
+    toggleBatMan(BM_DISABLED);
     startLED(&leds[LED_MONITOR], LED_MODE_ON);
     startMonitoring();
     working_state.mon_state = MONSTATE_ON;
@@ -475,6 +483,11 @@ WORK : {
     stopMonitoring();
     stopLED(&leds[LED_MONITOR]);
     stopLED(&leds[LED_PEAK]);
+
+    if(working_state.rec_state != RECSTATE_ON) {
+      toggleBatMan(BM_ENABLED);
+    }
+
     if ((working_state.bt_state == BTSTATE_CONNECTED) ||
         (working_state.bt_state == BTSTATE_PLAY)) {
       sendCmdOut(BCCMD_MON_STOP);
@@ -488,11 +501,6 @@ WORK : {
           (working_state.rec_state == RECSTATE_IDLE)) {
         sleep_flags.mon_ready = true;
       }
-      // else if(working_state.rec_state == RECSTATE_WAIT) {
-      //     // setIdleSnooze();
-      //     // working_state.rec_state = RECSTATE_IDLE;
-      //     rts = true;
-      // }
       else {
         sleep_flags.mon_ready = false;
       }

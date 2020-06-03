@@ -47,6 +47,9 @@ void initLEDButtons(void) {
   pinMode(BUTTON_MONITOR_PIN, INPUT_PULLUP);
   pinMode(BUTTON_BLUETOOTH_PIN, INPUT_PULLUP);
 
+  pinMode(BM_ENABLE_PIN, OUTPUT);
+  digitalWrite(BM_ENABLE_PIN, BM_PIN_EN);
+
   for (int i = 0; i < LED_MAX_NUMBER; i++) {
     leds[i].pin = led_pins[i];
     leds[i].status = LED_OFF;
@@ -73,6 +76,22 @@ void initLEDButtons(void) {
     digitalWrite(leds[i].pin, leds[i].status);
   }
 }
+/*****************************************************************************/
+
+/*****************************************************************************/
+/* toggleBatMan(bool *)
+ * --------------------
+ * Toggles BM_ENABLE_PIN in order to enable or disable the battery manager
+ * EN pin.
+ * IN:	- enable command (bool)
+ * OUT:	- none
+ */
+ void toggleBatMan(bool enable) {
+   snooze_usb.printf("I/O:     Toggling BatMan: %s\n", (enable ? "EN" : "DIS"));
+   if(enable) digitalWrite(BM_ENABLE_PIN, BM_PIN_EN);
+   else digitalWrite(BM_ENABLE_PIN, BM_PIN_DIS);
+   Alarm.delay(10);
+ }
 /*****************************************************************************/
 
 /*****************************************************************************/
