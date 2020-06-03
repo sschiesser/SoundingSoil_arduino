@@ -398,6 +398,7 @@ static enum serialMsg msgName3(String p1, String p2, String p3, String p4) {
 /*****************************************************************************/
 static enum serialMsg msgState(String p1, String p2, String p3, String p4) {
   if (!p1.substring(p1.length() - 2, p1.length() - 1).toInt()) {
+    if(debug) snooze_usb.printf("BT connected! Requesting name\n");
     return BCNOT_BT_STATE;
   }
   return BCCMD__NOTHING;
