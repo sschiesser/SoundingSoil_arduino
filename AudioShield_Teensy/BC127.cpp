@@ -398,8 +398,10 @@ static enum serialMsg msgName3(String p1, String p2, String p3, String p4) {
 /*****************************************************************************/
 static enum serialMsg msgState(String p1, String p2, String p3, String p4) {
   bool connState = p1.substring(p1.length() - 2, p1.length() - 1).toInt();
-    if(debug) snooze_usb.printf("CONNECTED state: %d, A2DP ID: %d\n", connState, BT_id_a2dp);
-    if (!connState) {
+  if (debug)
+    snooze_usb.printf("CONNECTED state: %d, A2DP ID: %d\n", connState,
+                      BT_id_a2dp);
+  if (!connState) {
     return BCNOT_BT_STATE;
   }
   return BCCMD__NOTHING;
@@ -918,6 +920,17 @@ static String notRecNb(void) {
 /*****************************************************************************/
 
 /*****************************************************************************/
+static String notRecRem(void) {
+  if (working_state.ble_state == BLESTATE_CONNECTED) {
+    rec_rem = next_record.tss - now();
+    return ("SEND " + String(BLE_conn_id) + " REC_REM " + rec_rem + "\r");
+  } else {
+    return "";
+  }
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
 static String notRecNext(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
     return ("SEND " + String(BLE_conn_id) + " REC_NEXT " + next_record.tss +
@@ -1335,8 +1348,10 @@ bool sendCmdOut(int msg) {
     break;
   // Device connection status
   case BCCMD_STATUS:
-    if(BT_id_a2dp != 0) cmdLine = "STATUS " + String(BT_id_a2dp) + "\r";
-    else cmdLine = "STATUS\r";
+    if (BT_id_a2dp != 0)
+      cmdLine = "STATUS " + String(BT_id_a2dp) + "\r";
+    else
+      cmdLine = "STATUS\r";
     break;
   // Volume level
   case BCCMD_VOL_A2DP:
@@ -1403,6 +1418,10 @@ bool sendCmdOut(int msg) {
   // REC_NB
   case BCNOT_REC_NB:
     cmdLine = notRecNb();
+    break;
+  // REC_REM
+  case BCNOT_REC_REM:
+    cmdLine = notRecRem();
     break;
   // REC_TS
   case BCNOT_REC_TS:

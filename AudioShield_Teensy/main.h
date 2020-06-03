@@ -152,6 +152,7 @@ extern struct rWindow rec_window;
 
 /*** Variables ***************************************************************/
 extern const bool debug;
+extern time_t rec_rem;
 
 /*** Functions ***************************************************************/
 

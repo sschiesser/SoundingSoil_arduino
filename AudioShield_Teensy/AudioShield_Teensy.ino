@@ -54,6 +54,7 @@ bool rts;
 struct rWindow rec_window;
 struct recInfo last_record;
 struct recInfo next_record;
+time_t rec_rem;
 
 /*** Function prototypes *****************************************************/
 /*** Macros ******************************************************************/
@@ -597,7 +598,7 @@ WORK : {
       sleep_flags.ble_ready = false;
     } else {
       working_state.ble_state = BLESTATE_REQ_OFF;
-      sleep_flags.ble_ready = true;
+      sleep_flags.ble_ready = false;
     }
 
     break;

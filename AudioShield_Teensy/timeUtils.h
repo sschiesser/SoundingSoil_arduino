@@ -24,6 +24,7 @@ extern time_t received_time;
 extern AlarmID_t alarm_rec_id;
 extern AlarmID_t alarm_wait_id;
 extern AlarmID_t alarm_adv_id;
+extern AlarmID_t alarm_rem_id;
 
 extern SnoozeDigital button_wakeup; // Wakeup pins on Teensy 3.6:
                                     // 2,4,6,7,9,10,11,13,16,21,22,26,30,33
@@ -43,6 +44,7 @@ void removeWaitAlarm(void);
 void removeIdleSnooze(void);
 void alarmAdvTimeout(void);
 void timerRecDone(void);
+void timerRemDone(void);
 void alarmNextRec(void);
 
 #endif /* _TIMEUTILS_H_ */

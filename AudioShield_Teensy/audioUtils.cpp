@@ -99,6 +99,7 @@ void prepareRecording(bool sync) {
                       next_record.gps_source);
   if (dur != 0) {
     alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
+    alarm_rem_id = Alarm.timerRepeat(2, timerRemDone);
   }
 }
 /*****************************************************************************/
@@ -201,6 +202,7 @@ void stopRecording(String path) {
     snooze_usb.println("Audio:   Recording stopped, writing metadata");
 
   createMetadata(&next_record);
+  Alarm.free(alarm_rem_id);
 }
 /*****************************************************************************/
 
@@ -213,6 +215,7 @@ void stopRecording(String path) {
  */
 void pauseRecording(void) {
   tmElements_t tm;
+
   breakTime(now(), tm);
 
   last_record = next_record;
