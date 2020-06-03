@@ -27,7 +27,7 @@ unsigned int found_dev;
 // Address of the connected BT device
 String BT_peer_address = "";
 // Name of the connected BT device
-String BT_peer_name = "auto";
+String BT_peer_name = "";
 // ID's (A2DP&AVRCP) of the established BT connection
 int BT_id_a2dp = 0;
 int BT_id_avrcp = 0;
@@ -397,8 +397,9 @@ static enum serialMsg msgName3(String p1, String p2, String p3, String p4) {
 
 /*****************************************************************************/
 static enum serialMsg msgState(String p1, String p2, String p3, String p4) {
-  if (!p1.substring(p1.length() - 2, p1.length() - 1).toInt()) {
-    if(debug) snooze_usb.printf("BT connected! Requesting name\n");
+  bool connState = p1.substring(p1.length() - 2, p1.length() - 1).toInt();
+    if(debug) snooze_usb.printf("CONNECTED state: %d, A2DP ID: %d\n", connState, BT_id_a2dp);
+    if (!connState) {
     return BCNOT_BT_STATE;
   }
   return BCCMD__NOTHING;
@@ -1334,7 +1335,8 @@ bool sendCmdOut(int msg) {
     break;
   // Device connection status
   case BCCMD_STATUS:
-    cmdLine = "STATUS\r";
+    if(BT_id_a2dp != 0) cmdLine = "STATUS " + String(BT_id_a2dp) + "\r";
+    else cmdLine = "STATUS\r";
     break;
   // Volume level
   case BCCMD_VOL_A2DP:
