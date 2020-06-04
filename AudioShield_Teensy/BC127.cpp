@@ -689,7 +689,7 @@ static enum serialMsg msgRecv3(String p1, String p2, String p3, String p4,
       if(debug)
         snooze_usb.printf("Received latlong info: %f, %f\n", atof(p4.c_str()),
                         atof(p5.c_str()));
-                        
+
       if ((p4.c_str() == NULL) || (p5.c_str() == NULL)) {
         next_record.gps_source = GPS_NONE;
         next_record.gps_lat = 1000.0;
