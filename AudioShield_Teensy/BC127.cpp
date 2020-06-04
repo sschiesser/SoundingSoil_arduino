@@ -553,8 +553,8 @@ static enum serialMsg msgOpenOk(String p1, String p2, String p3) {
     // if(debug) snooze_usb.printf("Info:    BLE connection opened. Conn ID:
     // %d\n", BLE_conn_id);
     working_state.ble_state = BLESTATE_REQ_CONN;
-    return BCREQ_TIME;
-    // return BCCMD__NOTHING;
+    alarm_request_id = Alarm.timerOnce(REQUEST_INTERVAL_SEC, alarmRequestDone);
+    return BCCMD__NOTHING;
   } else {
     return BCCMD__NOTHING;
   }
@@ -609,6 +609,7 @@ static enum serialMsg msgRecv2(String p1, String p2, String p3, String p4) {
         if (debug)
           snooze_usb.println("Error: Received time not correct!");
       }
+      return BCREQ_LATLONG;
     } else if (p3.equalsIgnoreCase("rec")) {
       if (p4.equalsIgnoreCase("start"))
         return BCCMD_REC_START;
@@ -685,8 +686,10 @@ static enum serialMsg msgRecv3(String p1, String p2, String p3, String p4,
   // - "latlong {lat long}"
   if (p1.toInt() == BLE_conn_id) {
     if (p3.equalsIgnoreCase("latlong")) {
-      snooze_usb.printf("Received latlong info: %f, %f", atof(p4.c_str()),
+      if(debug)
+        snooze_usb.printf("Received latlong info: %f, %f\n", atof(p4.c_str()),
                         atof(p5.c_str()));
+                        
       if ((p4.c_str() == NULL) || (p5.c_str() == NULL)) {
         next_record.gps_source = GPS_NONE;
         next_record.gps_lat = 1000.0;
@@ -968,8 +971,7 @@ static String notVolLevel(void) {
 // ---------------
 /*****************************************************************************/
 static String reqTime(void) {
-  if ((working_state.ble_state == BLESTATE_CONNECTED) ||
-      (working_state.ble_state == BLESTATE_REQ_CONN)) {
+  if (working_state.ble_state == BLESTATE_CONNECTED) {
     return ("SEND " + String(BLE_conn_id) + " TIME ?\r");
   } else
     return "";
@@ -978,7 +980,7 @@ static String reqTime(void) {
 /*****************************************************************************/
 static String reqLatLong(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
-    return ("SEND " + String(BLE_conn_id) + "LATLONG ?\r");
+    return ("SEND " + String(BLE_conn_id) + " LATLONG ?\r");
   } else
     return "";
 }
@@ -1105,7 +1107,7 @@ void bc127AdvStop(void) { sendCmdOut(BCCMD_ADV_OFF); }
  */
 enum serialMsg parseSerialIn(String input) {
   if (debug)
-    snooze_usb.printf("<-BC127: %s\n", input.c_str());
+    snooze_usb.printf("BC127->: %s\n", input.c_str());
 
   unsigned int nb_params = countParams(input);
 

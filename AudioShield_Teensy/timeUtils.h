@@ -14,6 +14,7 @@
 /*** Constants ***************************************************************/
 #define MIN_TIME_DEC 1549014885 // 01.02.2019, 09h54m00
 #define REC_REM_INTERVAL_SEC 10
+#define REQUEST_INTERVAL_SEC 5
 
 /*** Types *******************************************************************/
 // Time sources
@@ -26,6 +27,7 @@ extern AlarmID_t alarm_rec_id;
 extern AlarmID_t alarm_wait_id;
 extern AlarmID_t alarm_adv_id;
 extern AlarmID_t alarm_rem_id;
+extern AlarmID_t alarm_request_id;
 
 extern SnoozeDigital button_wakeup; // Wakeup pins on Teensy 3.6:
                                     // 2,4,6,7,9,10,11,13,16,21,22,26,30,33
@@ -46,6 +48,7 @@ void removeIdleSnooze(void);
 void alarmAdvTimeout(void);
 void timerRecDone(void);
 void timerRemDone(void);
+void alarmRequestDone(void);
 void alarmNextRec(void);
 
 #endif /* _TIMEUTILS_H_ */
