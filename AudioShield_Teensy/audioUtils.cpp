@@ -61,7 +61,6 @@ void prepareRecording(bool sync) {
   bool gps_fix = true;
   tmElements_t tm;
 
-  startLED(&leds[LED_RECORD], LED_MODE_ON);
   if (sync) {
     // gpsPowerOn();
     // gpsEnable(true);
@@ -81,6 +80,9 @@ void prepareRecording(bool sync) {
       }
       startLED(&leds[LED_RECORD], LED_MODE_ON);
     }
+  } else {
+    Alarm.delay((GPS_ENCODE_TIME_MS * GPS_ENCODE_RETRIES_MAX));
+    startLED(&leds[LED_RECORD], LED_MODE_ON);
   }
   next_record.tss = now();
   breakTime(next_record.tss, tm);
@@ -88,7 +90,7 @@ void prepareRecording(bool sync) {
   setRecInfos(&next_record, rec_path);
   unsigned long dur = next_record.dur.Second +
                       (next_record.dur.Minute * SECS_PER_MIN) +
-                      (next_record.dur.Hour * SECS_PER_HOUR);
+                      (next_record.dur.Hour * SECS_PER_HOUR) + 1;
   dur = (unsigned long)((float)dur * REC_DUR_CORRECTION_RATIO);
   if (debug)
     snooze_usb.printf("Audio:   Set recording duration to %d\n", dur);
@@ -99,6 +101,9 @@ void prepareRecording(bool sync) {
                       next_record.gps_source);
   if (dur != 0) {
     alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
+    rec_rem = dur;
+    sendCmdOut(BCNOT_REC_REM);
+    alarm_rem_id = Alarm.timerRepeat(REC_REM_INTERVAL_SEC, timerRemDone);
   }
 }
 /*****************************************************************************/
@@ -201,6 +206,7 @@ void stopRecording(String path) {
     snooze_usb.println("Audio:   Recording stopped, writing metadata");
 
   createMetadata(&next_record);
+  Alarm.free(alarm_rem_id);
 }
 /*****************************************************************************/
 
@@ -213,6 +219,7 @@ void stopRecording(String path) {
  */
 void pauseRecording(void) {
   tmElements_t tm;
+
   breakTime(now(), tm);
 
   last_record = next_record;

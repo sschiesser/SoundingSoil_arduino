@@ -34,13 +34,6 @@
 #define ALWAYS_ON_MODE 0
 const bool debug = true;
 
-// Still needed?
-#if (ALWAYS_ON_MODE == 1)
-const bool sleeping_permitted = false;
-#else
-const bool sleeping_permitted = true;
-#endif
-
 /*** Types *******************************************************************/
 /*** Variables ***************************************************************/
 /* Project-wide variables:
@@ -61,6 +54,7 @@ bool rts;
 struct rWindow rec_window;
 struct recInfo last_record;
 struct recInfo next_record;
+time_t rec_rem;
 
 /*** Function prototypes *****************************************************/
 /*** Macros ******************************************************************/
@@ -186,8 +180,7 @@ WORK : {
       setWaitAlarm();
       // Change REC state value to WAIT
       working_state.rec_state = RECSTATE_WAIT;
-    } else if ((working_state.rec_state == RECSTATE_WAIT) &&
-               (sleeping_permitted == true)) {
+    } else if (working_state.rec_state == RECSTATE_WAIT) {
       // Neet to remove WAIT-alarm and set a new IDLE-one
       removeWaitAlarm();
       setIdleSnooze();
@@ -313,8 +306,7 @@ WORK : {
 
     if ((working_state.mon_state != MONSTATE_OFF) ||
         (working_state.ble_state != BLESTATE_OFF) ||
-        (working_state.bt_state != BTSTATE_OFF) ||
-        (sleeping_permitted == false)) {
+        (working_state.bt_state != BTSTATE_OFF)) {
       setWaitAlarm();
       working_state.rec_state = RECSTATE_WAIT;
       sleep_flags.rec_ready = false;
@@ -606,7 +598,7 @@ WORK : {
       sleep_flags.ble_ready = false;
     } else {
       working_state.ble_state = BLESTATE_REQ_OFF;
-      sleep_flags.ble_ready = true;
+      sleep_flags.ble_ready = false;
     }
 
     break;
@@ -636,8 +628,7 @@ WORK : {
     sleep_flags.ble_ready = true;
 
     if (working_state.bt_state == BTSTATE_OFF) {
-      if ((working_state.rec_state == RECSTATE_WAIT) &&
-          (sleeping_permitted == true)) {
+      if (working_state.rec_state == RECSTATE_WAIT) {
         removeWaitAlarm();
         setIdleSnooze();
         working_state.rec_state = RECSTATE_IDLE;

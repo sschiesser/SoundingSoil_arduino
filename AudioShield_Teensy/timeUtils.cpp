@@ -23,6 +23,8 @@ time_t received_time = 0;
 AlarmID_t alarm_rec_id;
 AlarmID_t alarm_wait_id;
 AlarmID_t alarm_adv_id;
+AlarmID_t alarm_rem_id;
+AlarmID_t alarm_request_id;
 
 // Wakeup pins on Teensy 3.6:
 // 2,4,6,7,9,10,11,13,16,21,22,26,30,33
@@ -220,6 +222,24 @@ void timerRecDone(void) {
       snooze_usb.println(" Finished!");
     working_state.rec_state = RECSTATE_REQ_OFF;
   }
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
+void timerRemDone(void) {
+  int dur_sec = (next_record.dur.Hour * SECS_PER_HOUR) + (next_record.dur.Minute * SECS_PER_MIN) + next_record.dur.Second;
+  rec_rem = dur_sec - (now() - next_record.tss);
+
+  if(working_state.ble_state == BLESTATE_CONNECTED) {
+    sendCmdOut(BCNOT_REC_REM);
+  }
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
+void alarmRequestDone(void) {
+  Alarm.free(alarm_request_id);
+  sendCmdOut(BCREQ_TIME);
 }
 /*****************************************************************************/
 
