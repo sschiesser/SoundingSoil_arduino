@@ -218,20 +218,9 @@ static bool searchDevlist(String name) {
 }
 /*****************************************************************************/
 
-/*****************************************************************************/
-static enum serialMsg msgAvrcpPlay(void) {
-  working_state.mon_state = MONSTATE_REQ_ON;
-  return BCCMD__NOTHING;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgAvrcpPause(void) {
-  working_state.mon_state = MONSTATE_REQ_OFF;
-  return BCCMD__NOTHING;
-}
-/*****************************************************************************/
-
+// ---------------------
+// RECEIVED BLE MESSAGES
+// ---------------------
 /*****************************************************************************/
 static enum serialMsg msgAbsVol(String p1, String p2) {
   vol_value = (float)p2.toInt() / ABS_VOL_MAX_VAL;
@@ -242,7 +231,223 @@ static enum serialMsg msgAbsVol(String p1, String p2) {
   }
 }
 /*****************************************************************************/
+/*****************************************************************************/
+static enum serialMsg msgAvrcpPlay(void) {
+  working_state.mon_state = MONSTATE_REQ_ON;
+  return BCCMD__NOTHING;
+}
+/*****************************************************************************/
+/*****************************************************************************/
+static enum serialMsg msgAvrcpPause(void) {
+  working_state.mon_state = MONSTATE_REQ_OFF;
+  return BCCMD__NOTHING;
+}
+/*****************************************************************************/
+/*****************************************************************************/
+static enum serialMsg msgCloseOk(String p1, String p2, String p3) {
+  if (p1.toInt() == BT_id_a2dp) {
+    if (working_state.bt_state != BTSTATE_OFF)
+      working_state.bt_state = BTSTATE_REQ_DISC;
+  } else if (p1.toInt() == BLE_conn_id) {
+    if (working_state.ble_state != BLESTATE_OFF)
+      working_state.ble_state = BLESTATE_REQ_DISC;
+  }
+  return BCCMD__NOTHING;
+}
+/*****************************************************************************/
+/*****************************************************************************/
+static enum serialMsg msgInquiry1(String p1, String p2, String p3, String p4) {
+  String addr = p1;
+  String name;
+  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
+    name = p2.substring(1, (p2.length() - 1));
+  } else {
+    name = p2;
+  }
+  String caps = p3;
+  unsigned int stren = p4.substring(1, 3).toInt();
+  populateDevlist(addr, name, caps, stren);
+  return BCNOT_INQ_STATE;
+}
+/*****************************************************************************/
+static enum serialMsg msgInquiry2(String p1, String p2, String p3, String p4,
+                                  String p5) {
+  String addr = p1;
+  String name;
+  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
+    name = p2.substring(1) + "_" + p3.substring(0, (p3.length() - 1));
+  } else {
+    name = p2 + "_" + p3;
+  }
+  String caps = p4;
+  unsigned int stren = p5.substring(1, 3).toInt();
+  populateDevlist(addr, name, caps, stren);
+  return BCNOT_INQ_STATE;
+}
+/*****************************************************************************/
+static enum serialMsg msgInquiry3(String p1, String p2, String p3, String p4,
+                                  String p5, String p6) {
+  String addr = p1;
+  String name;
+  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
+    name =
+        p2.substring(1) + "_" + p3 + "_" + p4.substring(0, (p4.length() - 1));
+  } else {
+    name = p2 + "_" + p3 + "_" + p4;
+  }
+  String caps = p5;
+  unsigned int stren = p6.substring(1, 3).toInt();
+  populateDevlist(addr, name, caps, stren);
+  return BCNOT_INQ_STATE;
+}
+/*****************************************************************************/
+static enum serialMsg msgInquiry4(String p1, String p2, String p3, String p4,
+                                  String p5, String p6, String p7) {
+  String addr = p1;
+  String name;
+  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
+    name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" +
+           p5.substring(0, (p5.length() - 1));
+  } else {
+    name = p2 + "_" + p3 + "_" + p4 + "_" + p5;
+  }
+  String caps = p6;
+  unsigned int stren = p7.substring(1, 3).toInt();
+  populateDevlist(addr, name, caps, stren);
+  return BCNOT_INQ_STATE;
+}
+/*****************************************************************************/
+static enum serialMsg msgInquiry5(String p1, String p2, String p3, String p4,
+                                  String p5, String p6, String p7, String p8) {
+  String addr = p1;
+  String name;
+  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
+    name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" + p5 + "_" +
+           p6.substring(0, (p6.length() - 1));
+  } else {
+    name = p2 + "_" + p3 + "_" + p4 + "_" + p5 + "_" + p6;
+  }
+  String caps = p7;
+  unsigned int stren = p8.substring(1, 3).toInt();
+  populateDevlist(addr, name, caps, stren);
+  return BCNOT_INQ_STATE;
+}
+/*****************************************************************************/
+/*****************************************************************************/
+static enum serialMsg msgLink1(String p1, String p2, String p3, String p4,
+                               String p5) {
+  if (p3.equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p1.toInt();
+    BT_peer_address = p4;
+    if (debug)
+      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
+                        BT_peer_address.c_str(), BT_id_a2dp);
+    working_state.bt_state = BTSTATE_CONNECTED;
+    return BCCMD_BT_NAME;
+  } else if (p3.equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p1.toInt();
+    BT_peer_address = p4;
+    if (debug)
+      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
+                        BT_peer_address.c_str(), BT_id_avrcp);
+    working_state.bt_state = BTSTATE_CONNECTED;
+  }
+  return BCCMD__NOTHING;
+}
+/*****************************************************************************/
+static enum serialMsg msgLink2(String p1, String p2, String p3, String p4,
+                               String p5, String p6) {
+  enum serialMsg ret = BCCMD__NOTHING;
 
+  if (p3.equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p1.toInt();
+    BT_peer_address = p4;
+    if (debug)
+      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
+                        BT_peer_address.c_str(), BT_id_a2dp);
+    working_state.bt_state = BTSTATE_CONNECTED;
+    return BCCMD_BT_NAME;
+  } else if (p3.equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p1.toInt();
+    BT_peer_address = p4;
+    if (debug)
+      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
+                        BT_peer_address.c_str(), BT_id_avrcp);
+    working_state.bt_state = BTSTATE_CONNECTED;
+  }
+  return ret;
+}
+/*****************************************************************************/
+static enum serialMsg msgLink3(String p1, String p2, String p3, String p4,
+                               String p5, String p6, String p7) {
+  enum serialMsg ret = BCCMD__NOTHING;
+
+  if (p3.equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p1.toInt();
+    BT_peer_address = p4;
+    if (debug)
+      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
+                        BT_peer_address.c_str(), BT_id_a2dp);
+    working_state.bt_state = BTSTATE_CONNECTED;
+    return BCCMD_BT_NAME;
+  } else if (p3.equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p1.toInt();
+    BT_peer_address = p4;
+    if (debug)
+      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
+                        BT_peer_address.c_str(), BT_id_avrcp);
+    working_state.bt_state = BTSTATE_CONNECTED;
+  }
+  return ret;
+}
+/*****************************************************************************/
+static enum serialMsg msgLink4(String p1, String p2, String p3, String p4,
+                               String p5, String p6, String p7, String p8) {
+  enum serialMsg ret = BCCMD__NOTHING;
+
+  if (p3.equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p1.toInt();
+    BT_peer_address = p4;
+    if (debug)
+      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
+                        BT_peer_address.c_str(), BT_id_a2dp);
+    working_state.bt_state = BTSTATE_CONNECTED;
+    return BCCMD_BT_NAME;
+  } else if (p3.equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p1.toInt();
+    BT_peer_address = p4;
+    if (debug)
+      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
+                        BT_peer_address.c_str(), BT_id_avrcp);
+    working_state.bt_state = BTSTATE_CONNECTED;
+  }
+  return ret;
+}
+/*****************************************************************************/
+static enum serialMsg msgLink5(String p1, String p2, String p3, String p4,
+                               String p5, String p6, String p7, String p8,
+                               String p9) {
+  enum serialMsg ret = BCCMD__NOTHING;
+
+  if (p3.equalsIgnoreCase("A2DP")) {
+    BT_id_a2dp = p1.toInt();
+    BT_peer_address = p4;
+    if (debug)
+      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
+                        BT_peer_address.c_str(), BT_id_a2dp);
+    working_state.bt_state = BTSTATE_CONNECTED;
+    return BCCMD_BT_NAME;
+  } else if (p3.equalsIgnoreCase("AVRCP")) {
+    BT_id_avrcp = p1.toInt();
+    BT_peer_address = p4;
+    if (debug)
+      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
+                        BT_peer_address.c_str(), BT_id_avrcp);
+    working_state.bt_state = BTSTATE_CONNECTED;
+  }
+  return ret;
+}
+/*****************************************************************************/
 /*****************************************************************************/
 static enum serialMsg msgLinkLoss(String p1, String p2) {
   if (debug)
@@ -261,7 +466,6 @@ static enum serialMsg msgLinkLoss(String p1, String p2) {
   }
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static enum serialMsg msgName1(String p1, String p2) {
   if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
@@ -276,21 +480,6 @@ static enum serialMsg msgName1(String p1, String p2) {
     return BCCMD__NOTHING;
   }
 }
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgCloseOk(String p1, String p2, String p3) {
-  if (p1.toInt() == BT_id_a2dp) {
-    if (working_state.bt_state != BTSTATE_OFF)
-      working_state.bt_state = BTSTATE_REQ_DISC;
-  } else if (p1.toInt() == BLE_conn_id) {
-    if (working_state.ble_state != BLESTATE_OFF)
-      working_state.ble_state = BLESTATE_REQ_DISC;
-  }
-  return BCCMD__NOTHING;
-}
-/*****************************************************************************/
-
 /*****************************************************************************/
 static enum serialMsg msgName2(String p1, String p2, String p3) {
   if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
@@ -307,7 +496,39 @@ static enum serialMsg msgName2(String p1, String p2, String p3) {
   }
 }
 /*****************************************************************************/
+static enum serialMsg msgName3(String p1, String p2, String p3, String p4) {
+  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
+    int strlen = p4.length();
+    BT_peer_name =
+        p2.substring(1) + "_" + p3 + "_" + p4.substring(0, (strlen - 1));
+  } else {
+    BT_peer_name = p2 + "_" + p3 + "_" + p4;
+  }
 
+  if (working_state.ble_state == BLESTATE_CONNECTED) {
+    return BCNOT_BT_STATE;
+  } else {
+    return BCCMD__NOTHING;
+  }
+}
+/*****************************************************************************/
+static enum serialMsg msgName4(String p1, String p2, String p3, String p4,
+                               String p5) {
+  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
+    int strlen = p5.length();
+    BT_peer_name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" +
+                   p5.substring(0, (strlen - 1));
+  } else {
+    BT_peer_name = p2 + "_" + p3 + "_" + p4 + "_" + p5;
+  }
+
+  if (working_state.ble_state == BLESTATE_CONNECTED) {
+    return BCNOT_BT_STATE;
+  } else {
+    return BCCMD__NOTHING;
+  }
+}
+/*****************************************************************************/
 /*****************************************************************************/
 static enum serialMsg msgOpenOk(String p1, String p2, String p3) {
   if (p2.equalsIgnoreCase("A2DP")) {
@@ -332,13 +553,13 @@ static enum serialMsg msgOpenOk(String p1, String p2, String p3) {
     // if(debug) snooze_usb.printf("Info:    BLE connection opened. Conn ID:
     // %d\n", BLE_conn_id);
     working_state.ble_state = BLESTATE_REQ_CONN;
-    return BCCMD__NOTHING;
+    return BCREQ_TIME;
+    // return BCCMD__NOTHING;
   } else {
     return BCCMD__NOTHING;
   }
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static enum serialMsg msgRecv1(String p1, String p2, String p3) {
   // - "inq"
@@ -359,55 +580,6 @@ static enum serialMsg msgRecv1(String p1, String p2, String p3) {
 
   return ret;
 }
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgInquiry1(String p1, String p2, String p3, String p4) {
-  String addr = p1;
-  String name;
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p2.substring(1, (p2.length() - 1));
-  } else {
-    name = p2;
-  }
-  String caps = p3;
-  unsigned int stren = p4.substring(1, 3).toInt();
-  populateDevlist(addr, name, caps, stren);
-  return BCNOT_INQ_STATE;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgName3(String p1, String p2, String p3, String p4) {
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    int strlen = p4.length();
-    BT_peer_name =
-        p2.substring(1) + "_" + p3 + "_" + p4.substring(0, (strlen - 1));
-  } else {
-    BT_peer_name = p2 + "_" + p3 + "_" + p4;
-  }
-
-  if (working_state.ble_state == BLESTATE_CONNECTED) {
-    return BCNOT_BT_STATE;
-  } else {
-    return BCCMD__NOTHING;
-  }
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgState(String p1, String p2, String p3, String p4) {
-  bool connState = p1.substring(p1.length() - 2, p1.length() - 1).toInt();
-  if (debug)
-    snooze_usb.printf("CONNECTED state: %d, A2DP ID: %d\n", connState,
-                      BT_id_a2dp);
-  if (!connState) {
-    return BCNOT_BT_STATE;
-  }
-  return BCCMD__NOTHING;
-}
-/*****************************************************************************/
-
 /*****************************************************************************/
 static enum serialMsg msgRecv2(String p1, String p2, String p3, String p4) {
   // - "bt {?}"
@@ -508,67 +680,6 @@ static enum serialMsg msgRecv2(String p1, String p2, String p3, String p4) {
   return ret;
 }
 /*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgInquiry2(String p1, String p2, String p3, String p4,
-                                  String p5) {
-  String addr = p1;
-  String name;
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p2.substring(1) + "_" + p3.substring(0, (p3.length() - 1));
-  } else {
-    name = p2 + "_" + p3;
-  }
-  String caps = p4;
-  unsigned int stren = p5.substring(1, 3).toInt();
-  populateDevlist(addr, name, caps, stren);
-  return BCNOT_INQ_STATE;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgLink1(String p1, String p2, String p3, String p4,
-                               String p5) {
-  if (p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p4;
-    if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-    return BCCMD_BT_NAME;
-  } else if (p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p4;
-    if (debug)
-      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_avrcp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-  }
-  return BCCMD__NOTHING;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgName4(String p1, String p2, String p3, String p4,
-                               String p5) {
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    int strlen = p5.length();
-    BT_peer_name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" +
-                   p5.substring(0, (strlen - 1));
-  } else {
-    BT_peer_name = p2 + "_" + p3 + "_" + p4 + "_" + p5;
-  }
-
-  if (working_state.ble_state == BLESTATE_CONNECTED) {
-    return BCNOT_BT_STATE;
-  } else {
-    return BCCMD__NOTHING;
-  }
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
 static enum serialMsg msgRecv3(String p1, String p2, String p3, String p4,
                                String p5) {
   // - "latlong {lat long}"
@@ -589,26 +700,6 @@ static enum serialMsg msgRecv3(String p1, String p2, String p3, String p4,
   }
   return BCCMD__NOTHING;
 }
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgInquiry3(String p1, String p2, String p3, String p4,
-                                  String p5, String p6) {
-  String addr = p1;
-  String name;
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name =
-        p2.substring(1) + "_" + p3 + "_" + p4.substring(0, (p4.length() - 1));
-  } else {
-    name = p2 + "_" + p3 + "_" + p4;
-  }
-  String caps = p5;
-  unsigned int stren = p6.substring(1, 3).toInt();
-  populateDevlist(addr, name, caps, stren);
-  return BCNOT_INQ_STATE;
-}
-/*****************************************************************************/
-
 /*****************************************************************************/
 static enum serialMsg msgRecv4(String p1, String p2, String p3, String p4,
                                String p5, String p6) {
@@ -633,144 +724,22 @@ static enum serialMsg msgRecv4(String p1, String p2, String p3, String p4,
   return ret;
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
-static enum serialMsg msgLink2(String p1, String p2, String p3, String p4,
-                               String p5, String p6) {
-  enum serialMsg ret = BCCMD__NOTHING;
-
-  if (p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p4;
-    if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-    return BCCMD_BT_NAME;
-  } else if (p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p4;
-    if (debug)
-      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_avrcp);
-    working_state.bt_state = BTSTATE_CONNECTED;
+static enum serialMsg msgState(String p1, String p2, String p3, String p4) {
+  bool connState = p1.substring(p1.length() - 2, p1.length() - 1).toInt();
+  if (debug)
+    snooze_usb.printf("CONNECTED state: %d, A2DP ID: %d\n", connState,
+                      BT_id_a2dp);
+  if (!connState) {
+    return BCNOT_BT_STATE;
   }
-  return ret;
+  return BCCMD__NOTHING;
 }
 /*****************************************************************************/
 
-/*****************************************************************************/
-static enum serialMsg msgInquiry4(String p1, String p2, String p3, String p4,
-                                  String p5, String p6, String p7) {
-  String addr = p1;
-  String name;
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" +
-           p5.substring(0, (p5.length() - 1));
-  } else {
-    name = p2 + "_" + p3 + "_" + p4 + "_" + p5;
-  }
-  String caps = p6;
-  unsigned int stren = p7.substring(1, 3).toInt();
-  populateDevlist(addr, name, caps, stren);
-  return BCNOT_INQ_STATE;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgLink3(String p1, String p2, String p3, String p4,
-                               String p5, String p6, String p7) {
-  enum serialMsg ret = BCCMD__NOTHING;
-
-  if (p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p4;
-    if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-    return BCCMD_BT_NAME;
-  } else if (p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p4;
-    if (debug)
-      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_avrcp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-  }
-  return ret;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgInquiry5(String p1, String p2, String p3, String p4,
-                                  String p5, String p6, String p7, String p8) {
-  String addr = p1;
-  String name;
-  if (p2.substring(0, 1).equalsIgnoreCase("\"")) {
-    name = p2.substring(1) + "_" + p3 + "_" + p4 + "_" + p5 + "_" +
-           p6.substring(0, (p6.length() - 1));
-  } else {
-    name = p2 + "_" + p3 + "_" + p4 + "_" + p5 + "_" + p6;
-  }
-  String caps = p7;
-  unsigned int stren = p8.substring(1, 3).toInt();
-  populateDevlist(addr, name, caps, stren);
-  return BCNOT_INQ_STATE;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgLink4(String p1, String p2, String p3, String p4,
-                               String p5, String p6, String p7, String p8) {
-  enum serialMsg ret = BCCMD__NOTHING;
-
-  if (p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p4;
-    if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-    return BCCMD_BT_NAME;
-  } else if (p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p4;
-    if (debug)
-      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_avrcp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-  }
-  return ret;
-}
-/*****************************************************************************/
-
-/*****************************************************************************/
-static enum serialMsg msgLink5(String p1, String p2, String p3, String p4,
-                               String p5, String p6, String p7, String p8,
-                               String p9) {
-  enum serialMsg ret = BCCMD__NOTHING;
-
-  if (p3.equalsIgnoreCase("A2DP")) {
-    BT_id_a2dp = p1.toInt();
-    BT_peer_address = p4;
-    if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-    return BCCMD_BT_NAME;
-  } else if (p3.equalsIgnoreCase("AVRCP")) {
-    BT_id_avrcp = p1.toInt();
-    BT_peer_address = p4;
-    if (debug)
-      snooze_usb.printf("Info:    AVRCP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_avrcp);
-    working_state.bt_state = BTSTATE_CONNECTED;
-  }
-  return ret;
-}
-/*****************************************************************************/
-
+// ---------------
+// OUTPUT COMMANDS
+// ---------------
 /*****************************************************************************/
 static String cmdDevConnect(void) {
   if (searchDevlist(BT_peer_name)) {
@@ -783,7 +752,6 @@ static String cmdDevConnect(void) {
   }
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String cmdInquiry(void) {
   String cmd, devString;
@@ -802,7 +770,6 @@ static String cmdInquiry(void) {
   return ("INQUIRY 10\r");
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String cmdMonPause(void) {
   working_state.mon_state = MONSTATE_REQ_OFF;
@@ -812,7 +779,6 @@ static String cmdMonPause(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String cmdMonStart(void) {
   // working_state.mon_state = MONSTATE_REQ_ON;
@@ -822,7 +788,6 @@ static String cmdMonStart(void) {
   // else return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String cmdMonStop(void) {
   // working_state.mon_state = MONSTATE_REQ_OFF;
@@ -834,6 +799,9 @@ static String cmdMonStop(void) {
 }
 /*****************************************************************************/
 
+// --------------------
+// OUTPUT NOTIFICATIONS
+// --------------------
 /*****************************************************************************/
 static String notBtState(void) {
   String ret;
@@ -851,7 +819,6 @@ static String notBtState(void) {
   return ret;
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notFilepath(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -860,7 +827,6 @@ static String notFilepath(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notInqDone(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -869,7 +835,6 @@ static String notInqDone(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notInqStart(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -878,7 +843,6 @@ static String notInqStart(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notLatlong(void) {
   String ret;
@@ -893,7 +857,6 @@ static String notLatlong(void) {
   return ret;
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notMonState(void) {
   String ret;
@@ -908,7 +871,6 @@ static String notMonState(void) {
   return ret;
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notRecNb(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -918,7 +880,6 @@ static String notRecNb(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notRecNext(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -928,7 +889,6 @@ static String notRecNext(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notRecRem(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -938,7 +898,6 @@ static String notRecRem(void) {
   }
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notRecState(void) {
   String ret;
@@ -957,7 +916,6 @@ static String notRecState(void) {
   return ret;
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notRecTs(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -967,7 +925,6 @@ static String notRecTs(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notRwinOk(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -976,7 +933,6 @@ static String notRwinOk(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notRwinVals(void) {
   unsigned int l, p, o;
@@ -986,7 +942,7 @@ static String notRwinVals(void) {
         (rec_window.duration.Hour * SECS_PER_HOUR);
     if (debug)
       snooze_usb.printf(
-          "Info:    Sending RWIN values. Duration in s = %ld --> %dh%dm%ds\n",
+          "Info:    Sending RWIN values. Duration in s = %ld --> %dh%02dm%02ds\n",
           l, rec_window.duration.Hour, rec_window.duration.Minute,
           rec_window.duration.Second);
     p = rec_window.period.Second + (rec_window.period.Minute * SECS_PER_MIN) +
@@ -998,7 +954,6 @@ static String notRwinVals(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String notVolLevel(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -1008,6 +963,30 @@ static String notVolLevel(void) {
 }
 /*****************************************************************************/
 
+// ---------------
+// OUTPUT REQUESTS
+// ---------------
+/*****************************************************************************/
+static String reqTime(void) {
+  if ((working_state.ble_state == BLESTATE_CONNECTED) ||
+      (working_state.ble_state == BLESTATE_REQ_CONN)) {
+    return ("SEND " + String(BLE_conn_id) + " TIME ?\r");
+  } else
+    return "";
+}
+/*****************************************************************************/
+/*****************************************************************************/
+static String reqLatLong(void) {
+  if (working_state.ble_state == BLESTATE_CONNECTED) {
+    return ("SEND " + String(BLE_conn_id) + "LATLONG ?\r");
+  } else
+    return "";
+}
+/*****************************************************************************/
+
+// ---------------------
+// OUTPUT ERROR MESSAGES
+// ---------------------
 /*****************************************************************************/
 static String errRwinBadReq(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -1016,7 +995,6 @@ static String errRwinBadReq(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String errRwinWrongParams(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -1025,7 +1003,6 @@ static String errRwinWrongParams(void) {
     return "";
 }
 /*****************************************************************************/
-
 /*****************************************************************************/
 static String errVolBtDis(void) {
   if (working_state.ble_state == BLESTATE_CONNECTED) {
@@ -1437,6 +1414,17 @@ bool sendCmdOut(int msg) {
   // VOL level
   case BCNOT_VOL_LEVEL:
     cmdLine = notVolLevel();
+    break;
+  /* --------
+   * REQUESTS
+   * -------- */
+  // Latitude/longitude
+  case BCREQ_LATLONG:
+    cmdLine = reqLatLong();
+    break;
+  // Current time
+  case BCREQ_TIME:
+    cmdLine = reqTime();
     break;
   /* ------
    * ERRORS

@@ -63,6 +63,9 @@ enum serialMsg {
   BCNOT_RWIN_VALS,
   BCNOT_VOL_LEVEL,
   // ----------
+  BCREQ_LATLONG,
+  BCREQ_TIME,
+  // ----------
   BCERR_RWIN_BAD_REQ,
   BCERR_RWIN_WRONG_PARAMS,
   BCERR_VOL_BT_DIS,
