@@ -45,6 +45,7 @@ enum serialMsg {
   BCCMD_STATUS,
   BCCMD_VOL_A2DP,
   BCCMD_VOL_DOWN,
+  BCCMD_VOL_REQ,
   BCCMD_VOL_UP,
   // ----------
   BCNOT_BT_STATE,
