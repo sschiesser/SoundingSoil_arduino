@@ -25,6 +25,7 @@ AlarmID_t alarm_wait_id;
 AlarmID_t alarm_adv_id;
 AlarmID_t alarm_rem_id;
 AlarmID_t alarm_request_id;
+AlarmID_t alarm_req_vol_id;
 
 // Wakeup pins on Teensy 3.6:
 // 2,4,6,7,9,10,11,13,16,21,22,26,30,33
@@ -232,6 +233,15 @@ void timerRemDone(void) {
 
   if(working_state.ble_state == BLESTATE_CONNECTED) {
     sendCmdOut(BCNOT_REC_REM);
+  }
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
+void timerReqVolDone(void) {
+  if((working_state.ble_state == BLESTATE_CONNECTED) && (working_state.bt_state == BTSTATE_PLAY)) {
+    snooze_usb.printf("Requesting volume information\n");
+    sendCmdOut(BCCMD_VOL_REQ);
   }
 }
 /*****************************************************************************/

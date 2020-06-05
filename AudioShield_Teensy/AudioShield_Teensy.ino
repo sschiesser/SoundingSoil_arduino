@@ -439,12 +439,15 @@ WORK : {
     working_state.mon_state = MONSTATE_ON;
     sleep_flags.mon_ready = false;
 
-    if ((working_state.bt_state == BTSTATE_CONNECTED) ||
-        (working_state.bt_state == BTSTATE_PLAY)) {
-      sendCmdOut(BCCMD_MON_START);
-      sendCmdOut(BCCMD_VOL_A2DP);
+    if (working_state.bt_state == BTSTATE_CONNECTED) {
+      if (working_state.bt_state == BTSTATE_PLAY) {
+        sendCmdOut(BCCMD_MON_START);
+        sendCmdOut(BCCMD_VOL_A2DP);
+      }
+      alarm_req_vol_id = Alarm.timerRepeat(5, timerReqVolDone);
       working_state.bt_state = BTSTATE_PLAY;
     }
+
     if (working_state.ble_state == BLESTATE_CONNECTED) {
       sendCmdOut(BCNOT_MON_STATE);
     }
@@ -479,6 +482,8 @@ WORK : {
     if(working_state.rec_state != RECSTATE_ON) {
       toggleBatMan(BM_ENABLED);
     }
+
+    Alarm.free(alarm_req_vol_id);
 
     if ((working_state.bt_state == BTSTATE_CONNECTED) ||
         (working_state.bt_state == BTSTATE_PLAY)) {

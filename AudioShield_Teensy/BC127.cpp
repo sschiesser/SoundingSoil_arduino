@@ -550,9 +550,8 @@ static enum serialMsg msgOpenOk(String p1, String p2, String p3) {
     return BCCMD__NOTHING;
   } else if (p2.equalsIgnoreCase("BLE")) {
     BLE_conn_id = p1.toInt();
-    // if(debug) snooze_usb.printf("Info:    BLE connection opened. Conn ID:
-    // %d\n", BLE_conn_id);
     working_state.ble_state = BLESTATE_REQ_CONN;
+    // Request time update from phone
     alarm_request_id = Alarm.timerOnce(REQUEST_INTERVAL_SEC, alarmRequestDone);
     return BCCMD__NOTHING;
   } else {
@@ -686,9 +685,9 @@ static enum serialMsg msgRecv3(String p1, String p2, String p3, String p4,
   // - "latlong {lat long}"
   if (p1.toInt() == BLE_conn_id) {
     if (p3.equalsIgnoreCase("latlong")) {
-      if(debug)
+      if (debug)
         snooze_usb.printf("Received latlong info: %f, %f\n", atof(p4.c_str()),
-                        atof(p5.c_str()));
+                          atof(p5.c_str()));
 
       if ((p4.c_str() == NULL) || (p5.c_str() == NULL)) {
         next_record.gps_source = GPS_NONE;
@@ -944,10 +943,10 @@ static String notRwinVals(void) {
         (rec_window.duration.Minute * SECS_PER_MIN) +
         (rec_window.duration.Hour * SECS_PER_HOUR);
     if (debug)
-      snooze_usb.printf(
-          "Info:    Sending RWIN values. Duration in s = %ld --> %dh%02dm%02ds\n",
-          l, rec_window.duration.Hour, rec_window.duration.Minute,
-          rec_window.duration.Second);
+      snooze_usb.printf("Info:    Sending RWIN values. Duration in s = %ld --> "
+                        "%dh%02dm%02ds\n",
+                        l, rec_window.duration.Hour, rec_window.duration.Minute,
+                        rec_window.duration.Second);
     p = rec_window.period.Second + (rec_window.period.Minute * SECS_PER_MIN) +
         (rec_window.period.Hour * SECS_PER_HOUR);
     o = rec_window.occurences;
@@ -1338,6 +1337,9 @@ bool sendCmdOut(int msg) {
   // Volume up -> AVRCP volume up
   case BCCMD_VOL_UP:
     cmdLine = "VOLUME " + String(BT_id_a2dp) + " UP\r";
+    break;
+  case BCCMD_VOL_REQ:
+    cmdLine = "VOLUME " + String(BT_id_a2dp) + "\r";
     break;
   // Volume down -> AVRCP volume down
   case BCCMD_VOL_DOWN:
