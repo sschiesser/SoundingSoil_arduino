@@ -15,6 +15,7 @@
 #define MIN_TIME_DEC 1549014885 // 01.02.2019, 09h54m00
 #define REC_REM_INTERVAL_SEC 10
 #define REQUEST_INTERVAL_SEC 5
+#define REQ_VOL_INTERVAL_SEC 5
 
 /*** Types *******************************************************************/
 // Time sources

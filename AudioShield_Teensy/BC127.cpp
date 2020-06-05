@@ -232,6 +232,20 @@ static enum serialMsg msgAbsVol(String p1, String p2) {
 }
 /*****************************************************************************/
 /*****************************************************************************/
+static enum serialMsg msgA2dpInfo(String p1, String p2) {
+  int vol = strtol(p2.c_str(), NULL, 16);
+  if (p1.equalsIgnoreCase("A2DP")) {
+    vol_value = (float)vol / VOL_MAX_VAL_HEX;
+    if (debug)
+      snooze_usb.printf("A2DP device volume: %d (%f)\n", vol, vol_value);
+
+    return BCNOT_VOL_LEVEL;
+  } else {
+    return BCCMD__NOTHING;
+  }
+}
+/*****************************************************************************/
+/*****************************************************************************/
 static enum serialMsg msgAvrcpPlay(void) {
   working_state.mon_state = MONSTATE_REQ_ON;
   return BCCMD__NOTHING;
@@ -340,9 +354,17 @@ static enum serialMsg msgLink1(String p1, String p2, String p3, String p4,
     BT_id_a2dp = p1.toInt();
     BT_peer_address = p4;
     if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
+      snooze_usb.printf("Info:    A2DP address: %s, ID: %d, state: %s\n",
+                        BT_peer_address.c_str(), BT_id_a2dp, p5.c_str());
+    if (p5.equalsIgnoreCase("STREAMING")) {
+      snooze_usb.printf("Streaming state\n");
+      Alarm.free(alarm_req_vol_id);
+      alarm_req_vol_id =
+          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      working_state.bt_state = BTSTATE_PLAY;
+    } else {
+      working_state.bt_state = BTSTATE_CONNECTED;
+    }
     return BCCMD_BT_NAME;
   } else if (p3.equalsIgnoreCase("AVRCP")) {
     BT_id_avrcp = p1.toInt();
@@ -363,9 +385,17 @@ static enum serialMsg msgLink2(String p1, String p2, String p3, String p4,
     BT_id_a2dp = p1.toInt();
     BT_peer_address = p4;
     if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
+      snooze_usb.printf("Info:    A2DP address: %s, ID: %d, state: %s\n",
+                        BT_peer_address.c_str(), BT_id_a2dp, p5.c_str());
+    if (p5.equalsIgnoreCase("STREAMING")) {
+      snooze_usb.printf("Streaming state\n");
+      Alarm.free(alarm_req_vol_id);
+      alarm_req_vol_id =
+          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      working_state.bt_state = BTSTATE_PLAY;
+    } else {
+      working_state.bt_state = BTSTATE_CONNECTED;
+    }
     return BCCMD_BT_NAME;
   } else if (p3.equalsIgnoreCase("AVRCP")) {
     BT_id_avrcp = p1.toInt();
@@ -386,9 +416,17 @@ static enum serialMsg msgLink3(String p1, String p2, String p3, String p4,
     BT_id_a2dp = p1.toInt();
     BT_peer_address = p4;
     if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
+      snooze_usb.printf("Info:    A2DP address: %s, ID: %d, state: %s\n",
+                        BT_peer_address.c_str(), BT_id_a2dp, p5.c_str());
+    if (p5.equalsIgnoreCase("STREAMING")) {
+      snooze_usb.printf("Streaming state\n");
+      Alarm.free(alarm_req_vol_id);
+      alarm_req_vol_id =
+          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      working_state.bt_state = BTSTATE_PLAY;
+    } else {
+      working_state.bt_state = BTSTATE_CONNECTED;
+    }
     return BCCMD_BT_NAME;
   } else if (p3.equalsIgnoreCase("AVRCP")) {
     BT_id_avrcp = p1.toInt();
@@ -409,9 +447,17 @@ static enum serialMsg msgLink4(String p1, String p2, String p3, String p4,
     BT_id_a2dp = p1.toInt();
     BT_peer_address = p4;
     if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
+      snooze_usb.printf("Info:    A2DP address: %s, ID: %d, state: %s\n",
+                        BT_peer_address.c_str(), BT_id_a2dp, p5.c_str());
+    if (p5.equalsIgnoreCase("STREAMING")) {
+      snooze_usb.printf("Streaming state\n");
+      Alarm.free(alarm_req_vol_id);
+      alarm_req_vol_id =
+          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      working_state.bt_state = BTSTATE_PLAY;
+    } else {
+      working_state.bt_state = BTSTATE_CONNECTED;
+    }
     return BCCMD_BT_NAME;
   } else if (p3.equalsIgnoreCase("AVRCP")) {
     BT_id_avrcp = p1.toInt();
@@ -433,9 +479,17 @@ static enum serialMsg msgLink5(String p1, String p2, String p3, String p4,
     BT_id_a2dp = p1.toInt();
     BT_peer_address = p4;
     if (debug)
-      snooze_usb.printf("Info:    A2DP address: %s, ID: %d\n",
-                        BT_peer_address.c_str(), BT_id_a2dp);
-    working_state.bt_state = BTSTATE_CONNECTED;
+      snooze_usb.printf("Info:    A2DP address: %s, ID: %d, state: %s\n",
+                        BT_peer_address.c_str(), BT_id_a2dp, p5.c_str());
+    if (p5.equalsIgnoreCase("STREAMING")) {
+      snooze_usb.printf("Streaming state\n");
+      Alarm.free(alarm_req_vol_id);
+      alarm_req_vol_id =
+          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      working_state.bt_state = BTSTATE_PLAY;
+    } else {
+      working_state.bt_state = BTSTATE_CONNECTED;
+    }
     return BCCMD_BT_NAME;
   } else if (p3.equalsIgnoreCase("AVRCP")) {
     BT_id_avrcp = p1.toInt();
@@ -809,7 +863,8 @@ static String notBtState(void) {
   String ret;
   if (working_state.ble_state == BLESTATE_CONNECTED) {
     ret = "SEND " + String(BLE_conn_id);
-    if (working_state.bt_state == BTSTATE_CONNECTED) {
+    if ((working_state.bt_state == BTSTATE_CONNECTED) ||
+        (working_state.bt_state == BTSTATE_PLAY)) {
       ret += " BT " + BT_peer_name + "\r";
     } else if (working_state.bt_state == BTSTATE_INQUIRY) {
       ret += " BT INQ\r";
@@ -1141,6 +1196,8 @@ enum serialMsg parseSerialIn(String input) {
       return msgLinkLoss(param1, param2);
     else if (notif.equalsIgnoreCase("NAME"))
       return msgName1(param1, param2);
+    else if (notif.equalsIgnoreCase(String(BT_id_a2dp)))
+      return msgA2dpInfo(param1, param2);
     break;
   }
 

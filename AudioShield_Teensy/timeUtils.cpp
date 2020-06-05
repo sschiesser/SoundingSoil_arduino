@@ -228,10 +228,12 @@ void timerRecDone(void) {
 
 /*****************************************************************************/
 void timerRemDone(void) {
-  int dur_sec = (next_record.dur.Hour * SECS_PER_HOUR) + (next_record.dur.Minute * SECS_PER_MIN) + next_record.dur.Second;
+  int dur_sec = (next_record.dur.Hour * SECS_PER_HOUR) +
+                (next_record.dur.Minute * SECS_PER_MIN) +
+                next_record.dur.Second;
   rec_rem = dur_sec - (now() - next_record.tss);
 
-  if(working_state.ble_state == BLESTATE_CONNECTED) {
+  if (working_state.ble_state == BLESTATE_CONNECTED) {
     sendCmdOut(BCNOT_REC_REM);
   }
 }
@@ -239,8 +241,8 @@ void timerRemDone(void) {
 
 /*****************************************************************************/
 void timerReqVolDone(void) {
-  if((working_state.ble_state == BLESTATE_CONNECTED) && (working_state.bt_state == BTSTATE_PLAY)) {
-    snooze_usb.printf("Requesting volume information\n");
+  if ((working_state.ble_state == BLESTATE_CONNECTED) &&
+      (working_state.bt_state == BTSTATE_PLAY)) {
     sendCmdOut(BCCMD_VOL_REQ);
   }
 }
