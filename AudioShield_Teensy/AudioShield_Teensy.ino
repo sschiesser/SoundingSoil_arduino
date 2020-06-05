@@ -725,7 +725,8 @@ WORK : {
     BT_id_a2dp = 0;
     BT_id_avrcp = 0;
     BT_peer_address = "";
-    BT_peer_name = "auto";
+    BT_peer_name = "";
+    vol_value = 0.52;
 
     sleep_flags.rec_ready =
         (working_state.rec_state == RECSTATE_OFF ? true : false);

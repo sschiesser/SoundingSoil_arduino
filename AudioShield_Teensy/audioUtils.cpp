@@ -35,7 +35,7 @@ AudioControlSGTL5000 sgtl5000; // xy=251,186
 
 String rec_path = "--";
 int vol_ctrl;
-float vol_value;
+float vol_value = 0.52;
 elapsedMillis peak_interval;
 elapsedMillis hpgain_interval;
 
@@ -103,7 +103,7 @@ void prepareRecording(bool sync) {
     alarm_rec_id = Alarm.timerOnce(dur, timerRecDone);
     rec_rem = dur;
     sendCmdOut(BCNOT_REC_REM);
-    alarm_rem_id = Alarm.timerRepeat(REC_REM_INTERVAL_SEC, timerRemDone);
+    alarm_rem_id = Alarm.timerRepeat(REQ_RECREM_INTERVAL_SEC, timerRemDone);
   }
 }
 /*****************************************************************************/

@@ -233,16 +233,19 @@ static enum serialMsg msgAbsVol(String p1, String p2) {
 /*****************************************************************************/
 /*****************************************************************************/
 static enum serialMsg msgA2dpInfo(String p1, String p2) {
-  int vol = strtol(p2.c_str(), NULL, 16);
-  if (p1.equalsIgnoreCase("A2DP")) {
-    vol_value = (float)vol / VOL_MAX_VAL_HEX;
-    if (debug)
-      snooze_usb.printf("A2DP device volume: %d (%f)\n", vol, vol_value);
+  static float old_vol = 0;
+  enum serialMsg toRet = BCCMD__NOTHING;
 
-    return BCNOT_VOL_LEVEL;
-  } else {
-    return BCCMD__NOTHING;
+  if (p1.equalsIgnoreCase("A2DP")) {
+    float new_vol = (float)strtol(p2.c_str(), NULL, 16) / VOL_MAX_VAL_HEX;
+    if (new_vol != old_vol) {
+      vol_value = new_vol;
+      old_vol = new_vol;
+      toRet = BCNOT_VOL_LEVEL;
+    }
   }
+
+  return toRet;
 }
 /*****************************************************************************/
 /*****************************************************************************/
@@ -606,7 +609,7 @@ static enum serialMsg msgOpenOk(String p1, String p2, String p3) {
     BLE_conn_id = p1.toInt();
     working_state.ble_state = BLESTATE_REQ_CONN;
     // Request time update from phone
-    alarm_request_id = Alarm.timerOnce(REQUEST_INTERVAL_SEC, alarmRequestDone);
+    alarm_request_id = Alarm.timerOnce(REQ_TIME_INTERVAL_SEC, alarmRequestDone);
     return BCCMD__NOTHING;
   } else {
     return BCCMD__NOTHING;
@@ -1389,7 +1392,7 @@ bool sendCmdOut(int msg) {
     break;
   // Volume level
   case BCCMD_VOL_A2DP:
-    cmdLine = "VOLUME " + String(BT_id_a2dp) + " 7\r";
+    cmdLine = "VOLUME " + String(BT_id_a2dp) + " " + String((int)((vol_value * VOL_MAX_VAL_HEX) + 0.5), HEX) + "\r";
     break;
   // Volume up -> AVRCP volume up
   case BCCMD_VOL_UP:
