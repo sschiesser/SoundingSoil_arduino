@@ -66,7 +66,8 @@ enum lMode {
   LED_MODE_WARNING_LONG,  // 4
   LED_MODE_ERROR,         // 5
   LED_MODE_IDLE_FAST,     // 6
-  LED_MODE_IDLE_SLOW      // 7
+  LED_MODE_IDLE_SLOW,     // 7
+  LED_MODE_ADV            // 8
 };
 
 // LED state & status struct

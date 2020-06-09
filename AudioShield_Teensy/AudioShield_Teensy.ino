@@ -533,11 +533,11 @@ WORK : {
     // BT state check
     if ((working_state.bt_state == BTSTATE_CONNECTED) ||
         (working_state.bt_state == BTSTATE_PLAY)) {
-      startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
+      startLED(&leds[LED_BLUETOOTH], LED_MODE_ADV); //LED_MODE_IDLE_FAST);
     } else {
       bc127BlueOn();
       Alarm.delay(200);
-      startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
+      startLED(&leds[LED_BLUETOOTH], LED_MODE_ADV); // LED_MODE_WAITING);
       alarm_adv_id = Alarm.timerOnce(BLEADV_TIMEOUT_S, alarmAdvTimeout);
     }
 
@@ -632,7 +632,7 @@ WORK : {
       } else {
         sleep_flags.mon_ready = true;
       }
-      
+
       bc127BleDisconnect();
       bc127BlueOff();
       stopLED(&leds[LED_BLUETOOTH]);
