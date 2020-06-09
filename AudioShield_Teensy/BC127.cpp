@@ -265,6 +265,9 @@ static enum serialMsg msgCloseOk(String p1, String p2, String p3) {
   if (p1.toInt() == BT_id_a2dp) {
     if (working_state.bt_state != BTSTATE_OFF)
       working_state.bt_state = BTSTATE_REQ_DISC;
+  } else if (p1.toInt() == BT_id_avrcp) {
+    if (working_state.bt_state != BTSTATE_OFF)
+      working_state.bt_state = BTSTATE_REQ_DISC;
   } else if (p1.toInt() == BLE_conn_id) {
     if (working_state.ble_state != BLESTATE_OFF)
       working_state.ble_state = BLESTATE_REQ_DISC;
@@ -1110,7 +1113,7 @@ void bc127BlueOn(void) { sendCmdOut(BCCMD_BLUE_ON); }
 /*****************************************************************************/
 
 /*****************************************************************************/
-/* bc1267BlueOff(void)
+/* bc127BlueOff(void)
  * -------------------
  * Switch off the Bluetooth interface
  * IN:	- none
@@ -1151,7 +1154,19 @@ void bc127AdvStart(void) { sendCmdOut(BCCMD_ADV_ON); }
  * IN:	- none
  * OUT:	- none
  */
-void bc127AdvStop(void) { sendCmdOut(BCCMD_ADV_OFF); }
+void bc127AdvStop(void) {
+  Alarm.disable(alarm_adv_id);
+  Alarm.free(alarm_adv_id);
+  sendCmdOut(BCCMD_ADV_OFF);
+  Alarm.delay(100);
+}
+/*****************************************************************************/
+
+/*****************************************************************************/
+void bc127BleDisconnect(void) {
+  sendCmdOut(BCCMD_BLE_DISCONNECT);
+  Alarm.delay(200);
+}
 /*****************************************************************************/
 
 /*****************************************************************************/
@@ -1330,6 +1345,10 @@ bool sendCmdOut(int msg) {
   case BCCMD_ADV_OFF:
     cmdLine = "ADVERTISING OFF\r";
     break;
+  // Send BLE disconnect command
+  case BCCMD_BLE_DISCONNECT:
+    cmdLine = "CLOSE " + String(BLE_conn_id) + "\r";
+    break;
   // Switch off device (serial)
   case BCCMD_BLUE_OFF:
     cmdLine = "POWER OFF\r";
@@ -1392,7 +1411,8 @@ bool sendCmdOut(int msg) {
     break;
   // Volume level
   case BCCMD_VOL_A2DP:
-    cmdLine = "VOLUME " + String(BT_id_a2dp) + " " + String((int)((vol_value * VOL_MAX_VAL_HEX) + 0.5), HEX) + "\r";
+    cmdLine = "VOLUME " + String(BT_id_a2dp) + " " +
+              String((int)((vol_value * VOL_MAX_VAL_HEX) + 0.5), HEX) + "\r";
     break;
   // Volume up -> AVRCP volume up
   case BCCMD_VOL_UP:

@@ -29,6 +29,7 @@ enum serialMsg {
   BCCMD__NOTHING = 0,
   BCCMD_ADV_ON,
   BCCMD_ADV_OFF,
+  BCCMD_BLE_DISCONNECT,
   BCCMD_BLUE_OFF,
   BCCMD_BLUE_ON,
   BCCMD_BT_NAME,
@@ -91,6 +92,7 @@ void bc127BlueOn(void);
 void bc127BlueOff(void);
 void bc127AdvStart(void);
 void bc127AdvStop(void);
+void bc127BleDisconnect(void);
 void bc127Inquiry(void);
 enum serialMsg parseSerialIn(String input);
 bool sendCmdOut(int msg);

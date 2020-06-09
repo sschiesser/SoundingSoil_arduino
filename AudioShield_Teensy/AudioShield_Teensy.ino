@@ -223,7 +223,8 @@ WORK : {
       working_state.ble_state = BLESTATE_REQ_ADV;
     } else {
       if (working_state.ble_state == BLESTATE_ADV) {
-        Alarm.disable(alarm_adv_id);
+        bc127AdvStop();
+        //   Alarm.disable(alarm_adv_id);
       }
       working_state.ble_state = BLESTATE_REQ_OFF;
     }
@@ -253,8 +254,8 @@ WORK : {
           "Info:    Requesting REC ON. States: BT %d, BLE %d, REC %d, MON %d\n",
           working_state.bt_state, working_state.ble_state,
           working_state.rec_state, working_state.mon_state);
-      snooze_usb.printf("Info:    Current GPS source -> %d\n",
-                            next_record.gps_source);
+    snooze_usb.printf("Info:    Current GPS source -> %d\n",
+                      next_record.gps_source);
 
     // Doing things
     toggleBatMan(BM_DISABLED);
@@ -300,7 +301,7 @@ WORK : {
     // Doing things
     stopRecording(next_record.rpath);
     pauseRecording();
-    if(working_state.mon_state != MONSTATE_ON) {
+    if (working_state.mon_state != MONSTATE_ON) {
       toggleBatMan(BM_ENABLED);
     }
 
@@ -345,8 +346,8 @@ WORK : {
                         "%d, REC %d, MON %d\n",
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
-      snooze_usb.printf("Info:    Current GPS source -> %d\n",
-                                          next_record.gps_source);
+    snooze_usb.printf("Info:    Current GPS source -> %d\n",
+                      next_record.gps_source);
 
     // Doing things
     toggleBatMan(BM_DISABLED);
@@ -393,7 +394,7 @@ WORK : {
                         next_record.dur.Second);
     stopRecording(next_record.rpath);
     finishRecording();
-    if(working_state.mon_state != MONSTATE_ON) {
+    if (working_state.mon_state != MONSTATE_ON) {
       toggleBatMan(BM_ENABLED);
     }
     stopLED(&leds[LED_PEAK]);
@@ -442,7 +443,8 @@ WORK : {
     if (working_state.bt_state == BTSTATE_CONNECTED) {
       sendCmdOut(BCCMD_MON_START);
       sendCmdOut(BCCMD_VOL_A2DP);
-      alarm_req_vol_id = Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      alarm_req_vol_id =
+          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
       working_state.bt_state = BTSTATE_PLAY;
     }
 
@@ -477,7 +479,7 @@ WORK : {
     stopLED(&leds[LED_MONITOR]);
     stopLED(&leds[LED_PEAK]);
 
-    if(working_state.rec_state != RECSTATE_ON) {
+    if (working_state.rec_state != RECSTATE_ON) {
       toggleBatMan(BM_ENABLED);
     }
 
@@ -495,8 +497,7 @@ WORK : {
       if ((working_state.rec_state == RECSTATE_OFF) ||
           (working_state.rec_state == RECSTATE_IDLE)) {
         sleep_flags.mon_ready = true;
-      }
-      else {
+      } else {
         sleep_flags.mon_ready = false;
       }
     }
@@ -532,11 +533,11 @@ WORK : {
     // BT state check
     if ((working_state.bt_state == BTSTATE_CONNECTED) ||
         (working_state.bt_state == BTSTATE_PLAY)) {
-      startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
+      startLED(&leds[LED_BLUETOOTH], LED_MODE_ADV); //LED_MODE_IDLE_FAST);
     } else {
       bc127BlueOn();
       Alarm.delay(200);
-      startLED(&leds[LED_BLUETOOTH], LED_MODE_WAITING);
+      startLED(&leds[LED_BLUETOOTH], LED_MODE_ADV); // LED_MODE_WAITING);
       alarm_adv_id = Alarm.timerOnce(BLEADV_TIMEOUT_S, alarmAdvTimeout);
     }
 
@@ -615,38 +616,33 @@ WORK : {
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
 
-    if (working_state.ble_state == BLESTATE_ADV) {
-      Alarm.disable(alarm_adv_id);
-      // Alarm.free(alarm_adv_id);
-      bc127AdvStop();
-      Alarm.delay(100);
-    }
-    if (working_state.bt_state != BTSTATE_OFF) {
-      startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
-    } else {
-      bc127BlueOff();
-      stopLED(&leds[LED_BLUETOOTH]);
-    }
-    working_state.ble_state = BLESTATE_OFF;
-    sleep_flags.ble_ready = true;
-
     if (working_state.bt_state == BTSTATE_OFF) {
       if (working_state.rec_state == RECSTATE_WAIT) {
         removeWaitAlarm();
         setIdleSnooze();
         working_state.rec_state = RECSTATE_IDLE;
         sleep_flags.rec_ready = true;
-      } else if (working_state.rec_state == RECSTATE_ON) {
+      } else {
         sleep_flags.rec_ready = false;
-      } else if (working_state.mon_state != MONSTATE_OFF) {
+      }
+
+      if (working_state.mon_state != MONSTATE_OFF) {
         working_state.mon_state = MONSTATE_REQ_OFF;
         sleep_flags.mon_ready = false;
       } else {
         sleep_flags.mon_ready = true;
       }
+
+      bc127BleDisconnect();
+      bc127BlueOff();
+      stopLED(&leds[LED_BLUETOOTH]);
     } else {
+      bc127BleDisconnect();
+      startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
       sleep_flags.bt_ready = false;
     }
+    working_state.ble_state = BLESTATE_OFF;
+    sleep_flags.ble_ready = true;
     break;
   }
   default: {

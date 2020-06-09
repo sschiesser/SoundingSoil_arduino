@@ -86,12 +86,14 @@ void initLEDButtons(void) {
  * IN:	- enable command (bool)
  * OUT:	- none
  */
- void toggleBatMan(bool enable) {
-   snooze_usb.printf("I/O:     Toggling BatMan: %s\n", (enable ? "EN" : "DIS"));
-   if(enable) digitalWrite(BM_ENABLE_PIN, BM_PIN_EN);
-   else digitalWrite(BM_ENABLE_PIN, BM_PIN_DIS);
-   Alarm.delay(10);
- }
+void toggleBatMan(bool enable) {
+  snooze_usb.printf("I/O:     Toggling BatMan: %s\n", (enable ? "EN" : "DIS"));
+  if (enable)
+    digitalWrite(BM_ENABLE_PIN, BM_PIN_EN);
+  else
+    digitalWrite(BM_ENABLE_PIN, BM_PIN_DIS);
+  Alarm.delay(10);
+}
 /*****************************************************************************/
 
 /*****************************************************************************/
@@ -170,6 +172,15 @@ void toggleCb(struct leds_s *ld) {
     ld->status = !ld->status;
     break;
 
+  case LED_MODE_ADV:
+    if (ld->status == LED_ON) {
+      ld->timer.update(LED_BLINK_FAST_MS);
+    } else {
+      ld->timer.update(LED_BLINK_FAST_MS);
+    }
+    ld->status = !ld->status;
+    break;
+
   default:
     break;
   }
@@ -237,6 +248,10 @@ void startLED(struct leds_s *ld, enum lMode mode) {
     break;
 
   case LED_MODE_IDLE_SLOW:
+    ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
+    break;
+
+  case LED_MODE_ADV:
     ld->timer.begin(ld->toggle, LED_BLINK_FAST_MS);
     break;
 
