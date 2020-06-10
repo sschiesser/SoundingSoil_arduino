@@ -31,7 +31,7 @@
 /*****************************************************************************/
 /*** Constants ***************************************************************/
 // Debugging values
-#define ALWAYS_ON_MODE 0
+#define ALWAYS_ON_MODE 1
 const bool debug = true;
 
 /*** Types *******************************************************************/
@@ -80,7 +80,7 @@ void setup() {
     //   ;
     Alarm.delay(500);
   }
-  BLUEPORT.begin(9600);
+  BLUEPORT.begin(115200);
   GPSPORT.begin(9600);
 
   // Init GUI (buttons/LEDs)
@@ -107,7 +107,7 @@ void setup() {
 
   // Debug...
   if (debug)
-    snooze_usb.printf("Info:    SoundingSoil firmware version 1.0 build "
+    snooze_usb.printf("Info:    SoundingSoil firmware version 1.1 build "
                       "%02d%02d%02d%02d%02d\n",
                       (tm.Year - 30), tm.Month, tm.Day, tm.Hour, tm.Minute);
 }
@@ -424,7 +424,7 @@ WORK : {
     sleep_flags.mon_ready = true;
     break;
   }
-    // 1
+  // 1
   case MONSTATE_REQ_ON: {
     // Debug...
     if (debug)
@@ -533,7 +533,7 @@ WORK : {
     // BT state check
     if ((working_state.bt_state == BTSTATE_CONNECTED) ||
         (working_state.bt_state == BTSTATE_PLAY)) {
-      startLED(&leds[LED_BLUETOOTH], LED_MODE_ADV); //LED_MODE_IDLE_FAST);
+      startLED(&leds[LED_BLUETOOTH], LED_MODE_ADV); // LED_MODE_IDLE_FAST);
     } else {
       bc127BlueOn();
       Alarm.delay(200);
@@ -672,13 +672,15 @@ WORK : {
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
 
-    // Alarm.free(alarm_adv_id);
     working_state.bt_state = BTSTATE_CONNECTED;
     sleep_flags.bt_ready = false;
 
     if (working_state.ble_state == BLESTATE_CONNECTED) {
       startLED(&leds[LED_BLUETOOTH], LED_MODE_ON);
       sendCmdOut(BCNOT_BT_STATE);
+      if (working_state.mon_state == MONSTATE_ON) {
+        sendCmdOut(BCNOT_VOL_LEVEL);
+      }
     } else {
       startLED(&leds[LED_BLUETOOTH], LED_MODE_IDLE_FAST);
     }

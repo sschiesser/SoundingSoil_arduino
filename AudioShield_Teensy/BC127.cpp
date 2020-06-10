@@ -607,7 +607,12 @@ static enum serialMsg msgOpenOk(String p1, String p2, String p3) {
       snooze_usb.printf("Info:    AVRCP connection opened. Conn ID: %d, peer "
                         "address (check) = %s\n",
                         BT_id_avrcp, BT_peer_address.c_str());
-    return BCCMD__NOTHING;
+
+    if (working_state.mon_state == MONSTATE_ON) {
+      return BCCMD_MON_START;
+    } else {
+      return BCCMD__NOTHING;
+    }
   } else if (p2.equalsIgnoreCase("BLE")) {
     BLE_conn_id = p1.toInt();
     working_state.ble_state = BLESTATE_REQ_CONN;
@@ -786,6 +791,10 @@ static enum serialMsg msgRecv4(String p1, String p2, String p3, String p4,
   return ret;
 }
 /*****************************************************************************/
+/*****************************************************************************/
+static enum serialMsg msgRoleOk(String p1, String p2) { return BCCMD__NOTHING; }
+/*****************************************************************************/
+
 /*****************************************************************************/
 static enum serialMsg msgState(String p1, String p2, String p3, String p4) {
   bool connState = p1.substring(p1.length() - 2, p1.length() - 1).toInt();
@@ -1214,6 +1223,8 @@ enum serialMsg parseSerialIn(String input) {
       return msgLinkLoss(param1, param2);
     else if (notif.equalsIgnoreCase("NAME"))
       return msgName1(param1, param2);
+    else if (notif.equalsIgnoreCase("ROLE_OK"))
+      return msgRoleOk(param1, param2);
     else if (notif.equalsIgnoreCase(String(BT_id_a2dp)))
       return msgA2dpInfo(param1, param2);
     break;

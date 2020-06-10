@@ -174,9 +174,9 @@ void toggleCb(struct leds_s *ld) {
 
   case LED_MODE_ADV:
     if (ld->status == LED_ON) {
-      ld->timer.update(LED_BLINK_FAST_MS);
+      ld->timer.update(LED_BLINK_MED_MS);
     } else {
-      ld->timer.update(LED_BLINK_FAST_MS);
+      ld->timer.update(LED_BLINK_MED_MS);
     }
     ld->status = !ld->status;
     break;
