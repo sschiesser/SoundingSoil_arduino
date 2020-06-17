@@ -32,7 +32,7 @@
 /*** Constants ***************************************************************/
 // Debugging values
 #define ALWAYS_ON_MODE 0
-const bool debug = true;
+const bool debug = false;
 
 /*** Types *******************************************************************/
 /*** Variables ***************************************************************/
@@ -269,9 +269,9 @@ WORK : {
     startRecording(next_record.rpath);
 
     // Checking other states
-    if (working_state.mon_state != MONSTATE_ON) {
-      startMonitoring();
-    }
+    // if (working_state.mon_state != MONSTATE_ON) {
+    //   startMonitoring();
+    // }
     if (working_state.ble_state == BLESTATE_CONNECTED) {
       sendCmdOut(BCNOT_REC_TS);
       sendCmdOut(BCNOT_LATLONG);
@@ -306,7 +306,7 @@ WORK : {
     stopRecording(next_record.rpath);
     pauseRecording();
     if (working_state.mon_state != MONSTATE_ON) {
-      stopMonitoring();
+      // stopMonitoring();
       toggleBatMan(BM_ENABLED);
     }
 
@@ -364,9 +364,9 @@ WORK : {
     startRecording(next_record.rpath);
 
     // Checking other states
-    if (working_state.mon_state != MONSTATE_ON) {
-      startMonitoring();
-    }
+    // if (working_state.mon_state != MONSTATE_ON) {
+    //   startMonitoring();
+    // }
     if (working_state.ble_state == BLESTATE_CONNECTED) {
       sendCmdOut(BCNOT_REC_TS);
       sendCmdOut(BCNOT_LATLONG);
@@ -403,7 +403,7 @@ WORK : {
     stopRecording(next_record.rpath);
     finishRecording();
     if (working_state.mon_state != MONSTATE_ON) {
-      stopMonitoring();
+      // stopMonitoring();
       toggleBatMan(BM_ENABLED);
     }
     stopLED(&leds[LED_PEAK]);
@@ -445,13 +445,13 @@ WORK : {
     // Doing things
     toggleBatMan(BM_DISABLED);
     startLED(&leds[LED_MONITOR], LED_MODE_ON);
-    // startMonitoring();
+    startMonitoring();
     working_state.mon_state = MONSTATE_ON;
     sleep_flags.mon_ready = false;
 
-    if (working_state.rec_state != RECSTATE_ON) {
-      startMonitoring();
-    }
+    // if (working_state.rec_state != RECSTATE_ON) {
+    //   startMonitoring();
+    // }
     if (working_state.bt_state == BTSTATE_CONNECTED) {
       sendCmdOut(BCCMD_MON_START);
       sendCmdOut(BCCMD_VOL_A2DP);
@@ -487,13 +487,13 @@ WORK : {
                         working_state.bt_state, working_state.ble_state,
                         working_state.rec_state, working_state.mon_state);
 
-    // stopMonitoring();
+    stopMonitoring();
     stopLED(&leds[LED_MONITOR]);
     stopLED(&leds[LED_PEAK]);
 
     if (working_state.rec_state != RECSTATE_ON) {
       toggleBatMan(BM_ENABLED);
-      stopMonitoring();
+      // stopMonitoring();
     }
 
     Alarm.free(alarm_req_vol_id);

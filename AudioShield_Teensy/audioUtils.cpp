@@ -375,11 +375,13 @@ void initAudio(void) {
   // Enable the audio shield, select input, enable output
   sgtl5000.enable();
   sgtl5000.inputSelect(audioInput);
-  sgtl5000.volume(SGTL5000_VOLUME_DEF);
+  // sgtl5000.volume(SGTL5000_VOLUME_DEF);
   sgtl5000.lineInLevel(SGTL5000_INLEVEL_DEF);
   sgtl5000.lineOutLevel(GSTL5000_OUTLEVEL_DEF);
   sgtl5000.adcHighPassFilterDisable();
-  monMixer.gain(MIXER_CH_REC, 0);
+  setHpGain();
+  // monMixer.gain(MIXER_CH_REC, 0);
+  monMixer.gain(MIXER_CH_REC, 1);
   monMixer.gain(MIXER_CH_SDC, 0);
 }
 /*****************************************************************************/
