@@ -80,7 +80,7 @@ void setup() {
     //   ;
     Alarm.delay(500);
   }
-  BLUEPORT.begin(9600);
+  BLUEPORT.begin(115200);
   GPSPORT.begin(9600);
 
   // Init GUI (buttons/LEDs)
