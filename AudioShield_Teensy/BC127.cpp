@@ -364,9 +364,9 @@ static enum serialMsg msgLink1(String p1, String p2, String p3, String p4,
                         BT_peer_address.c_str(), BT_id_a2dp, p5.c_str());
     if (p5.equalsIgnoreCase("STREAMING")) {
       snooze_usb.printf("Streaming state\n");
-      Alarm.free(alarm_req_vol_id);
-      alarm_req_vol_id =
-          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      // Alarm.free(alarm_req_vol_id);
+      // alarm_req_vol_id =
+      //     Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
       working_state.bt_state = BTSTATE_PLAY;
     } else {
       working_state.bt_state = BTSTATE_CONNECTED;
@@ -395,9 +395,9 @@ static enum serialMsg msgLink2(String p1, String p2, String p3, String p4,
                         BT_peer_address.c_str(), BT_id_a2dp, p5.c_str());
     if (p5.equalsIgnoreCase("STREAMING")) {
       snooze_usb.printf("Streaming state\n");
-      Alarm.free(alarm_req_vol_id);
-      alarm_req_vol_id =
-          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      // Alarm.free(alarm_req_vol_id);
+      // alarm_req_vol_id =
+      //     Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
       working_state.bt_state = BTSTATE_PLAY;
     } else {
       working_state.bt_state = BTSTATE_CONNECTED;
@@ -426,9 +426,9 @@ static enum serialMsg msgLink3(String p1, String p2, String p3, String p4,
                         BT_peer_address.c_str(), BT_id_a2dp, p5.c_str());
     if (p5.equalsIgnoreCase("STREAMING")) {
       snooze_usb.printf("Streaming state\n");
-      Alarm.free(alarm_req_vol_id);
-      alarm_req_vol_id =
-          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      // Alarm.free(alarm_req_vol_id);
+      // alarm_req_vol_id =
+      //     Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
       working_state.bt_state = BTSTATE_PLAY;
     } else {
       working_state.bt_state = BTSTATE_CONNECTED;
@@ -457,9 +457,9 @@ static enum serialMsg msgLink4(String p1, String p2, String p3, String p4,
                         BT_peer_address.c_str(), BT_id_a2dp, p5.c_str());
     if (p5.equalsIgnoreCase("STREAMING")) {
       snooze_usb.printf("Streaming state\n");
-      Alarm.free(alarm_req_vol_id);
-      alarm_req_vol_id =
-          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      // Alarm.free(alarm_req_vol_id);
+      // alarm_req_vol_id =
+      //     Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
       working_state.bt_state = BTSTATE_PLAY;
     } else {
       working_state.bt_state = BTSTATE_CONNECTED;
@@ -489,9 +489,9 @@ static enum serialMsg msgLink5(String p1, String p2, String p3, String p4,
                         BT_peer_address.c_str(), BT_id_a2dp, p5.c_str());
     if (p5.equalsIgnoreCase("STREAMING")) {
       snooze_usb.printf("Streaming state\n");
-      Alarm.free(alarm_req_vol_id);
-      alarm_req_vol_id =
-          Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
+      // Alarm.free(alarm_req_vol_id);
+      // alarm_req_vol_id =
+      //     Alarm.timerRepeat(REQ_VOL_INTERVAL_SEC, timerReqVolDone);
       working_state.bt_state = BTSTATE_PLAY;
     } else {
       working_state.bt_state = BTSTATE_CONNECTED;

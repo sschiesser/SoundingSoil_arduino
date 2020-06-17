@@ -29,7 +29,7 @@ extern AlarmID_t alarm_wait_id;
 extern AlarmID_t alarm_adv_id;
 extern AlarmID_t alarm_rem_id;
 extern AlarmID_t alarm_request_id;
-extern AlarmID_t alarm_req_vol_id;
+// extern AlarmID_t alarm_req_vol_id;
 
 extern SnoozeDigital button_wakeup; // Wakeup pins on Teensy 3.6:
                                     // 2,4,6,7,9,10,11,13,16,21,22,26,30,33
